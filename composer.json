@@ -1,0 +1,31 @@
+{
+  "name": "webcito/bs-markdown-editor",
+  "description": "A lightweight Bootstrap-styled jQuery Markdown editor with toolbar, preview mode, and configurable actions.",
+  "type": "library",
+  "keywords": [
+    "markdown",
+    "editor",
+    "jquery",
+    "bootstrap",
+    "wysiwyg",
+    "frontend"
+  ],
+  "homepage": "https://github.com/webcito/bs-markdown-editor",
+  "minimum-stability": "stable",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Thomas Kirsch",
+      "email": "t.kirsch@webcito.de"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/webcito/bs-markdown-editor/issues",
+    "source": "https://github.com/webcito/bs-markdown-editor"
+  },
+  "require": {
+    "components/jquery": "^3",
+    "twbs/bootstrap": "^5",
+    "twbs/bootstrap-icons": "^1"
+  }
+}

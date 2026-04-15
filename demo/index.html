@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>bs-markdown-editor Demo</title>
+    <link href="../vendor/twbs/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../vendor/twbs/bootstrap-icons/font/bootstrap-icons.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container py-4">
+    <h1 class="mb-3">$.fn.bsMarkdownEditor Demo</h1>
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3 d-flex flex-wrap gap-2">
+                        <button id="modeEditor" class="btn btn-sm btn-outline-primary">Mode: Editor</button>
+                        <button id="modePreview" class="btn btn-sm btn-outline-primary">Mode: Preview</button>
+                        <button id="modeGet" class="btn btn-sm btn-outline-secondary">Get Mode</button>
+                    </div>
+
+                    <div class="mb-3 d-flex flex-wrap gap-2">
+                        <button id="valGet" class="btn btn-sm btn-outline-secondary">Get Value</button>
+                        <button id="valSet" class="btn btn-sm btn-outline-secondary">Set Value</button>
+                        <button id="valAppend" class="btn btn-sm btn-outline-secondary">Append Timestamp</button>
+                    </div>
+
+                    <textarea id="editor" class="form-control"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Event Log</strong>
+                    <button id="clearLog" class="btn btn-sm btn-outline-danger">Clear</button>
+                </div>
+                <div id="eventLog" class="card-body p-2" style="height:420px; overflow:auto; font-family:monospace; font-size:12px; background:#0f172a; color:#e2e8f0;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../vendor/components/jquery/jquery.min.js"></script>
+<script src="../vendor/twbs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../dist/bs-markdown-editor.js"></script>
+<script>
+    const $editor = $('#editor');
+    const $eventLog = $('#eventLog');
+
+    function addLog(label, payload) {
+        const now = new Date().toLocaleTimeString();
+        const line = $('<div></div>');
+        const pretty = payload ? JSON.stringify(payload) : '';
+        line.text(`[${now}] ${label}${pretty ? ' -> ' + pretty : ''}`);
+        $eventLog.prepend(line);
+    }
+
+    $editor.bsMarkdownEditor({
+        size: 'sm',
+        lang: 'en',
+        // mode: 'editor'
+    });
+
+    $editor.on('ready.bs.markdown-editor', function (event, data) {
+        addLog(event.type + '.bs.markdown-editor', data);
+    });
+    $editor.on('change.bs.markdown-editor', function (event, data) {
+        addLog(event.type + '.bs.markdown-editor', data);
+    });
+    $editor.on('userChange.bs.markdown-editor', function (event, data) {
+        addLog(event.type + '.bs.markdown-editor', data);
+    });
+    $editor.on('modeChange.bs.markdown-editor', function (event, data) {
+        addLog(event.type + '.bs.markdown-editor', data);
+    });
+    $editor.on('any.bs.markdown-editor', function (event, data) {
+        addLog('any.bs.markdown-editor', data);
+    });
+
+    $('#modeEditor').on('click', function () {
+        $editor.bsMarkdownEditor('mode', 'editor');
+    });
+    $('#modePreview').on('click', function () {
+        $editor.bsMarkdownEditor('mode', 'preview');
+    });
+    $('#modeGet').on('click', function () {
+        addLog('method.mode()', {mode: $editor.bsMarkdownEditor('mode')});
+    });
+
+    $('#valGet').on('click', function () {
+        addLog('method.val()', {value: $editor.bsMarkdownEditor('val')});
+    });
+    $('#valSet').on('click', function () {
+        $editor.bsMarkdownEditor('val', '# Demo Heading\n\n- item 1\n- item 2\n');
+    });
+    $('#valAppend').on('click', function () {
+        const value = $editor.bsMarkdownEditor('val');
+        const next = value + '\nUpdated at: ' + new Date().toISOString();
+        $editor.bsMarkdownEditor('val', next);
+    });
+
+    $('#clearLog').on('click', function () {
+        $eventLog.empty();
+    });
+</script>
+</body>
+</html>
