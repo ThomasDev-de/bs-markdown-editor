@@ -1,4 +1,584 @@
 (function ($) {
+    const sharedConverters = {
+        escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        },
+        sanitizeUrl(url) {
+            const trimmed = String(url || '').trim();
+
+            if (trimmed === '') {
+                return '';
+            }
+
+            if (/^(https?:|mailto:|\/|#)/i.test(trimmed)) {
+                return trimmed;
+            }
+
+            return '#';
+        },
+        renderInline(text) {
+            const codeStore = [];
+            let content = sharedConverters.escapeHtml(text);
+
+            content = content.replace(/`([^`]+)`/g, function (_, code) {
+                const token = `@@CODE_${codeStore.length}@@`;
+                codeStore.push(`<code>${sharedConverters.escapeHtml(code)}</code>`);
+                return token;
+            });
+
+            content = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function (_, alt, url) {
+                const safeSrc = sharedConverters.escapeHtml(sharedConverters.sanitizeUrl(url));
+                const safeAlt = sharedConverters.escapeHtml(alt || '');
+                return `<img src="${safeSrc}" alt="${safeAlt}" class="img-fluid">`;
+            });
+
+            content = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (_, label, url) {
+                const safeHref = sharedConverters.escapeHtml(sharedConverters.sanitizeUrl(url));
+                return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+            });
+
+            content = content.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+            content = content.replace(/==([^=]+)==/g, '<u>$1</u>');
+            content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            content = content.replace(/(^|[\s(])_([^_]+)_(?=$|[\s).,!?:;])/g, '$1<em>$2</em>');
+            content = content.replace(/(^|[\s(])\*([^*]+)\*(?=$|[\s).,!?:;])/g, '$1<em>$2</em>');
+
+            codeStore.forEach(function (codeHtml, index) {
+                content = content.replace(`@@CODE_${index}@@`, codeHtml);
+            });
+
+            return content;
+        },
+        renderMarkdown(markdown) {
+            const lines = String(markdown || '').replace(/\r\n?/g, '\n').split('\n');
+            const html = [];
+            let i = 0;
+
+            function renderParagraph(rawLines) {
+                const joined = rawLines.join('\n').trim();
+                if (joined === '') {
+                    return '';
+                }
+                return `<p>${sharedConverters.renderInline(joined).replace(/\n/g, '<br>')}</p>`;
+            }
+
+            while (i < lines.length) {
+                const line = lines[i];
+                const trimmed = line.trim();
+
+                if (trimmed === '') {
+                    i += 1;
+                    continue;
+                }
+
+                if (/^```/.test(trimmed)) {
+                    const fenceLines = [];
+                    i += 1;
+                    while (i < lines.length && !/^```/.test(lines[i].trim())) {
+                        fenceLines.push(lines[i]);
+                        i += 1;
+                    }
+                    if (i < lines.length) {
+                        i += 1;
+                    }
+                    html.push(`<pre><code>${sharedConverters.escapeHtml(fenceLines.join('\n'))}</code></pre>`);
+                    continue;
+                }
+
+                const headingMatch = line.match(/^\s{0,3}(#{1,6})\s+(.+?)\s*$/);
+                if (headingMatch) {
+                    const level = headingMatch[1].length;
+                    html.push(`<h${level}>${sharedConverters.renderInline(headingMatch[2])}</h${level}>`);
+                    i += 1;
+                    continue;
+                }
+
+                if (/^\s{0,3}([-*_])\s*(\1\s*){2,}$/.test(line)) {
+                    html.push('<hr>');
+                    i += 1;
+                    continue;
+                }
+
+                if (/^\s*>\s?/.test(line)) {
+                    const quoteLines = [];
+                    while (i < lines.length && /^\s*>\s?/.test(lines[i])) {
+                        quoteLines.push(lines[i].replace(/^\s*>\s?/, ''));
+                        i += 1;
+                    }
+                    html.push(`<blockquote>${sharedConverters.renderMarkdown(quoteLines.join('\n'))}</blockquote>`);
+                    continue;
+                }
+
+                if (sharedConverters.isTableHeaderLine(line) && i + 1 < lines.length && sharedConverters.isTableSeparatorLine(lines[i + 1])) {
+                    const alignments = sharedConverters.parseTableAlignments(lines[i + 1]);
+                    const headerCells = sharedConverters.parseTableRow(line);
+                    const bodyRows = [];
+                    i += 2;
+
+                    while (i < lines.length && sharedConverters.isTableDataLine(lines[i])) {
+                        bodyRows.push(sharedConverters.parseTableRow(lines[i]));
+                        i += 1;
+                    }
+
+                    const thead = '<thead><tr>' + headerCells.map(function (cell, index) {
+                        const align = alignments[index] ? ` style="text-align:${alignments[index]}"` : '';
+                        return `<th${align}>${sharedConverters.renderInline(cell)}</th>`;
+                    }).join('') + '</tr></thead>';
+
+                    const tbody = bodyRows.length === 0
+                        ? '<tbody></tbody>'
+                        : '<tbody>' + bodyRows.map(function (row) {
+                            return '<tr>' + row.map(function (cell, index) {
+                                const align = alignments[index] ? ` style="text-align:${alignments[index]}"` : '';
+                                return `<td${align}>${sharedConverters.renderInline(cell)}</td>`;
+                            }).join('') + '</tr>';
+                        }).join('') + '</tbody>';
+
+                    html.push(`<table class="table table-sm">${thead}${tbody}</table>`);
+                    continue;
+                }
+
+                if (sharedConverters.isListLine(line)) {
+                    const listLines = [];
+                    while (i < lines.length && sharedConverters.isListLine(lines[i])) {
+                        listLines.push(lines[i]);
+                        i += 1;
+                    }
+                    html.push(sharedConverters.renderListBlock(listLines));
+                    continue;
+                }
+
+                const paragraphLines = [];
+                while (i < lines.length) {
+                    const current = lines[i];
+                    if (
+                        current.trim() === '' ||
+                        /^```/.test(current.trim()) ||
+                        /^\s{0,3}(#{1,6})\s+/.test(current) ||
+                        /^\s*>\s?/.test(current) ||
+                        sharedConverters.isListLine(current) ||
+                        /^\s{0,3}([-*_])\s*(\1\s*){2,}$/.test(current) ||
+                        (
+                            sharedConverters.isTableHeaderLine(current) &&
+                            i + 1 < lines.length &&
+                            sharedConverters.isTableSeparatorLine(lines[i + 1])
+                        )
+                    ) {
+                        break;
+                    }
+                    paragraphLines.push(current);
+                    i += 1;
+                }
+                html.push(renderParagraph(paragraphLines));
+            }
+
+            return html.join('\n');
+        },
+        escapeMarkdownText(text) {
+            return String(text || '')
+                .replace(/\r\n?/g, '\n')
+                .replace(/[ \t]+\n/g, '\n')
+                .replace(/\\/g, '\\\\')
+                .replace(/([*_`\[\]])/g, '\\$1');
+        },
+        normalizeMarkdown(markdown) {
+            return String(markdown || '')
+                .replace(/\r\n?/g, '\n')
+                .replace(/[ \t]+\n/g, '\n')
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
+        },
+        renderInlineNodes(nodes) {
+            return Array.from(nodes || []).map(function (node) {
+                return sharedConverters.renderInlineNode(node);
+            }).join('').replace(/[ \t]+\n/g, '\n');
+        },
+        renderInlineNode(node) {
+            if (!node) {
+                return '';
+            }
+
+            if (node.nodeType === 3) {
+                return sharedConverters.escapeMarkdownText(node.nodeValue).replace(/\s+/g, ' ');
+            }
+
+            if (node.nodeType !== 1) {
+                return '';
+            }
+
+            const tagName = node.tagName.toLowerCase();
+
+            if (tagName === 'br') {
+                return '\n';
+            }
+            if (tagName === 'code') {
+                return '`' + node.textContent.replace(/\n+/g, ' ').trim() + '`';
+            }
+            if (tagName === 'strong' || tagName === 'b') {
+                return `**${sharedConverters.renderInlineNodes(node.childNodes).trim()}**`;
+            }
+            if (tagName === 'em' || tagName === 'i') {
+                return `_${sharedConverters.renderInlineNodes(node.childNodes).trim()}_`;
+            }
+            if (tagName === 'del' || tagName === 's') {
+                return `~~${sharedConverters.renderInlineNodes(node.childNodes).trim()}~~`;
+            }
+            if (tagName === 'u') {
+                return `==${sharedConverters.renderInlineNodes(node.childNodes).trim()}==`;
+            }
+            if (tagName === 'a') {
+                const label = sharedConverters.renderInlineNodes(node.childNodes).trim() || (node.textContent || '').trim();
+                return `[${label}](${node.getAttribute('href') || ''})`;
+            }
+            if (tagName === 'img') {
+                return `![${sharedConverters.escapeMarkdownText(node.getAttribute('alt') || '')}](${node.getAttribute('src') || ''})`;
+            }
+            if (tagName === 'input') {
+                return '';
+            }
+
+            return sharedConverters.renderInlineNodes(node.childNodes);
+        },
+        renderBlockNodes(nodes, depth) {
+            return Array.from(nodes || []).map(function (node) {
+                return sharedConverters.renderBlockNode(node, depth || 0);
+            }).join('');
+        },
+        renderBlockNode(node, depth) {
+            if (!node) {
+                return '';
+            }
+
+            if (node.nodeType === 3) {
+                const text = node.nodeValue.replace(/\s+/g, ' ').trim();
+                return text === '' ? '' : `${sharedConverters.escapeMarkdownText(text)}\n\n`;
+            }
+
+            if (node.nodeType !== 1) {
+                return '';
+            }
+
+            const tagName = node.tagName.toLowerCase();
+
+            if (/^h[1-6]$/.test(tagName)) {
+                return `${'#'.repeat(parseInt(tagName.slice(1), 10))} ${sharedConverters.renderInlineNodes(node.childNodes).trim()}\n\n`;
+            }
+            if (tagName === 'p') {
+                return `${sharedConverters.renderInlineNodes(node.childNodes).trim()}\n\n`;
+            }
+            if (tagName === 'blockquote') {
+                const inner = sharedConverters.normalizeMarkdown(sharedConverters.renderBlockNodes(node.childNodes, depth));
+                if (inner === '') {
+                    return '';
+                }
+                return inner.split('\n').map(function (line) {
+                    return line === '' ? '>' : `> ${line}`;
+                }).join('\n') + '\n\n';
+            }
+            if (tagName === 'pre') {
+                const codeNode = node.querySelector('code');
+                const code = codeNode ? codeNode.textContent : node.textContent;
+                return `\`\`\`\n${String(code || '').replace(/\r\n?/g, '\n').replace(/\n$/, '')}\n\`\`\`\n\n`;
+            }
+            if (tagName === 'hr') {
+                return '---\n\n';
+            }
+            if (tagName === 'ul' || tagName === 'ol') {
+                return `${sharedConverters.renderListElement(node, depth)}\n`;
+            }
+            if (tagName === 'table') {
+                const tableMarkdown = sharedConverters.renderTableElement(node);
+                return tableMarkdown === '' ? '' : `${tableMarkdown}\n\n`;
+            }
+            if (tagName === 'div' || tagName === 'section' || tagName === 'article') {
+                return sharedConverters.renderBlockNodes(node.childNodes, depth);
+            }
+
+            return `${sharedConverters.renderInlineNodes(node.childNodes).trim()}\n\n`;
+        },
+        getDirectCheckbox(item) {
+            const directChildren = Array.from(item.children || []);
+
+            for (let index = 0; index < directChildren.length; index += 1) {
+                const child = directChildren[index];
+                const tagName = child.tagName.toLowerCase();
+
+                if (tagName === 'input' && child.type === 'checkbox') {
+                    return child;
+                }
+
+                if (tagName === 'label') {
+                    const labelChildren = Array.from(child.children || []);
+                    for (let labelIndex = 0; labelIndex < labelChildren.length; labelIndex += 1) {
+                        const labelChild = labelChildren[labelIndex];
+                        if (labelChild.tagName && labelChild.tagName.toLowerCase() === 'input' && labelChild.type === 'checkbox') {
+                            return labelChild;
+                        }
+                    }
+                }
+            }
+
+            return null;
+        },
+        renderListElement(listNode, depth) {
+            const isOrdered = listNode.tagName.toLowerCase() === 'ol';
+            const indent = '  '.repeat(depth || 0);
+            const items = Array.from(listNode.children).filter(function (child) {
+                return child.tagName && child.tagName.toLowerCase() === 'li';
+            });
+
+            return items.map(function (item, index) {
+                const childNodes = Array.from(item.childNodes);
+                const nestedLists = childNodes.filter(function (child) {
+                    return child.nodeType === 1 && /^(ul|ol)$/i.test(child.tagName);
+                });
+                const contentNodes = childNodes.filter(function (child) {
+                    return !(child.nodeType === 1 && /^(ul|ol)$/i.test(child.tagName));
+                });
+                const checkbox = sharedConverters.getDirectCheckbox(item);
+                const marker = checkbox ? `- [${checkbox.checked ? 'x' : ' '}]` : (isOrdered ? `${index + 1}.` : '-');
+                const content = sharedConverters.renderInlineNodes(contentNodes).replace(/\n+/g, ' ').trim();
+                let line = `${indent}${marker}`;
+
+                if (content !== '') {
+                    line += ` ${content}`;
+                }
+
+                if (nestedLists.length === 0) {
+                    return line;
+                }
+
+                const nested = nestedLists.map(function (nestedList) {
+                    return sharedConverters.renderListElement(nestedList, (depth || 0) + 1);
+                }).join('\n');
+
+                return `${line}\n${nested}`;
+            }).join('\n');
+        },
+        renderTableElement(tableNode) {
+            const rows = [];
+            const alignments = [];
+
+            if (tableNode.tHead && tableNode.tHead.rows.length > 0) {
+                rows.push(Array.from(tableNode.tHead.rows[0].cells));
+            }
+
+            Array.from(tableNode.tBodies || []).forEach(function (tbody) {
+                Array.from(tbody.rows).forEach(function (row) {
+                    rows.push(Array.from(row.cells));
+                });
+            });
+
+            if (rows.length === 0) {
+                Array.from(tableNode.rows || []).forEach(function (row) {
+                    rows.push(Array.from(row.cells));
+                });
+            }
+
+            if (rows.length === 0) {
+                return '';
+            }
+
+            const markdownRows = rows.map(function (row) {
+                return row.map(function (cell, index) {
+                    const styleAlign = (cell.style && cell.style.textAlign ? cell.style.textAlign : '').trim().toLowerCase();
+                    if (!alignments[index] && styleAlign !== '') {
+                        alignments[index] = styleAlign;
+                    }
+                    return sharedConverters.renderInlineNodes(cell.childNodes).replace(/\n+/g, ' ').trim();
+                });
+            });
+            const columnCount = markdownRows.reduce(function (max, row) {
+                return Math.max(max, row.length);
+            }, 0);
+
+            markdownRows.forEach(function (row) {
+                while (row.length < columnCount) {
+                    row.push('');
+                }
+            });
+
+            while (alignments.length < columnCount) {
+                alignments.push('');
+            }
+
+            const header = markdownRows.shift() || [];
+            const separator = alignments.map(function (alignment) {
+                if (alignment === 'center') {
+                    return ':---:';
+                }
+                if (alignment === 'right') {
+                    return '---:';
+                }
+                if (alignment === 'left') {
+                    return ':---';
+                }
+                return '---';
+            });
+            const lines = [`| ${header.join(' | ')} |`, `| ${separator.join(' | ')} |`];
+
+            markdownRows.forEach(function (row) {
+                lines.push(`| ${row.join(' | ')} |`);
+            });
+
+            return lines.join('\n');
+        },
+        htmlToMarkdown(html) {
+            const source = String(html == null ? '' : html);
+
+            if (source.trim() === '') {
+                return '';
+            }
+
+            const parser = new window.DOMParser();
+            const doc = parser.parseFromString(`<div>${source}</div>`, 'text/html');
+            const root = doc.body.firstElementChild;
+
+            return sharedConverters.normalizeMarkdown(sharedConverters.renderBlockNodes(root.childNodes, 0));
+        },
+        parseTableRow(line) {
+            const normalized = String(line || '').trim().replace(/^\|/, '').replace(/\|$/, '');
+            return normalized.split('|').map(function (cell) {
+                return cell.trim();
+            });
+        },
+        isTableHeaderLine(line) {
+            const cells = sharedConverters.parseTableRow(line);
+            return cells.length > 0 && cells.some(function (cell) {
+                return cell !== '';
+            });
+        },
+        isTableSeparatorLine(line) {
+            return /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(String(line || ''));
+        },
+        isTableDataLine(line) {
+            if (String(line || '').trim() === '') {
+                return false;
+            }
+
+            return String(line).indexOf('|') !== -1;
+        },
+        parseTableAlignments(line) {
+            return sharedConverters.parseTableRow(line).map(function (cell) {
+                const trimmed = cell.trim();
+
+                if (/^:-+:$/.test(trimmed)) {
+                    return 'center';
+                }
+                if (/^:-+$/.test(trimmed)) {
+                    return 'left';
+                }
+                if (/^-+:$/.test(trimmed)) {
+                    return 'right';
+                }
+
+                return '';
+            });
+        },
+        getListItemData(line) {
+            const match = String(line).match(/^(\s*)([-*+]|\d+\.)\s+(.+)$/);
+            if (!match) {
+                return null;
+            }
+
+            const indent = match[1].replace(/\t/g, '    ').length;
+            const marker = match[2];
+
+            return {
+                indent: indent,
+                type: /^\d+\.$/.test(marker) ? 'ol' : 'ul',
+                content: match[3]
+            };
+        },
+        isListLine(line) {
+            return sharedConverters.getListItemData(line) !== null;
+        },
+        renderListBlock(lines) {
+            const items = lines
+                .map(function (line) {
+                    return sharedConverters.getListItemData(line);
+                })
+                .filter(function (item) {
+                    return item !== null;
+                });
+
+            if (items.length === 0) {
+                return '';
+            }
+
+            const root = {children: []};
+            const stack = [{indent: -1, node: root}];
+
+            items.forEach(function (item) {
+                while (stack.length > 1 && item.indent <= stack[stack.length - 1].indent) {
+                    stack.pop();
+                }
+
+                const node = {
+                    type: item.type,
+                    content: item.content,
+                    children: []
+                };
+                stack[stack.length - 1].node.children.push(node);
+                stack.push({indent: item.indent, node: node});
+            });
+
+            return sharedConverters.renderListNodes(root.children);
+        },
+        renderListItem(item) {
+            const taskMatch = String(item).match(/^\[( |x|X)\]\s+(.+)$/);
+
+            if (!taskMatch) {
+                return sharedConverters.renderInline(item);
+            }
+
+            const checked = taskMatch[1].toLowerCase() === 'x' ? ' checked' : '';
+            return `<label class="form-check-label d-flex align-items-center gap-2"><input class="form-check-input mt-0" type="checkbox" disabled${checked}>${sharedConverters.renderInline(taskMatch[2])}</label>`;
+        },
+        isTaskListItem(item) {
+            return /^\[( |x|X)\]\s+.+$/.test(String(item));
+        },
+        renderListNodes(nodes) {
+            let index = 0;
+            let html = '';
+
+            while (index < nodes.length) {
+                const groupType = nodes[index].type;
+                const groupNodes = [];
+
+                while (index < nodes.length && nodes[index].type === groupType) {
+                    groupNodes.push(nodes[index]);
+                    index += 1;
+                }
+
+                const isTaskList = groupType === 'ul' && groupNodes.length > 0 && groupNodes.every(function (node) {
+                    return sharedConverters.isTaskListItem(node.content);
+                });
+                const listClass = isTaskList ? ' class="list-unstyled ps-0"' : '';
+                html += `<${groupType}${listClass}>` + groupNodes.map(function (node) {
+                    const nested = node.children.length > 0 ? sharedConverters.renderListNodes(node.children) : '';
+                    return `<li>${sharedConverters.renderListItem(node.content)}${nested}</li>`;
+                }).join('') + `</${groupType}>`;
+            }
+
+            return html;
+        }
+    };
+
+    $.bsMarkdownEditor = $.extend({}, $.bsMarkdownEditor, {
+        toHtml(markdown) {
+            return sharedConverters.renderMarkdown(markdown);
+        },
+        toMarkdown(html) {
+            return sharedConverters.htmlToMarkdown(html);
+        }
+    });
+
     $.fn.bsMarkdownEditor = function (options) {
         const methodArgs = Array.prototype.slice.call(arguments, 1);
         if (typeof options === 'string') {
@@ -355,183 +935,16 @@
 
         const helpers = {
             escapeHtml(value) {
-                return String(value)
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/"/g, '&quot;')
-                    .replace(/'/g, '&#39;');
+                return sharedConverters.escapeHtml(value);
             },
             sanitizeUrl(url) {
-                const trimmed = String(url || '').trim();
-
-                if (trimmed === '') {
-                    return '';
-                }
-
-                if (/^(https?:|mailto:|\/|#)/i.test(trimmed)) {
-                    return trimmed;
-                }
-
-                return '#';
+                return sharedConverters.sanitizeUrl(url);
             },
             renderInline(text) {
-                const codeStore = [];
-                let content = helpers.escapeHtml(text);
-
-                content = content.replace(/`([^`]+)`/g, function (_, code) {
-                    const token = `@@CODE_${codeStore.length}@@`;
-                    codeStore.push(`<code>${helpers.escapeHtml(code)}</code>`);
-                    return token;
-                });
-
-                content = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function (_, alt, url) {
-                    const safeSrc = helpers.escapeHtml(helpers.sanitizeUrl(url));
-                    const safeAlt = helpers.escapeHtml(alt || '');
-                    return `<img src="${safeSrc}" alt="${safeAlt}" class="img-fluid">`;
-                });
-
-                content = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (_, label, url) {
-                    const safeHref = helpers.escapeHtml(helpers.sanitizeUrl(url));
-                    return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer">${label}</a>`;
-                });
-
-                content = content.replace(/~~([^~]+)~~/g, '<del>$1</del>');
-                content = content.replace(/==([^=]+)==/g, '<u>$1</u>');
-                content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-                content = content.replace(/(^|[\s(])_([^_]+)_(?=$|[\s).,!?:;])/g, '$1<em>$2</em>');
-                content = content.replace(/(^|[\s(])\*([^*]+)\*(?=$|[\s).,!?:;])/g, '$1<em>$2</em>');
-
-                codeStore.forEach(function (codeHtml, index) {
-                    content = content.replace(`@@CODE_${index}@@`, codeHtml);
-                });
-
-                return content;
+                return sharedConverters.renderInline(text);
             },
             renderMarkdown(markdown) {
-                const lines = String(markdown || '').replace(/\r\n?/g, '\n').split('\n');
-                const html = [];
-                let i = 0;
-
-                function renderParagraph(rawLines) {
-                    const joined = rawLines.join('\n').trim();
-                    if (joined === '') {
-                        return '';
-                    }
-                    return `<p>${helpers.renderInline(joined).replace(/\n/g, '<br>')}</p>`;
-                }
-
-                while (i < lines.length) {
-                    const line = lines[i];
-                    const trimmed = line.trim();
-
-                    if (trimmed === '') {
-                        i += 1;
-                        continue;
-                    }
-
-                    if (/^```/.test(trimmed)) {
-                        const fenceLines = [];
-                        i += 1;
-                        while (i < lines.length && !/^```/.test(lines[i].trim())) {
-                            fenceLines.push(lines[i]);
-                            i += 1;
-                        }
-                        if (i < lines.length) {
-                            i += 1;
-                        }
-                        html.push(`<pre><code>${helpers.escapeHtml(fenceLines.join('\n'))}</code></pre>`);
-                        continue;
-                    }
-
-                    const headingMatch = line.match(/^\s{0,3}(#{1,6})\s+(.+?)\s*$/);
-                    if (headingMatch) {
-                        const level = headingMatch[1].length;
-                        html.push(`<h${level}>${helpers.renderInline(headingMatch[2])}</h${level}>`);
-                        i += 1;
-                        continue;
-                    }
-
-                    if (/^\s{0,3}([-*_])\s*(\1\s*){2,}$/.test(line)) {
-                        html.push('<hr>');
-                        i += 1;
-                        continue;
-                    }
-
-                    if (/^\s*>\s?/.test(line)) {
-                        const quoteLines = [];
-                        while (i < lines.length && /^\s*>\s?/.test(lines[i])) {
-                            quoteLines.push(lines[i].replace(/^\s*>\s?/, ''));
-                            i += 1;
-                        }
-                        html.push(`<blockquote>${helpers.renderMarkdown(quoteLines.join('\n'))}</blockquote>`);
-                        continue;
-                    }
-
-                    if (helpers.isTableHeaderLine(line) && i + 1 < lines.length && helpers.isTableSeparatorLine(lines[i + 1])) {
-                        const alignments = helpers.parseTableAlignments(lines[i + 1]);
-                        const headerCells = helpers.parseTableRow(line);
-                        const bodyRows = [];
-                        i += 2;
-
-                        while (i < lines.length && helpers.isTableDataLine(lines[i])) {
-                            bodyRows.push(helpers.parseTableRow(lines[i]));
-                            i += 1;
-                        }
-
-                        const thead = '<thead><tr>' + headerCells.map(function (cell, index) {
-                            const align = alignments[index] ? ` style="text-align:${alignments[index]}"` : '';
-                            return `<th${align}>${helpers.renderInline(cell)}</th>`;
-                        }).join('') + '</tr></thead>';
-
-                        const tbody = bodyRows.length === 0
-                            ? '<tbody></tbody>'
-                            : '<tbody>' + bodyRows.map(function (row) {
-                                return '<tr>' + row.map(function (cell, index) {
-                                    const align = alignments[index] ? ` style="text-align:${alignments[index]}"` : '';
-                                    return `<td${align}>${helpers.renderInline(cell)}</td>`;
-                                }).join('') + '</tr>';
-                            }).join('') + '</tbody>';
-
-                        html.push(`<table class="table table-sm">${thead}${tbody}</table>`);
-                        continue;
-                    }
-
-                    if (helpers.isListLine(line)) {
-                        const listLines = [];
-                        while (i < lines.length && helpers.isListLine(lines[i])) {
-                            listLines.push(lines[i]);
-                            i += 1;
-                        }
-                        html.push(helpers.renderListBlock(listLines));
-                        continue;
-                    }
-
-                    const paragraphLines = [];
-                    while (i < lines.length) {
-                        const current = lines[i];
-                        if (
-                            current.trim() === '' ||
-                            /^```/.test(current.trim()) ||
-                            /^\s{0,3}(#{1,6})\s+/.test(current) ||
-                            /^\s*>\s?/.test(current) ||
-                            helpers.isListLine(current) ||
-                            /^\s{0,3}([-*_])\s*(\1\s*){2,}$/.test(current) ||
-                            (
-                                helpers.isTableHeaderLine(current) &&
-                                i + 1 < lines.length &&
-                                helpers.isTableSeparatorLine(lines[i + 1])
-                            )
-                        ) {
-                            break;
-                        }
-                        paragraphLines.push(current);
-                        i += 1;
-                    }
-                    html.push(renderParagraph(paragraphLines));
-                }
-
-                return html.join('\n');
+                return sharedConverters.renderMarkdown(markdown);
             },
             getGroupSizeClass() {
                 const size = String(settings.size || '').trim().toLowerCase();
@@ -697,93 +1110,22 @@
                 return textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
             },
             renderListItem(item) {
-                const taskMatch = String(item).match(/^\[( |x|X)\]\s+(.+)$/);
-
-                if (!taskMatch) {
-                    return helpers.renderInline(item);
-                }
-
-                const checked = taskMatch[1].toLowerCase() === 'x' ? ' checked' : '';
-                return `<label class="form-check-label d-flex align-items-center gap-2"><input class="form-check-input mt-0" type="checkbox" disabled${checked}>${helpers.renderInline(taskMatch[2])}</label>`;
+                return sharedConverters.renderListItem(item);
             },
             isListLine(line) {
-                return helpers.getListItemData(line) !== null;
+                return sharedConverters.isListLine(line);
             },
             getListItemData(line) {
-                const match = String(line).match(/^(\s*)([-*+]|\d+\.)\s+(.+)$/);
-                if (!match) {
-                    return null;
-                }
-
-                const indent = match[1].replace(/\t/g, '    ').length;
-                const marker = match[2];
-                const type = /^\d+\.$/.test(marker) ? 'ol' : 'ul';
-
-                return {
-                    indent: indent,
-                    type: type,
-                    content: match[3]
-                };
+                return sharedConverters.getListItemData(line);
             },
             renderListBlock(lines) {
-                const items = lines
-                    .map(function (line) {
-                        return helpers.getListItemData(line);
-                    })
-                    .filter(function (item) {
-                        return item !== null;
-                    });
-
-                if (items.length === 0) {
-                    return '';
-                }
-
-                const root = {children: []};
-                const stack = [{indent: -1, node: root}];
-
-                items.forEach(function (item) {
-                    while (stack.length > 1 && item.indent <= stack[stack.length - 1].indent) {
-                        stack.pop();
-                    }
-
-                    const node = {
-                        type: item.type,
-                        content: item.content,
-                        children: []
-                    };
-                    stack[stack.length - 1].node.children.push(node);
-                    stack.push({indent: item.indent, node: node});
-                });
-
-                return helpers.renderListNodes(root.children);
+                return sharedConverters.renderListBlock(lines);
             },
             renderListNodes(nodes) {
-                let index = 0;
-                let html = '';
-
-                while (index < nodes.length) {
-                    const groupType = nodes[index].type;
-                    const groupNodes = [];
-
-                    while (index < nodes.length && nodes[index].type === groupType) {
-                        groupNodes.push(nodes[index]);
-                        index += 1;
-                    }
-
-                    const isTaskList = groupType === 'ul' && groupNodes.length > 0 && groupNodes.every(function (node) {
-                        return helpers.isTaskListItem(node.content);
-                    });
-                    const listClass = isTaskList ? ' class="list-unstyled ps-0"' : '';
-                    html += `<${groupType}${listClass}>` + groupNodes.map(function (node) {
-                        const nested = node.children.length > 0 ? helpers.renderListNodes(node.children) : '';
-                        return `<li>${helpers.renderListItem(node.content)}${nested}</li>`;
-                    }).join('') + `</${groupType}>`;
-                }
-
-                return html;
+                return sharedConverters.renderListNodes(nodes);
             },
             isTaskListItem(item) {
-                return /^\[( |x|X)\]\s+.+$/.test(String(item));
+                return sharedConverters.isTaskListItem(item);
             },
             ensureHistory(textarea) {
                 let history = $(textarea).data('bsMarkdownEditorHistory');
@@ -887,45 +1229,19 @@
                 helpers.replaceSelection(textarea, template);
             },
             parseTableRow(line) {
-                const normalized = String(line || '').trim().replace(/^\|/, '').replace(/\|$/, '');
-
-                return normalized.split('|').map(function (cell) {
-                    return cell.trim();
-                });
+                return sharedConverters.parseTableRow(line);
             },
             isTableHeaderLine(line) {
-                const cells = helpers.parseTableRow(line);
-
-                return cells.length > 0 && cells.some(function (cell) {
-                    return cell !== '';
-                });
+                return sharedConverters.isTableHeaderLine(line);
             },
             isTableSeparatorLine(line) {
-                return /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(String(line || ''));
+                return sharedConverters.isTableSeparatorLine(line);
             },
             isTableDataLine(line) {
-                if (String(line || '').trim() === '') {
-                    return false;
-                }
-
-                return String(line).indexOf('|') !== -1;
+                return sharedConverters.isTableDataLine(line);
             },
             parseTableAlignments(line) {
-                return helpers.parseTableRow(line).map(function (cell) {
-                    const trimmed = cell.trim();
-
-                    if (/^:-+:$/.test(trimmed)) {
-                        return 'center';
-                    }
-                    if (/^:-+$/.test(trimmed)) {
-                        return 'left';
-                    }
-                    if (/^-+:$/.test(trimmed)) {
-                        return 'right';
-                    }
-
-                    return '';
-                });
+                return sharedConverters.parseTableAlignments(line);
             },
             buildMarkdownTable(rows, columns) {
                 const safeRows = Math.min(30, Math.max(1, parseInt(rows, 10) || 1));

@@ -30,6 +30,38 @@
                     <textarea id="editor" class="form-control"></textarea>
                 </div>
             </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <strong>Static Conversion Demo</strong>
+                </div>
+                <div class="card-body">
+                    <p class="text-body-secondary small mb-3">
+                        Native textarea without plugin binding. The buttons call <code>$.bsMarkdownEditor.toHtml()</code> and <code>$.bsMarkdownEditor.toMarkdown()</code> directly.
+                    </p>
+
+                    <div class="mb-3 d-flex flex-wrap gap-2">
+                        <button id="nativeToHtml" class="btn btn-sm btn-outline-secondary">Markdown to HTML</button>
+                        <button id="nativeToMarkdown" class="btn btn-sm btn-outline-secondary">HTML to Markdown</button>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12 col-xl-6">
+                            <label for="nativeInput" class="form-label">Native Textarea</label>
+                            <textarea id="nativeInput" class="form-control" rows="12"># Static API Demo
+
+- item 1
+- item 2
+
+[OpenAI](https://openai.com)</textarea>
+                        </div>
+                        <div class="col-12 col-xl-6">
+                            <label for="nativeHtmlOutput" class="form-label">HTML Output</label>
+                            <textarea id="nativeHtmlOutput" class="form-control font-monospace" rows="12" readonly></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="col-12 col-lg-4">
@@ -49,6 +81,8 @@
 <script>
     const $editor = $('#editor');
     const $eventLog = $('#eventLog');
+    const $nativeInput = $('#nativeInput');
+    const $nativeHtmlOutput = $('#nativeHtmlOutput');
 
     function addLog(label, payload) {
         const now = new Date().toLocaleTimeString();
@@ -102,9 +136,23 @@
         $editor.bsMarkdownEditor('val', next);
     });
 
+    $('#nativeToHtml').on('click', function () {
+        const html = $.bsMarkdownEditor.toHtml($nativeInput.val());
+        $nativeHtmlOutput.val(html);
+        addLog('static.toHtml()', {inputLength: $nativeInput.val().length, outputLength: html.length});
+    });
+
+    $('#nativeToMarkdown').on('click', function () {
+        const markdown = $.bsMarkdownEditor.toMarkdown($nativeHtmlOutput.val());
+        $nativeInput.val(markdown);
+        addLog('static.toMarkdown()', {inputLength: $nativeHtmlOutput.val().length, outputLength: markdown.length});
+    });
+
     $('#clearLog').on('click', function () {
         $eventLog.empty();
     });
+
+    $('#nativeToHtml').trigger('click');
 </script>
 </body>
 </html>

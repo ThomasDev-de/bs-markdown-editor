@@ -104,6 +104,22 @@ $('#editor').bsMarkdownEditor('val', '# Hello');
 $('#editor').bsMarkdownEditor('mode', 'preview');
 ```
 
+## Static Methods
+
+These helpers are available directly on `$.bsMarkdownEditor` and are not bound to a specific editor instance.
+
+| Method | Signature | Returns | Description |
+|---|---|---|---|
+| `toHtml` | `toHtml(markdown)` | `string` | Converts Markdown to the same HTML used by the built-in preview renderer. |
+| `toMarkdown` | `toMarkdown(html)` | `string` | Converts HTML back to Markdown for common editor output such as headings, lists, links, tables, blockquotes, code, and task lists. |
+
+Example:
+
+```js
+const html = $.bsMarkdownEditor.toHtml('# Hello');
+const markdown = $.bsMarkdownEditor.toMarkdown('<h1>Hello</h1>');
+```
+
 ## Events
 
 | Event | Fired When | Payload |

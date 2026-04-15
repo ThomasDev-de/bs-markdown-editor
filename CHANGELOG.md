@@ -7,11 +7,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-04-15
+
 ### Added
 
-- New option `wrapperClass` (default `null`) to append custom classes to the editor wrapper.
-- README improvements: detailed option tables and GitHub CDN installation example.
-- Composer package metadata completed (`description`, `keywords`, `homepage`, `support`, MIT license).
+- Added public static helpers `$.bsMarkdownEditor.toHtml(markdown)` and `$.bsMarkdownEditor.toMarkdown(html)` for conversions without binding to an element.
+- README updated with documentation for the new static conversion API.
+
+### Changed
+
+- Package version bumped from `1.0.0` to `1.0.1`.
 
 ## [1.0.0] - 2026-04-15
 
