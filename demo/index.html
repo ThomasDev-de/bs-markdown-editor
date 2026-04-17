@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,23 +8,47 @@
     <link href="../vendor/twbs/bootstrap-icons/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
         :root {
-            --bg-a: #f7efe4;
-            --bg-b: #dce8ff;
-            --ink: #1f2937;
-            --muted: #5b6472;
-            --panel: rgba(255, 255, 255, 0.85);
-            --panel-border: rgba(148, 163, 184, 0.35);
-            --preview-bg: #fffefb;
-            --log-bg: #0f172a;
+            --demo-bg-a: #f7efe4;
+            --demo-bg-b: #dce8ff;
+            --demo-orb-a: rgba(255, 248, 236, 0.95);
+            --demo-orb-b: rgba(229, 239, 255, 0.9);
+            --demo-ink: var(--bs-body-color);
+            --demo-muted: var(--bs-secondary-color);
+            --demo-panel: rgba(255, 255, 255, 0.84);
+            --demo-panel-border: rgba(148, 163, 184, 0.35);
+            --demo-preview-bg: rgba(255, 255, 255, 0.7);
+            --demo-preview-border: rgba(148, 163, 184, 0.3);
+            --demo-code-bg: #111827;
+            --demo-code-fg: #e5e7eb;
+            --demo-log-bg: #0f172a;
+            --demo-log-fg: #e2e8f0;
+            --demo-shadow: 0 12px 34px rgba(15, 23, 42, 0.08);
+        }
+        [data-bs-theme="dark"] {
+            --demo-bg-a: #0f172a;
+            --demo-bg-b: #132238;
+            --demo-orb-a: rgba(56, 189, 248, 0.16);
+            --demo-orb-b: rgba(251, 191, 36, 0.12);
+            --demo-ink: var(--bs-body-color);
+            --demo-muted: rgba(226, 232, 240, 0.78);
+            --demo-panel: rgba(15, 23, 42, 0.72);
+            --demo-panel-border: rgba(148, 163, 184, 0.22);
+            --demo-preview-bg: rgba(15, 23, 42, 0.58);
+            --demo-preview-border: rgba(148, 163, 184, 0.2);
+            --demo-code-bg: rgba(2, 6, 23, 0.92);
+            --demo-code-fg: #dbeafe;
+            --demo-log-bg: rgba(2, 6, 23, 0.92);
+            --demo-log-fg: #dbeafe;
+            --demo-shadow: 0 18px 40px rgba(2, 6, 23, 0.36);
         }
         body {
             margin: 0;
             min-height: 100vh;
-            color: var(--ink);
+            color: var(--demo-ink);
             font-family: "Space Grotesk", "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
-            background: radial-gradient(circle at 10% 20%, #fff8ec 0%, transparent 40%),
-                        radial-gradient(circle at 90% 10%, #e5efff 0%, transparent 35%),
-                        linear-gradient(160deg, var(--bg-a), var(--bg-b));
+            background: radial-gradient(circle at 10% 20%, var(--demo-orb-a) 0%, transparent 40%),
+                        radial-gradient(circle at 90% 10%, var(--demo-orb-b) 0%, transparent 35%),
+                        linear-gradient(160deg, var(--demo-bg-a), var(--demo-bg-b));
         }
         .demo-shell {
             max-width: 1300px;
@@ -32,11 +56,11 @@
             padding: 2rem 1rem 2.5rem;
         }
         .hero, .panel {
-            border: 1px solid var(--panel-border);
-            background: var(--panel);
+            border: 1px solid var(--demo-panel-border);
+            background: var(--demo-panel);
             backdrop-filter: blur(8px);
             border-radius: 1rem;
-            box-shadow: 0 12px 34px rgba(15, 23, 42, 0.08);
+            box-shadow: var(--demo-shadow);
         }
         .hero {
             padding: 1rem 1.25rem;
@@ -47,38 +71,41 @@
         }
         .hero p {
             margin: 0.35rem 0 0;
-            color: var(--muted);
+            color: var(--demo-muted);
         }
         .panel-header {
             padding: 0.8rem 1rem;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+            border-bottom: 1px solid var(--demo-preview-border);
         }
         .panel-body {
             padding: 1rem;
         }
         .stat-pill {
-            border: 1px solid rgba(148, 163, 184, 0.35);
+            border: 1px solid var(--demo-panel-border);
             border-radius: 999px;
             padding: 0.2rem 0.6rem;
             font-size: 0.75rem;
-            color: #475569;
-            background: rgba(255, 255, 255, 0.8);
+            color: var(--demo-muted);
+            background: color-mix(in srgb, var(--demo-panel) 92%, transparent);
         }
         .controls .btn {
+            border-radius: 999px;
+        }
+        .hero-actions .btn {
             border-radius: 999px;
         }
         #livePreview {
             min-height: 460px;
             max-height: 72vh;
             overflow: auto;
-            background: var(--preview-bg);
-            border: 1px solid rgba(148, 163, 184, 0.25);
+            background: var(--demo-preview-bg);
+            border: 1px solid var(--demo-preview-border);
             border-radius: 0.75rem;
             padding: 1rem;
         }
         #livePreview pre {
-            background: #111827;
-            color: #e5e7eb;
+            background: var(--demo-code-bg);
+            color: var(--demo-code-fg);
             padding: 0.8rem;
             border-radius: 0.5rem;
             overflow-x: auto;
@@ -87,8 +114,8 @@
             height: 260px;
             overflow: auto;
             border-radius: 0.75rem;
-            background: var(--log-bg);
-            color: #e2e8f0;
+            background: var(--demo-log-bg);
+            color: var(--demo-log-fg);
             font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
             font-size: 12px;
             padding: 0.55rem 0.7rem;
@@ -101,8 +128,19 @@
 <body>
 <main class="demo-shell">
     <section class="hero mb-4">
-        <h1>bs-markdown-editor Demo Playground</h1>
-        <p>Live preview updates over plugin events and uses <code>$.bsMarkdownEditor.toHtml()</code>.</p>
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <h1>bs-markdown-editor Demo Playground</h1>
+                <p>Live preview updates over plugin events and uses <code>$.bsMarkdownEditor.toHtml()</code>.</p>
+            </div>
+            <div class="hero-actions d-flex align-items-center gap-2">
+                <span class="stat-pill" id="themeBadge"><i class="bi bi-palette me-1"></i>Theme: dark</span>
+                <div class="btn-group btn-group-sm" role="group" aria-label="Theme selector">
+                    <button id="themeLight" class="btn btn-outline-secondary">Light</button>
+                    <button id="themeDark" class="btn btn-outline-secondary">Dark</button>
+                </div>
+            </div>
+        </div>
     </section>
 
     <div class="row g-4">
@@ -116,10 +154,10 @@
                     <div class="controls mb-3 d-flex flex-wrap gap-2">
                         <button id="modeEditor" class="btn btn-sm btn-outline-secondary">Editor</button>
                         <button id="modePreview" class="btn btn-sm btn-outline-secondary">Plugin Preview</button>
-                        <button id="modeGet" class="btn btn-sm btn-outline-dark">Get Mode</button>
-                        <button id="valGet" class="btn btn-sm btn-outline-dark">Get Value</button>
-                        <button id="valSet" class="btn btn-sm btn-outline-dark">Set Sample</button>
-                        <button id="valAppend" class="btn btn-sm btn-outline-dark">Append Timestamp</button>
+                        <button id="modeGet" class="btn btn-sm btn-outline-secondary">Get Mode</button>
+                        <button id="valGet" class="btn btn-sm btn-outline-secondary">Get Value</button>
+                        <button id="valSet" class="btn btn-sm btn-outline-secondary">Set Sample</button>
+                        <button id="valAppend" class="btn btn-sm btn-outline-secondary">Append Timestamp</button>
                     </div>
                     <textarea id="editor" class="form-control"></textarea>
                 </div>
@@ -157,7 +195,9 @@
     const $editor = $('#editor');
     const $eventLog = $('#eventLog');
     const $modeBadge = $('#modeBadge');
+    const $themeBadge = $('#themeBadge');
     const $livePreview = $('#livePreview');
+    const $root = $(document.documentElement);
 
     function addLog(label, payload) {
         const now = new Date().toLocaleTimeString();
@@ -172,6 +212,13 @@
         $modeBadge.html(`<i class="bi bi-dot me-1"></i>Mode: ${mode}`);
     }
 
+    function updateThemeMeta() {
+        const theme = $root.attr('data-bs-theme') || 'light';
+        $themeBadge.html(`<i class="bi bi-palette me-1"></i>Theme: ${theme}`);
+        $('#themeLight, #themeDark').removeClass('active');
+        $('#theme' + theme.charAt(0).toUpperCase() + theme.slice(1)).addClass('active');
+    }
+
     function updateLivePreview(value) {
         const text = String(value || '');
         if (text.trim() === '') {
@@ -182,10 +229,14 @@
     }
 
     $editor.bsMarkdownEditor({
-        size: 'sm',
+        // size: 'sm',
         lang: 'en',
-        showStats: true
+        resize: 'both',
+        showStats: true,
+        btnClass: 'border-0',
     });
+
+    updateThemeMeta();
 
     $editor.on('ready.bs.markdown-editor', function (event, data) {
         const value = $editor.bsMarkdownEditor('val') || '';
@@ -235,6 +286,16 @@
     });
     $('#clearLog').on('click', function () {
         $eventLog.empty();
+    });
+    $('#themeLight').on('click', function () {
+        $root.attr('data-bs-theme', 'light');
+        updateThemeMeta();
+        addLog('theme.change', {theme: 'light'});
+    });
+    $('#themeDark').on('click', function () {
+        $root.attr('data-bs-theme', 'dark');
+        updateThemeMeta();
+        addLog('theme.change', {theme: 'dark'});
     });
 </script>
 </body>

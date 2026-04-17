@@ -7,6 +7,21 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-04-17
+
+### Added
+
+- New option `resize` (`boolean | 'vertical' | 'both'`) to enable mouse-based resizing on the editor surface.
+- New option `btnClass` (defaults to `'border-0'`) to customize the Bootstrap button style class used in the toolbar.
+- Value property bridge for the underlying textarea: changes made via `.val()`, `.value = ...`, or `.setRangeText()` are now automatically detected and mirrored into the editor.
+- Form reset support: the editor now automatically resets its content when the parent form is reset.
+
+### Changed
+
+- Stats counter UI updated to use Bootstrap 5 theme-aware utility classes (badge with pill shape and subtle borders).
+- Improved event handling: `userChange` event is now strictly emitted only for user-initiated actions (typing, toolbar, history).
+- Enhanced Bootstrap 5 dark mode compatibility using standard utility classes.
+
 ## [1.0.2] - 2026-04-17
 
 ### Changed

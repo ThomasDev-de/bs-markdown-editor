@@ -622,9 +622,10 @@
             minHeight: 220,
             preview: true,
             mode: 'editor',
+            resize: false,
             showStats: false,
             size: null,
-            btnClass: 'btn-outline-secondary',
+            btnClass: 'border-0',
             wrapperClass: null,
             actions: 'all',
             lang: null,
@@ -1026,6 +1027,16 @@
             getWrapperClass() {
                 return String(settings.wrapperClass || '').trim();
             },
+            getResizeMode() {
+                if (settings.resize === true) {
+                    return 'vertical';
+                }
+                const resizeMode = String(settings.resize || '').trim().toLowerCase();
+                if (resizeMode === 'vertical' || resizeMode === 'both') {
+                    return resizeMode;
+                }
+                return 'none';
+            },
             getResolvedActionKeys() {
                 const allKeys = Object.keys(actions);
                 if (settings.actions === 'all' || settings.actions == null || !Array.isArray(settings.actions)) {
@@ -1267,6 +1278,98 @@
                     helpers.setEditableSelectionOffsets(editable, offsets.start, offsets.end);
                 }
             },
+            refreshPreview(textarea) {
+                const $textarea = $(textarea);
+                const $wrapper = $textarea.closest('.bs-parsedown-wrapper');
+                const $preview = $wrapper.find('.js-bs-parsedown-preview');
+                if ($preview.length === 0 || !$preview.is(':visible')) {
+                    return;
+                }
+                try {
+                    $preview.html(`<div class="markdown">${helpers.renderMarkdown($textarea.val())}</div>`);
+                } catch (error) {
+                    $preview.html(`<div class="text-danger">${helpers.escapeHtml(t('preview.error', 'Vorschau konnte nicht gerendert werden.'))}</div>`);
+                }
+            },
+            refreshRenderedState(textarea, preserveSelection = true) {
+                helpers.syncEditableFromTextarea(textarea, preserveSelection);
+                helpers.refreshPreview(textarea);
+                helpers.updateStats(textarea);
+            },
+            commitExternalChange(textarea, source = 'external') {
+                const valueLength = String(textarea.value || '').length;
+                const selectionStart = typeof textarea.selectionStart === 'number' ? textarea.selectionStart : valueLength;
+                const selectionEnd = typeof textarea.selectionEnd === 'number' ? textarea.selectionEnd : valueLength;
+                const clampedStart = Math.max(0, Math.min(valueLength, selectionStart));
+                const clampedEnd = Math.max(clampedStart, Math.min(valueLength, selectionEnd));
+                helpers.withInternalChange(textarea, source, function () {
+                    textarea.setSelectionRange(clampedStart, clampedEnd);
+                    $(textarea).trigger('input');
+                });
+            },
+            installValuePropertyBridge(textarea) {
+                const $textarea = $(textarea);
+                if ($textarea.data('bsMarkdownEditorValueBridgeInstalled')) {
+                    return;
+                }
+                const prototype = Object.getPrototypeOf(textarea);
+                const descriptor = Object.getOwnPropertyDescriptor(prototype, 'value') || Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement && window.HTMLTextAreaElement.prototype, 'value');
+                if (!descriptor || typeof descriptor.get !== 'function' || typeof descriptor.set !== 'function') {
+                    return;
+                }
+                const nativeGet = descriptor.get.bind(textarea);
+                const nativeSet = descriptor.set.bind(textarea);
+                Object.defineProperty(textarea, 'value', {
+                    configurable: true,
+                    enumerable: descriptor.enumerable,
+                    get() {
+                        return nativeGet();
+                    },
+                    set(nextValue) {
+                        const previousValue = nativeGet();
+                        nativeSet(nextValue);
+                        if (nativeGet() === previousValue || $textarea.data('bsMarkdownEditorInternalChange')) {
+                            return;
+                        }
+                        helpers.commitExternalChange(textarea, 'external');
+                    }
+                });
+                $textarea.data('bsMarkdownEditorValueBridgeInstalled', true);
+            },
+            installSetRangeTextBridge(textarea) {
+                const $textarea = $(textarea);
+                if ($textarea.data('bsMarkdownEditorSetRangeTextBridgeInstalled') || typeof textarea.setRangeText !== 'function') {
+                    return;
+                }
+                const nativeSetRangeText = textarea.setRangeText.bind(textarea);
+                textarea.setRangeText = function () {
+                    const previousValue = textarea.value;
+                    const result = nativeSetRangeText.apply(textarea, arguments);
+                    if (textarea.value !== previousValue && !$textarea.data('bsMarkdownEditorInternalChange')) {
+                        helpers.commitExternalChange(textarea, 'external');
+                    }
+                    return result;
+                };
+                $textarea.data('bsMarkdownEditorSetRangeTextBridgeInstalled', true);
+            },
+            installFormResetBridge(textarea) {
+                const $textarea = $(textarea);
+                const form = textarea.form;
+                if (!form || $textarea.data('bsMarkdownEditorFormResetBridgeInstalled')) {
+                    return;
+                }
+                $(form).on('reset.bsMarkdownEditor', function () {
+                    const syncAfterReset = function () {
+                        helpers.commitExternalChange(textarea, 'reset');
+                    };
+                    if (typeof window.requestAnimationFrame === 'function') {
+                        window.requestAnimationFrame(syncAfterReset);
+                        return;
+                    }
+                    window.setTimeout(syncAfterReset, 0);
+                });
+                $textarea.data('bsMarkdownEditorFormResetBridgeInstalled', true);
+            },
             getTextareaPreviewSpacing(textarea) {
                 const surface = helpers.getEditableElement(textarea) || textarea;
                 const styles = window.getComputedStyle(surface);
@@ -1295,6 +1398,9 @@
                 if (eventName !== 'any.bs.markdown-editor') {
                     $textarea.trigger('any.bs.markdown-editor', [{eventName: eventName, payload: eventPayload}]);
                 }
+            },
+            isUserInitiatedChangeSource(source) {
+                return source === 'editable' || source === 'toolbar' || source === 'history' || source === 'user';
             },
             updateStats(textarea) {
                 const $stats = $(textarea).data('bsMarkdownEditorStatsEl');
@@ -1346,11 +1452,7 @@
                         paddingBottom: previewSpacing.paddingBottom,
                         paddingLeft: previewSpacing.paddingLeft
                     }).html(`<div class="text-body-secondary">${helpers.escapeHtml(t('preview.loading', 'Rendere Vorschau...'))}</div>`);
-                    try {
-                        $preview.html(`<div class="markdown">${helpers.renderMarkdown($textarea.val())}</div>`);
-                    } catch (error) {
-                        $preview.html(`<div class="text-danger">${helpers.escapeHtml(t('preview.error', 'Vorschau konnte nicht gerendert werden.'))}</div>`);
-                    }
+                    helpers.refreshPreview(textarea);
                 }
                 helpers.updateStats(textarea);
                 helpers.emitPluginEvent(textarea, 'modeChange.bs.markdown-editor', {
@@ -1374,7 +1476,7 @@
                     textarea.value = nextValue;
                     textarea.setSelectionRange(selectionEnd, selectionEnd);
                     $(textarea).trigger('input');
-                    helpers.syncEditableFromTextarea(textarea, true);
+                    helpers.refreshRenderedState(textarea, true);
                     helpers.focusEditor(textarea);
                 });
             },
@@ -1440,7 +1542,7 @@
                     textarea.value = state.value;
                     textarea.setSelectionRange(state.selectionStart, state.selectionEnd);
                     $(textarea).trigger('input');
-                    helpers.syncEditableFromTextarea(textarea, true);
+                    helpers.refreshRenderedState(textarea, true);
                     helpers.focusEditor(textarea);
                 });
                 history.lock = false;
@@ -1516,7 +1618,7 @@
                     textarea.value = value.substring(0, start) + replacement + value.substring(end);
                     textarea.setSelectionRange(start + selectionStartOffset, start + selectionEndOffset);
                     $(textarea).trigger('input');
-                    helpers.syncEditableFromTextarea(textarea, true);
+                    helpers.refreshRenderedState(textarea, true);
                     helpers.focusEditor(textarea);
                 });
             },
@@ -1655,7 +1757,14 @@
             $textarea.wrap($editor);
             const $editorRef = $textarea.closest('.js-bs-parsedown-editor');
             const $editable = $(`<div class="js-bs-parsedown-editable form-control" contenteditable="true" spellcheck="true" aria-label="${helpers.escapeHtml(t('actions.textStyles', 'Textstil'))}"></div>`);
-            $editable.css({minHeight: settings.minHeight + 'px', whiteSpace: 'pre-wrap', overflowWrap: 'break-word'});
+            const resizeMode = helpers.getResizeMode();
+            $editable.css({
+                minHeight: settings.minHeight + 'px',
+                whiteSpace: 'pre-wrap',
+                overflowWrap: 'break-word',
+                overflow: resizeMode === 'none' ? 'hidden' : 'auto',
+                resize: resizeMode
+            });
             $editorRef.prepend($editable);
             $textarea.addClass('visually-hidden js-bs-parsedown-source').attr('aria-hidden', 'true').css({
                 position: 'absolute',
@@ -1666,17 +1775,19 @@
                 opacity: 0
             });
             $textarea.data('bsMarkdownEditorEditable', $editable.get(0));
+            helpers.installValuePropertyBridge(textarea);
+            helpers.installSetRangeTextBridge(textarea);
+            helpers.installFormResetBridge(textarea);
 
             if (settings.showStats) {
                 const $statsWrap = $('<div class="d-flex justify-content-end mt-2"></div>');
-                const $stats = $('<span class="js-bs-parsedown-stats badge rounded-pill text-bg-light border fw-normal"></span>');
+                const $stats = $('<span class="js-bs-parsedown-stats badge rounded-pill bg-body-tertiary text-body border border-secondary-subtle fw-normal"></span>');
                 $statsWrap.append($stats);
                 $editorRef.append($statsWrap);
                 $textarea.data('bsMarkdownEditorStatsEl', $stats);
             }
 
-            helpers.syncEditableFromTextarea(textarea, false);
-            helpers.updateStats(textarea);
+            helpers.refreshRenderedState(textarea, false);
 
             $editable.on('input.bsMarkdownEditorEditable', function () {
                 helpers.syncTextareaFromEditable(textarea, 'editable');
@@ -1712,13 +1823,15 @@
             helpers.pushHistoryState(textarea, helpers.createHistoryState(textarea));
             $textarea.on('input.bsMarkdownEditorHistory', function () {
                 helpers.pushHistoryState(textarea, helpers.createHistoryState(textarea));
-                const source = $textarea.data('bsMarkdownEditorChangeSource') || 'user';
+                const source = $textarea.data('bsMarkdownEditorChangeSource') || 'unknown';
                 if (source !== 'editable') {
-                    helpers.syncEditableFromTextarea(textarea, false);
+                    helpers.refreshRenderedState(textarea, source === 'external' || source === 'reset');
+                } else {
+                    helpers.refreshPreview(textarea);
+                    helpers.updateStats(textarea);
                 }
-                helpers.updateStats(textarea);
                 helpers.emitPluginEvent(textarea, 'change.bs.markdown-editor', {source: source, value: textarea.value});
-                if (source === 'user' || source === 'editable') {
+                if (helpers.isUserInitiatedChangeSource(source)) {
                     helpers.emitPluginEvent(textarea, 'userChange.bs.markdown-editor', {source: source, value: textarea.value});
                 }
             });

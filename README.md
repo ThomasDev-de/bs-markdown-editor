@@ -40,8 +40,9 @@ Or use a GitHub CDN (replace `x.y.z` with a release tag):
     minHeight: 240,
     preview: true,
     mode: 'editor',
+    resize: 'vertical',
     size: 'sm',
-    btnClass: 'btn-outline-secondary',
+    btnClass: 'border-0',
     wrapperClass: null,
     actions: 'all',
     lang: 'en'
@@ -51,17 +52,18 @@ Or use a GitHub CDN (replace `x.y.z` with a release tag):
 
 ## Options
 
-| Option | Type | Default | Details |
-|---|---|---|---|
-| `minHeight` | `number` | `220` | Minimum editor height in pixels. Applied to the textarea and used as a lower bound for preview height. |
-| `preview` | `boolean` | `true` | Enables the preview toggle button in the toolbar. If `false`, preview mode is not available through the toolbar. |
-| `mode` | `'editor' \| 'preview'` | `'editor'` | Initial mode after initialization. Invalid values fall back to editor mode behavior. |
-| `size` | `'sm' \| 'lg' \| null` | `null` | Button group size variant. Maps to Bootstrap button-group size classes (`btn-group-sm`/`btn-group-lg`). |
-| `btnClass` | `string` | `'btn-outline-secondary'` | Bootstrap button style class used by toolbar buttons (example: `btn-outline-dark`, `btn-secondary`). |
-| `wrapperClass` | `string \| null` | `null` | Additional class name(s) applied to the editor wrapper (`.bs-parsedown-wrapper`). Use this for spacing, borders, themes, or per-instance styling hooks. |
-| `actions` | `'all' \| string[]` | `'all'` | Toolbar action filter. `'all'` renders all actions. Array mode renders only matching action keys and keeps array order. Unknown keys are ignored. |
+| Option | Type | Default                        | Details |
+|---|---|--------------------------------|---|
+| `minHeight` | `number` | `220`                          | Minimum editor height in pixels. Applied to the textarea and used as a lower bound for preview height. |
+| `preview` | `boolean` | `true`                         | Enables the preview toggle button in the toolbar. If `false`, preview mode is not available through the toolbar. |
+| `mode` | `'editor' \| 'preview'` | `'editor'`                     | Initial mode after initialization. Invalid values fall back to editor mode behavior. |
+| `resize` | `boolean \| 'vertical' \| 'both'` | `false`                        | Enables mouse-based resizing on the visible `contenteditable` surface. `true` maps to `'vertical'`. |
+| `size` | `'sm' \| 'lg' \| null` | `null`                         | Button group size variant. Maps to Bootstrap button-group size classes (`btn-group-sm`/`btn-group-lg`). |
+| `btnClass` | `string` | `'border-0'`                   | Bootstrap button style class used by toolbar buttons (example: `btn-outline-dark`, `btn-secondary`). |
+| `wrapperClass` | `string \| null` | `null`                         | Additional class name(s) applied to the editor wrapper (`.bs-parsedown-wrapper`). Use this for spacing, borders, themes, or per-instance styling hooks. |
+| `actions` | `'all' \| string[]` | `'all'`                        | Toolbar action filter. `'all'` renders all actions. Array mode renders only matching action keys and keeps array order. Unknown keys are ignored. |
 | `lang` | `string` | `auto` (`<html lang>` -> `de`) | Built-in UI language key. Currently bundled: `de`, `en`. Locale values like `en-US` resolve to `en`. |
-| `translations` | `object` | `{}` | Deep-merged text overrides for labels, prompts, placeholders, modal text, and preview messages. Useful for custom wording or additional locales without extra setup. |
+| `translations` | `object` | `{}`                           | Deep-merged text overrides for labels, prompts, placeholders, modal text, and preview messages. Useful for custom wording or additional locales without extra setup. |
 
 ### Action Keys (`actions` option)
 
@@ -104,6 +106,15 @@ $('#editor').bsMarkdownEditor('val', '# Hello');
 $('#editor').bsMarkdownEditor('mode', 'preview');
 ```
 
+Direct updates on the underlying textarea are mirrored into the visible editor as well:
+
+```js
+$('#editor').val('# Hello from jQuery');
+document.getElementById('editor').value = '# Hello from DOM';
+document.getElementById('editor').setRangeText('updated');
+document.querySelector('form').reset();
+```
+
 ## Static Methods
 
 These helpers are available directly on `$.bsMarkdownEditor` and are not bound to a specific editor instance.
@@ -125,8 +136,8 @@ const markdown = $.bsMarkdownEditor.toMarkdown('<h1>Hello</h1>');
 | Event | Fired When | Payload |
 |---|---|---|
 | `ready.bs.markdown-editor` | Plugin finished initialization | `{ mode, value, api }` |
-| `change.bs.markdown-editor` | Any content change (user, toolbar, API, history) | `{ source, value }` |
-| `userChange.bs.markdown-editor` | User typed directly into the textarea | `{ source: 'user', value }` |
+| `change.bs.markdown-editor` | Any content change (user, toolbar, API, history, external sync) | `{ source, value }` |
+| `userChange.bs.markdown-editor` | User-initiated content change inside the editor (typing, paste, toolbar actions, undo/redo) | `{ source, value }` |
 | `modeChange.bs.markdown-editor` | Mode changed between editor/preview | `{ mode, previousMode, source }` |
 | `any.bs.markdown-editor` | Any plugin event above fired | `{ eventName, payload }` |
 
@@ -136,3 +147,4 @@ const markdown = $.bsMarkdownEditor.toMarkdown('<h1>Hello</h1>');
 - The table action opens a Bootstrap modal where users can choose row/column count; the modal is removed from the DOM when closed.
 - Preview rendering is built in and does not require an external Markdown package.
 - Preview supports inline image syntax (`![alt](url)`), task list checkboxes, nested lists (including sublists), fenced code blocks, and basic Markdown tables.
+- The generated UI uses Bootstrap 5 theme-aware utility classes and is compatible with `data-bs-theme="dark"` without requiring separate dark-mode markup.
