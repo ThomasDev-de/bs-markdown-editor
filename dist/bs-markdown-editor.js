@@ -1302,7 +1302,7 @@
                     return;
                 }
                 const value = helpers.getValue(textarea) || '';
-                const words = value.trim() === '' ? 0 : value.trim().split(/\s+/).length;
+                const words = helpers.countWords(value);
                 const mode = helpers.getMode(textarea);
                 $stats.text(`${t('stats.mode', 'Mode')}: ${mode} | ${value.length} ${t('stats.chars', 'chars')} / ${words} ${t('stats.words', 'words')}`);
             },
@@ -1611,6 +1611,31 @@
                     .replace(/(^|[\s(])_([^_]+)_(?=$|[\s).,!?:;])/g, '$1$2')
                     .replace(/(^|[\s(])\*([^*]+)\*(?=$|[\s).,!?:;])/g, '$1$2')
                     .replace(/`([^`]+)`/g, '$1');
+            },
+            stripMarkdownForWordCount(text) {
+                const normalized = String(text || '').replace(/\r\n?/g, '\n');
+                const withoutCodeFences = normalized.replace(/```[\s\S]*?```/g, ' ');
+                return helpers.removeInlineFormatting(withoutCodeFences)
+                    .replace(/^\s{0,3}(#{1,6})\s+/gm, '')
+                    .replace(/^\s{0,3}(?:[-*_])\s*(?:\1\s*){2,}$/gm, ' ')
+                    .replace(/^\s*>\s?/gm, '')
+                    .replace(/^\s{0,3}(?:[-*+]\s+|\d+[.)]\s+)/gm, '')
+                    .replace(/^\s{0,3}```/gm, ' ')
+                    .replace(/!\[[^\]]*\]\(([^)]+)\)/g, ' ')
+                    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
+                    .replace(/[~#*_`>|\[\](){}]+/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+            },
+            countWords(text) {
+                const html = sharedConverters.renderMarkdown(String(text || ''));
+                const $container = $('<div></div>').html(html);
+                $container.find('br').replaceWith(' ');
+                const plain = $container.text().replace(/\s+/g, ' ').trim();
+                if (plain === '') {
+                    return 0;
+                }
+                return plain.split(/\s+/).length;
             }
         };
 
