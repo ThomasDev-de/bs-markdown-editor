@@ -6,110 +6,210 @@
     <title>bs-markdown-editor Demo</title>
     <link href="../vendor/twbs/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="../vendor/twbs/bootstrap-icons/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-a: #f7efe4;
+            --bg-b: #dce8ff;
+            --ink: #1f2937;
+            --muted: #5b6472;
+            --panel: rgba(255, 255, 255, 0.85);
+            --panel-border: rgba(148, 163, 184, 0.35);
+            --preview-bg: #fffefb;
+            --log-bg: #0f172a;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--ink);
+            font-family: "Space Grotesk", "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+            background: radial-gradient(circle at 10% 20%, #fff8ec 0%, transparent 40%),
+                        radial-gradient(circle at 90% 10%, #e5efff 0%, transparent 35%),
+                        linear-gradient(160deg, var(--bg-a), var(--bg-b));
+        }
+        .demo-shell {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 2rem 1rem 2.5rem;
+        }
+        .hero, .panel {
+            border: 1px solid var(--panel-border);
+            background: var(--panel);
+            backdrop-filter: blur(8px);
+            border-radius: 1rem;
+            box-shadow: 0 12px 34px rgba(15, 23, 42, 0.08);
+        }
+        .hero {
+            padding: 1rem 1.25rem;
+        }
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(1.3rem, 2vw, 2rem);
+        }
+        .hero p {
+            margin: 0.35rem 0 0;
+            color: var(--muted);
+        }
+        .panel-header {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+        }
+        .panel-body {
+            padding: 1rem;
+        }
+        .stat-pill {
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 999px;
+            padding: 0.2rem 0.6rem;
+            font-size: 0.75rem;
+            color: #475569;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        .controls .btn {
+            border-radius: 999px;
+        }
+        #livePreview {
+            min-height: 460px;
+            max-height: 72vh;
+            overflow: auto;
+            background: var(--preview-bg);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 0.75rem;
+            padding: 1rem;
+        }
+        #livePreview pre {
+            background: #111827;
+            color: #e5e7eb;
+            padding: 0.8rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+        }
+        #eventLog {
+            height: 260px;
+            overflow: auto;
+            border-radius: 0.75rem;
+            background: var(--log-bg);
+            color: #e2e8f0;
+            font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+            font-size: 12px;
+            padding: 0.55rem 0.7rem;
+        }
+        .log-line + .log-line {
+            margin-top: 0.2rem;
+        }
+    </style>
 </head>
 <body>
-<div class="container py-4">
-    <h1 class="mb-3">$.fn.bsMarkdownEditor Demo</h1>
+<main class="demo-shell">
+    <section class="hero mb-4">
+        <h1>bs-markdown-editor Demo Playground</h1>
+        <p>Live preview updates over plugin events and uses <code>$.bsMarkdownEditor.toHtml()</code>.</p>
+    </section>
 
     <div class="row g-4">
-        <div class="col-12 col-lg-8">
-            <div class="card">
-                <div class="card-body">
-                    <div class="mb-3 d-flex flex-wrap gap-2">
-                        <button id="modeEditor" class="btn btn-sm btn-outline-primary">Mode: Editor</button>
-                        <button id="modePreview" class="btn btn-sm btn-outline-primary">Mode: Preview</button>
-                        <button id="modeGet" class="btn btn-sm btn-outline-secondary">Get Mode</button>
+        <div class="col-12 col-xl-7">
+            <section class="panel h-100">
+                <div class="panel-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <strong><i class="bi bi-pencil-square me-1"></i>Editor</strong>
+                    <span class="stat-pill" id="modeBadge"><i class="bi bi-dot me-1"></i>Mode: editor</span>
+                </div>
+                <div class="panel-body">
+                    <div class="controls mb-3 d-flex flex-wrap gap-2">
+                        <button id="modeEditor" class="btn btn-sm btn-outline-secondary">Editor</button>
+                        <button id="modePreview" class="btn btn-sm btn-outline-secondary">Plugin Preview</button>
+                        <button id="modeGet" class="btn btn-sm btn-outline-dark">Get Mode</button>
+                        <button id="valGet" class="btn btn-sm btn-outline-dark">Get Value</button>
+                        <button id="valSet" class="btn btn-sm btn-outline-dark">Set Sample</button>
+                        <button id="valAppend" class="btn btn-sm btn-outline-dark">Append Timestamp</button>
                     </div>
-
-                    <div class="mb-3 d-flex flex-wrap gap-2">
-                        <button id="valGet" class="btn btn-sm btn-outline-secondary">Get Value</button>
-                        <button id="valSet" class="btn btn-sm btn-outline-secondary">Set Value</button>
-                        <button id="valAppend" class="btn btn-sm btn-outline-secondary">Append Timestamp</button>
-                    </div>
-
                     <textarea id="editor" class="form-control"></textarea>
                 </div>
-            </div>
-
-            <div class="card mt-4">
-                <div class="card-header">
-                    <strong>Static Conversion Demo</strong>
-                </div>
-                <div class="card-body">
-                    <p class="text-body-secondary small mb-3">
-                        Native textarea without plugin binding. The buttons call <code>$.bsMarkdownEditor.toHtml()</code> and <code>$.bsMarkdownEditor.toMarkdown()</code> directly.
-                    </p>
-
-                    <div class="mb-3 d-flex flex-wrap gap-2">
-                        <button id="nativeToHtml" class="btn btn-sm btn-outline-secondary">Markdown to HTML</button>
-                        <button id="nativeToMarkdown" class="btn btn-sm btn-outline-secondary">HTML to Markdown</button>
-                    </div>
-
-                    <div class="row g-3">
-                        <div class="col-12 col-xl-6">
-                            <label for="nativeInput" class="form-label">Native Textarea</label>
-                            <textarea id="nativeInput" class="form-control" rows="12"># Static API Demo
-
-- item 1
-- item 2
-
-[OpenAI](https://openai.com)</textarea>
-                        </div>
-                        <div class="col-12 col-xl-6">
-                            <label for="nativeHtmlOutput" class="form-label">HTML Output</label>
-                            <textarea id="nativeHtmlOutput" class="form-control font-monospace" rows="12" readonly></textarea>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </section>
         </div>
 
-        <div class="col-12 col-lg-4">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <strong>Event Log</strong>
+        <div class="col-12 col-xl-5">
+            <section class="panel mb-4">
+                <div class="panel-header d-flex justify-content-between align-items-center">
+                    <strong><i class="bi bi-eye me-1"></i>Live Preview</strong>
+                    <span class="stat-pill">Event-driven</span>
+                </div>
+                <div class="panel-body">
+                    <div id="livePreview"></div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-header d-flex justify-content-between align-items-center">
+                    <strong><i class="bi bi-broadcast me-1"></i>Event Log</strong>
                     <button id="clearLog" class="btn btn-sm btn-outline-danger">Clear</button>
                 </div>
-                <div id="eventLog" class="card-body p-2" style="height:420px; overflow:auto; font-family:monospace; font-size:12px; background:#0f172a; color:#e2e8f0;"></div>
-            </div>
+                <div class="panel-body">
+                    <div id="eventLog"></div>
+                </div>
+            </section>
         </div>
     </div>
-</div>
+</main>
+
 <script src="../vendor/components/jquery/jquery.min.js"></script>
 <script src="../vendor/twbs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../dist/bs-markdown-editor.js"></script>
 <script>
     const $editor = $('#editor');
     const $eventLog = $('#eventLog');
-    const $nativeInput = $('#nativeInput');
-    const $nativeHtmlOutput = $('#nativeHtmlOutput');
+    const $modeBadge = $('#modeBadge');
+    const $livePreview = $('#livePreview');
 
     function addLog(label, payload) {
         const now = new Date().toLocaleTimeString();
-        const line = $('<div></div>');
+        const line = $('<div class="log-line"></div>');
         const pretty = payload ? JSON.stringify(payload) : '';
         line.text(`[${now}] ${label}${pretty ? ' -> ' + pretty : ''}`);
         $eventLog.prepend(line);
     }
 
+    function updateMeta() {
+        const mode = $editor.bsMarkdownEditor('mode');
+        $modeBadge.html(`<i class="bi bi-dot me-1"></i>Mode: ${mode}`);
+    }
+
+    function updateLivePreview(value) {
+        const text = String(value || '');
+        if (text.trim() === '') {
+            $livePreview.html('<div class="text-body-secondary">Start typing to see live preview.</div>');
+            return;
+        }
+        $livePreview.html($.bsMarkdownEditor.toHtml(text));
+    }
+
     $editor.bsMarkdownEditor({
         size: 'sm',
         lang: 'en',
-        // mode: 'editor'
+        showStats: true
     });
 
     $editor.on('ready.bs.markdown-editor', function (event, data) {
-        addLog(event.type + '.bs.markdown-editor', data);
+        const value = $editor.bsMarkdownEditor('val') || '';
+        updateMeta();
+        updateLivePreview(value);
+        addLog(event.type, data);
     });
+
     $editor.on('change.bs.markdown-editor', function (event, data) {
-        addLog(event.type + '.bs.markdown-editor', data);
+        const value = data && typeof data.value === 'string' ? data.value : $editor.bsMarkdownEditor('val');
+        updateMeta();
+        updateLivePreview(value);
+        addLog(event.type, data);
     });
+
     $editor.on('userChange.bs.markdown-editor', function (event, data) {
-        addLog(event.type + '.bs.markdown-editor', data);
+        addLog(event.type, data);
     });
+
     $editor.on('modeChange.bs.markdown-editor', function (event, data) {
-        addLog(event.type + '.bs.markdown-editor', data);
+        updateMeta();
+        addLog(event.type, data);
     });
+
     $editor.on('any.bs.markdown-editor', function (event, data) {
         addLog('any.bs.markdown-editor', data);
     });
@@ -123,36 +223,19 @@
     $('#modeGet').on('click', function () {
         addLog('method.mode()', {mode: $editor.bsMarkdownEditor('mode')});
     });
-
     $('#valGet').on('click', function () {
         addLog('method.val()', {value: $editor.bsMarkdownEditor('val')});
     });
     $('#valSet').on('click', function () {
-        $editor.bsMarkdownEditor('val', '# Demo Heading\n\n- item 1\n- item 2\n');
+        $editor.bsMarkdownEditor('val', '# Demo Heading\n\nA little **bold** text with `inline code`.\n\n- item 1\n- item 2\n\nx<sup>2</sup> and H<sub>2</sub>O');
     });
     $('#valAppend').on('click', function () {
         const value = $editor.bsMarkdownEditor('val');
-        const next = value + '\nUpdated at: ' + new Date().toISOString();
-        $editor.bsMarkdownEditor('val', next);
+        $editor.bsMarkdownEditor('val', value + '\n\nUpdated at: ' + new Date().toISOString());
     });
-
-    $('#nativeToHtml').on('click', function () {
-        const html = $.bsMarkdownEditor.toHtml($nativeInput.val());
-        $nativeHtmlOutput.val(html);
-        addLog('static.toHtml()', {inputLength: $nativeInput.val().length, outputLength: html.length});
-    });
-
-    $('#nativeToMarkdown').on('click', function () {
-        const markdown = $.bsMarkdownEditor.toMarkdown($nativeHtmlOutput.val());
-        $nativeInput.val(markdown);
-        addLog('static.toMarkdown()', {inputLength: $nativeHtmlOutput.val().length, outputLength: markdown.length});
-    });
-
     $('#clearLog').on('click', function () {
         $eventLog.empty();
     });
-
-    $('#nativeToHtml').trigger('click');
 </script>
 </body>
 </html>

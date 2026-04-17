@@ -42,6 +42,8 @@
                 return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer">${label}</a>`;
             });
 
+            content = content.replace(/&lt;sub&gt;([\s\S]*?)&lt;\/sub&gt;/gi, '<sub>$1</sub>');
+            content = content.replace(/&lt;sup&gt;([\s\S]*?)&lt;\/sup&gt;/gi, '<sup>$1</sup>');
             content = content.replace(/~~([^~]+)~~/g, '<del>$1</del>');
             content = content.replace(/==([^=]+)==/g, '<u>$1</u>');
             content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
@@ -230,6 +232,9 @@
             }
             if (tagName === 'u') {
                 return `==${sharedConverters.renderInlineNodes(node.childNodes).trim()}==`;
+            }
+            if (tagName === 'sub' || tagName === 'sup') {
+                return `<${tagName}>${sharedConverters.renderInlineNodes(node.childNodes).trim()}</${tagName}>`;
             }
             if (tagName === 'a') {
                 const label = sharedConverters.renderInlineNodes(node.childNodes).trim() || (node.textContent || '').trim();
@@ -617,6 +622,7 @@
             minHeight: 220,
             preview: true,
             mode: 'editor',
+            showStats: false,
             size: null,
             btnClass: 'btn-outline-secondary',
             wrapperClass: null,
@@ -624,15 +630,29 @@
             lang: null,
             translations: {}
         }, options);
+
         const defaultTranslations = {
             de: {
                 actions: {
                     bold: 'Fett',
                     italic: 'Kursiv',
                     textStyles: 'Textstil',
+                    clearFormatting: 'Formatierung löschen',
+                    normalText: 'Normaler Text',
+                    heading1: 'Überschrift 1',
+                    heading2: 'Überschrift 2',
+                    heading3: 'Überschrift 3',
+                    heading4: 'Überschrift 4',
+                    heading5: 'Überschrift 5',
+                    heading6: 'Überschrift 6',
+                    customTable: 'Benutzerdefiniert…',
                     strikethrough: 'Durchgestrichen',
                     underline: 'Unterstrichen',
+                    subscript: 'Tiefgestellt',
+                    superscript: 'Hochgestellt',
                     heading: 'Überschrift',
+                    insert: 'Einfügen',
+                    lists: 'Listen',
                     ul: 'Liste',
                     ol: 'Nummerierte Liste',
                     indent: 'Einrücken',
@@ -660,6 +680,8 @@
                     italic: 'kursiv',
                     strikethrough: 'durchgestrichen',
                     underline: 'unterstrichen',
+                    subscript: 'tiefgestellt',
+                    superscript: 'hochgestellt',
                     linkText: 'Linktext',
                     code: 'code',
                     defaultText: 'Text',
@@ -679,6 +701,11 @@
                     columns: 'Spalten',
                     cancel: 'Abbrechen',
                     insert: 'Einfügen'
+                },
+                stats: {
+                    mode: 'Modus',
+                    chars: 'Zeichen',
+                    words: 'Wörter'
                 }
             },
             en: {
@@ -686,9 +713,22 @@
                     bold: 'Bold',
                     italic: 'Italic',
                     textStyles: 'Text style',
+                    clearFormatting: 'Clear formatting',
+                    normalText: 'Normal text',
+                    heading1: 'Heading 1',
+                    heading2: 'Heading 2',
+                    heading3: 'Heading 3',
+                    heading4: 'Heading 4',
+                    heading5: 'Heading 5',
+                    heading6: 'Heading 6',
+                    customTable: 'Custom…',
                     strikethrough: 'Strikethrough',
                     underline: 'Underline',
+                    subscript: 'Subscript',
+                    superscript: 'Superscript',
                     heading: 'Heading',
+                    insert: 'Insert',
+                    lists: 'Lists',
                     ul: 'List',
                     ol: 'Numbered list',
                     indent: 'Indent',
@@ -716,6 +756,8 @@
                     italic: 'italic',
                     strikethrough: 'strikethrough',
                     underline: 'underlined',
+                    subscript: 'subscript',
+                    superscript: 'superscript',
                     linkText: 'Link text',
                     code: 'code',
                     defaultText: 'Text',
@@ -735,9 +777,15 @@
                     columns: 'Columns',
                     cancel: 'Cancel',
                     insert: 'Insert'
+                },
+                stats: {
+                    mode: 'Mode',
+                    chars: 'chars',
+                    words: 'words'
                 }
             }
         };
+
         const normalizedLang = String(settings.lang || document.documentElement.lang || 'de').trim().toLowerCase();
         const lang = normalizedLang.split('-')[0];
         const baseTranslations = defaultTranslations[lang] || defaultTranslations.de;
@@ -750,11 +798,9 @@
                 }
                 return current[part];
             }, i18n);
-
             if (typeof value === 'string' && value !== '') {
                 return value;
             }
-
             return fallback;
         }
 
@@ -777,8 +823,10 @@
                 title: t('actions.textStyles', 'Textstil'),
                 icon: 'bi-type',
                 items: [
-                    {label: t('actions.strikethrough', 'Durchgestrichen'), before: '~~', after: '~~', placeholder: t('placeholders.strikethrough', 'durchgestrichen')},
-                    {label: t('actions.underline', 'Unterstrichen'), before: '==', after: '==', placeholder: t('placeholders.underline', 'unterstrichen')}
+                    {label: t('actions.strikethrough', 'Durchgestrichen'), icon: 'bi-type-strikethrough', before: '~~', after: '~~', placeholder: t('placeholders.strikethrough', 'durchgestrichen')},
+                    {label: t('actions.underline', 'Unterstrichen'), icon: 'bi-type-underline', before: '==', after: '==', placeholder: t('placeholders.underline', 'unterstrichen')},
+                    {label: t('actions.subscript', 'Tiefgestellt'), icon: 'bi-subscript', before: '<sub>', after: '</sub>', placeholder: t('placeholders.subscript', 'tiefgestellt')},
+                    {label: t('actions.superscript', 'Hochgestellt'), icon: 'bi-superscript', before: '<sup>', after: '</sup>', placeholder: t('placeholders.superscript', 'hochgestellt')}
                 ],
                 run(textarea, item) {
                     helpers.wrapSelection(textarea, item.before, item.after, item.placeholder);
@@ -786,17 +834,27 @@
             },
             heading: {
                 title: t('actions.heading', 'Überschrift'),
-                icon: 'bi-type-h1',
+                icon: 'bi-fonts',
                 items: [
-                    {label: 'H1', prefix: '# '},
-                    {label: 'H2', prefix: '## '},
-                    {label: 'H3', prefix: '### '},
-                    {label: 'H4', prefix: '#### '},
-                    {label: 'H5', prefix: '##### '},
-                    {label: 'H6', prefix: '###### '}
+                    {label: t('actions.normalText', 'Normaler Text'), prefix: '', textStyle: 'font-size:1rem;'},
+                    {label: t('actions.heading1', 'Überschrift 1'), prefix: '# ', textStyle: 'font-size:1.15rem; font-weight:600;'},
+                    {label: t('actions.heading2', 'Überschrift 2'), prefix: '## ', textStyle: 'font-size:1.1rem; font-weight:600;'},
+                    {label: t('actions.heading3', 'Überschrift 3'), prefix: '### ', textStyle: 'font-size:1.05rem; font-weight:600;'},
+                    {label: t('actions.heading4', 'Überschrift 4'), prefix: '#### ', textStyle: 'font-size:1rem; font-weight:600;'},
+                    {label: t('actions.heading5', 'Überschrift 5'), prefix: '##### ', textStyle: 'font-size:0.95rem; font-weight:600;'},
+                    {label: t('actions.heading6', 'Überschrift 6'), prefix: '###### ', textStyle: 'font-size:0.9rem; font-weight:600;'}
                 ],
                 run(textarea, item) {
-                    helpers.prefixLines(textarea, item.prefix);
+                    helpers.transformSelectedLines(textarea, function (line) {
+                        if (line.trim() === '') {
+                            return line;
+                        }
+                        const normalized = helpers.stripHeadingPrefix(line).trimStart();
+                        if (!item.prefix) {
+                            return normalized;
+                        }
+                        return item.prefix + normalized;
+                    });
                 }
             },
             ul: {
@@ -866,8 +924,19 @@
             table: {
                 title: t('actions.table', 'Tabelle'),
                 icon: 'bi-table',
-                run(textarea) {
-                    helpers.openTableModal(textarea);
+                items: [
+                    {label: '2 x 2', rows: 2, columns: 2},
+                    {label: '3 x 2', rows: 3, columns: 2},
+                    {label: '3 x 3', rows: 3, columns: 3},
+                    {label: '4 x 3', rows: 4, columns: 3},
+                    {label: '4 x 4', rows: 4, columns: 4},
+                    {type: 'divider'},
+                    {label: t('actions.customTable', 'Benutzerdefiniert…'), customForm: true, icon: 'bi-sliders'}
+                ],
+                run(textarea, item) {
+                    const rows = item && item.rows ? item.rows : 2;
+                    const columns = item && item.columns ? item.columns : 2;
+                    helpers.insertTemplate(textarea, helpers.buildMarkdownTable(rows, columns));
                 }
             },
             image: {
@@ -898,15 +967,12 @@
                 run(textarea) {
                     const selected = helpers.getSelection(textarea);
                     const content = selected === '' ? t('placeholders.defaultTask', 'Aufgabe') : selected;
-                    const replacement = content
-                        .split('\n')
-                        .map(function (line) {
-                            if (line.trim() === '') {
-                                return line;
-                            }
-                            return `- [ ] ${line}`;
-                        })
-                        .join('\n');
+                    const replacement = content.split('\n').map(function (line) {
+                        if (line.trim() === '') {
+                            return line;
+                        }
+                        return `- [ ] ${line}`;
+                    }).join('\n');
                     helpers.replaceSelection(textarea, replacement);
                 }
             },
@@ -948,48 +1014,262 @@
             },
             getGroupSizeClass() {
                 const size = String(settings.size || '').trim().toLowerCase();
-
-                if (size === '') {
-                    return '';
-                }
-
                 if (size === 'sm' || size === 'lg') {
                     return `btn-group-${size}`;
                 }
-
                 return '';
             },
             getButtonClass() {
                 const btnClass = String(settings.btnClass || '').trim();
-
-                if (btnClass === '') {
-                    return 'btn-outline-secondary';
-                }
-
-                return btnClass;
+                return btnClass === '' ? 'btn-outline-secondary' : btnClass;
             },
             getWrapperClass() {
-                const wrapperClass = String(settings.wrapperClass || '').trim();
-                return wrapperClass;
+                return String(settings.wrapperClass || '').trim();
             },
             getResolvedActionKeys() {
                 const allKeys = Object.keys(actions);
-
-                if (settings.actions === 'all' || settings.actions === null || typeof settings.actions === 'undefined') {
+                if (settings.actions === 'all' || settings.actions == null || !Array.isArray(settings.actions)) {
                     return allKeys;
                 }
-
-                if (!Array.isArray(settings.actions)) {
-                    return allKeys;
-                }
-
                 return settings.actions.filter(function (key, index) {
                     return allKeys.indexOf(key) !== -1 && settings.actions.indexOf(key) === index;
                 });
             },
-            getTextareaPreviewSpacing(textarea) {
-                const styles = window.getComputedStyle(textarea);
+            getEditableElement(textarea) {
+                return $(textarea).data('bsMarkdownEditorEditable') || null;
+            },
+            focusEditor(textarea) {
+                const editable = helpers.getEditableElement(textarea);
+                if (editable) {
+                    editable.focus();
+                    return;
+                }
+                textarea.focus();
+            },
+            getNodeIndex(node) {
+                if (!node || !node.parentNode) {
+                    return 0;
+                }
+                return Array.prototype.indexOf.call(node.parentNode.childNodes, node);
+            },
+            getEditableNodeMarkdownLength(node, root) {
+                if (!node) {
+                    return 0;
+                }
+                if (node.nodeType === Node.TEXT_NODE) {
+                    return String(node.nodeValue || '').length;
+                }
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    const tag = String(node.tagName || '').toLowerCase();
+                    if (tag === 'br') {
+                        return 1;
+                    }
+                    let length = 0;
+                    if (tag === 'sup' || tag === 'sub') {
+                        length += (`<${tag}>`).length;
+                    }
+                    Array.prototype.forEach.call(node.childNodes, function (child) {
+                        length += helpers.getEditableNodeMarkdownLength(child, root);
+                    });
+                    if ((tag === 'div' || tag === 'p') && node !== root) {
+                        length += 1;
+                    }
+                    if (tag === 'sup' || tag === 'sub') {
+                        length += (`</${tag}>`).length;
+                    }
+                    return length;
+                }
+                if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
+                    let len = 0;
+                    Array.prototype.forEach.call(node.childNodes, function (child) {
+                        len += helpers.getEditableNodeMarkdownLength(child, root);
+                    });
+                    return len;
+                }
+                return 0;
+            },
+            serializeEditableNode(node, root) {
+                if (!node) {
+                    return '';
+                }
+                if (node.nodeType === Node.TEXT_NODE) {
+                    return String(node.nodeValue || '');
+                }
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    const tag = String(node.tagName || '').toLowerCase();
+                    if (tag === 'br') {
+                        return '\n';
+                    }
+                    let content = '';
+                    Array.prototype.forEach.call(node.childNodes, function (child) {
+                        content += helpers.serializeEditableNode(child, root);
+                    });
+                    if (tag === 'sup' || tag === 'sub') {
+                        return `<${tag}>${content}</${tag}>`;
+                    }
+                    if ((tag === 'div' || tag === 'p') && node !== root) {
+                        return content + '\n';
+                    }
+                    return content;
+                }
+                if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
+                    let fragment = '';
+                    Array.prototype.forEach.call(node.childNodes, function (child) {
+                        fragment += helpers.serializeEditableNode(child, root);
+                    });
+                    return fragment;
+                }
+                return '';
+            },
+            getEditableValue(editable) {
+                if (!editable) {
+                    return '';
+                }
+                let value = helpers.serializeEditableNode(editable, editable).replace(/\r\n?/g, '\n');
+                if (value.endsWith('\n')) {
+                    value = value.slice(0, -1);
+                }
+                return value;
+            },
+            getEditableSelectionOffsets(editable) {
+                if (!editable) {
+                    return {start: 0, end: 0};
+                }
+                const selection = window.getSelection();
+                if (!selection || selection.rangeCount === 0) {
+                    return {start: 0, end: 0};
+                }
+                const range = selection.getRangeAt(0);
+                if (!editable.contains(range.startContainer) || !editable.contains(range.endContainer)) {
+                    return {start: 0, end: 0};
+                }
+                const startRange = range.cloneRange();
+                startRange.selectNodeContents(editable);
+                startRange.setEnd(range.startContainer, range.startOffset);
+                const endRange = range.cloneRange();
+                endRange.selectNodeContents(editable);
+                endRange.setEnd(range.endContainer, range.endOffset);
+                return {
+                    start: helpers.serializeEditableNode(startRange.cloneContents(), editable).length,
+                    end: helpers.serializeEditableNode(endRange.cloneContents(), editable).length
+                };
+            },
+            getEditableDomPointByMarkdownOffset(editable, offset) {
+                const target = Math.max(0, offset);
+                if (target === 0) {
+                    return {container: editable, offset: 0};
+                }
+                let consumed = 0;
+                let result = null;
 
+                function walk(node) {
+                    if (result) {
+                        return;
+                    }
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const textLength = String(node.nodeValue || '').length;
+                        if (consumed + textLength >= target) {
+                            result = {container: node, offset: target - consumed};
+                            return;
+                        }
+                        consumed += textLength;
+                        return;
+                    }
+                    if (node.nodeType !== Node.ELEMENT_NODE) {
+                        return;
+                    }
+                    const tag = String(node.tagName || '').toLowerCase();
+                    if (tag === 'br') {
+                        if (consumed + 1 >= target) {
+                            result = {container: node.parentNode, offset: helpers.getNodeIndex(node) + 1};
+                            return;
+                        }
+                        consumed += 1;
+                        return;
+                    }
+                    if (tag === 'sup' || tag === 'sub') {
+                        const openLength = (`<${tag}>`).length;
+                        if (consumed + openLength >= target) {
+                            result = {container: node, offset: 0};
+                            return;
+                        }
+                        consumed += openLength;
+                    }
+                    Array.prototype.forEach.call(node.childNodes, walk);
+                    if ((tag === 'div' || tag === 'p') && node !== editable && !result) {
+                        if (consumed + 1 >= target) {
+                            result = {container: node.parentNode, offset: helpers.getNodeIndex(node) + 1};
+                            return;
+                        }
+                        consumed += 1;
+                    }
+                    if (tag === 'sup' || tag === 'sub') {
+                        const closeLength = (`</${tag}>`).length;
+                        if (consumed + closeLength >= target) {
+                            result = {container: node, offset: node.childNodes.length};
+                            return;
+                        }
+                        consumed += closeLength;
+                    }
+                }
+
+                walk(editable);
+                return result || {container: editable, offset: editable.childNodes.length};
+            },
+            setEditableSelectionOffsets(editable, start, end) {
+                if (!editable) {
+                    return;
+                }
+                const textLength = helpers.getEditableNodeMarkdownLength(editable, editable);
+                const safeStart = Math.max(0, Math.min(textLength, start));
+                const safeEnd = Math.max(safeStart, Math.min(textLength, end));
+                const startPoint = helpers.getEditableDomPointByMarkdownOffset(editable, safeStart);
+                const endPoint = helpers.getEditableDomPointByMarkdownOffset(editable, safeEnd);
+                const range = document.createRange();
+                range.setStart(startPoint.container, startPoint.offset);
+                range.setEnd(endPoint.container, endPoint.offset);
+                const selection = window.getSelection();
+                if (!selection) {
+                    return;
+                }
+                selection.removeAllRanges();
+                selection.addRange(range);
+            },
+            renderEditableHtml(markdown) {
+                return helpers.escapeHtml(markdown == null ? '' : String(markdown))
+                    .replace(/&lt;sub&gt;([\s\S]*?)&lt;\/sub&gt;/gi, '<sub>$1</sub>')
+                    .replace(/&lt;sup&gt;([\s\S]*?)&lt;\/sup&gt;/gi, '<sup>$1</sup>')
+                    .replace(/\n/g, '<br>');
+            },
+            syncTextareaFromEditable(textarea, source = 'editable') {
+                const editable = helpers.getEditableElement(textarea);
+                if (!editable) {
+                    return;
+                }
+                const offsets = helpers.getEditableSelectionOffsets(editable);
+                const value = helpers.getEditableValue(editable);
+                const clampedStart = Math.max(0, Math.min(value.length, offsets.start));
+                const clampedEnd = Math.max(clampedStart, Math.min(value.length, offsets.end));
+                helpers.withInternalChange(textarea, source, function () {
+                    textarea.value = value;
+                    textarea.setSelectionRange(clampedStart, clampedEnd);
+                    $(textarea).trigger('input');
+                });
+            },
+            syncEditableFromTextarea(textarea, preserveSelection = true) {
+                const editable = helpers.getEditableElement(textarea);
+                if (!editable) {
+                    return;
+                }
+                const offsets = {start: textarea.selectionStart || 0, end: textarea.selectionEnd || 0};
+                editable.innerHTML = helpers.renderEditableHtml(textarea.value);
+                if (preserveSelection) {
+                    helpers.setEditableSelectionOffsets(editable, offsets.start, offsets.end);
+                }
+            },
+            getTextareaPreviewSpacing(textarea) {
+                const surface = helpers.getEditableElement(textarea) || textarea;
+                const styles = window.getComputedStyle(surface);
                 return {
                     paddingTop: styles.paddingTop,
                     paddingRight: styles.paddingRight,
@@ -1013,16 +1293,21 @@
                 const eventPayload = payload || {};
                 $textarea.trigger(eventName, [eventPayload]);
                 if (eventName !== 'any.bs.markdown-editor') {
-                    $textarea.trigger('any.bs.markdown-editor', [{
-                        eventName: eventName,
-                        payload: eventPayload
-                    }]);
+                    $textarea.trigger('any.bs.markdown-editor', [{eventName: eventName, payload: eventPayload}]);
                 }
             },
+            updateStats(textarea) {
+                const $stats = $(textarea).data('bsMarkdownEditorStatsEl');
+                if (!$stats || $stats.length === 0) {
+                    return;
+                }
+                const value = helpers.getValue(textarea) || '';
+                const words = value.trim() === '' ? 0 : value.trim().split(/\s+/).length;
+                const mode = helpers.getMode(textarea);
+                $stats.text(`${t('stats.mode', 'Mode')}: ${mode} | ${value.length} ${t('stats.chars', 'chars')} / ${words} ${t('stats.words', 'words')}`);
+            },
             getMode(textarea) {
-                const $textarea = $(textarea);
-                const $wrapper = $textarea.closest('.bs-parsedown-wrapper');
-                const $preview = $wrapper.find('.js-bs-parsedown-preview');
+                const $preview = $(textarea).closest('.bs-parsedown-wrapper').find('.js-bs-parsedown-preview');
                 return $preview.is(':visible') ? 'preview' : 'editor';
             },
             setMode(textarea, mode, source = 'api') {
@@ -1030,7 +1315,6 @@
                 if (targetMode !== 'editor' && targetMode !== 'preview') {
                     return helpers.getMode(textarea);
                 }
-
                 const $textarea = $(textarea);
                 const $wrapper = $textarea.closest('.bs-parsedown-wrapper');
                 const $preview = $wrapper.find('.js-bs-parsedown-preview');
@@ -1038,27 +1322,18 @@
                 const $editor = $wrapper.find('.js-bs-parsedown-editor');
                 const $actionButtons = $wrapper.find('.js-bs-parsedown-action');
                 const currentMode = helpers.getMode(textarea);
-
                 if (currentMode === targetMode) {
                     return currentMode;
                 }
-
                 if (targetMode === 'editor') {
-                    $preview.addClass('d-none').hide().html('').css({
-                        height: '',
-                        overflowY: ''
-                    });
+                    $preview.addClass('d-none').hide().html('').css({height: '', overflowY: ''});
                     $editor.removeClass('d-none').show();
                     $actionButtons.prop('disabled', false).removeClass('disabled');
                     $button.removeClass('active btn-primary').addClass(helpers.getButtonClass());
                 } else {
                     const previewSpacing = helpers.getTextareaPreviewSpacing(textarea);
-                    const editorHeight = Math.max(
-                        settings.minHeight,
-                        Math.ceil($editor.outerHeight() || 0),
-                        Math.ceil($textarea.outerHeight() || 0)
-                    );
-
+                    const editable = helpers.getEditableElement(textarea);
+                    const editorHeight = Math.max(settings.minHeight, Math.ceil($editor.outerHeight() || 0), Math.ceil((editable ? $(editable).outerHeight() : $textarea.outerHeight()) || 0));
                     $button.removeClass(helpers.getButtonClass()).addClass('active btn-primary');
                     $actionButtons.prop('disabled', true).addClass('disabled');
                     $editor.addClass('d-none').hide();
@@ -1071,21 +1346,18 @@
                         paddingBottom: previewSpacing.paddingBottom,
                         paddingLeft: previewSpacing.paddingLeft
                     }).html(`<div class="text-body-secondary">${helpers.escapeHtml(t('preview.loading', 'Rendere Vorschau...'))}</div>`);
-
                     try {
-                        const rendered = helpers.renderMarkdown($textarea.val());
-                        $preview.html(`<div class="markdown">${rendered}</div>`);
+                        $preview.html(`<div class="markdown">${helpers.renderMarkdown($textarea.val())}</div>`);
                     } catch (error) {
                         $preview.html(`<div class="text-danger">${helpers.escapeHtml(t('preview.error', 'Vorschau konnte nicht gerendert werden.'))}</div>`);
                     }
                 }
-
+                helpers.updateStats(textarea);
                 helpers.emitPluginEvent(textarea, 'modeChange.bs.markdown-editor', {
                     mode: targetMode,
                     previousMode: currentMode,
                     source: source
                 });
-
                 return targetMode;
             },
             toggleMode(textarea, source = 'toolbar') {
@@ -1098,12 +1370,12 @@
             setValue(textarea, value, source = 'api') {
                 const nextValue = value == null ? '' : String(value);
                 const selectionEnd = nextValue.length;
-
                 helpers.withInternalChange(textarea, source, function () {
                     textarea.value = nextValue;
-                    textarea.focus();
                     textarea.setSelectionRange(selectionEnd, selectionEnd);
                     $(textarea).trigger('input');
+                    helpers.syncEditableFromTextarea(textarea, true);
+                    helpers.focusEditor(textarea);
                 });
             },
             getSelection(textarea) {
@@ -1129,16 +1401,10 @@
             },
             ensureHistory(textarea) {
                 let history = $(textarea).data('bsMarkdownEditorHistory');
-
                 if (history) {
                     return history;
                 }
-
-                history = {
-                    stack: [],
-                    index: -1,
-                    lock: false
-                };
+                history = {stack: [], index: -1, lock: false};
                 $(textarea).data('bsMarkdownEditorHistory', history);
                 return history;
             },
@@ -1151,25 +1417,16 @@
             },
             pushHistoryState(textarea, state) {
                 const history = helpers.ensureHistory(textarea);
-
                 if (history.lock) {
                     return;
                 }
-
                 const current = history.stack[history.index];
-                if (
-                    current &&
-                    current.value === state.value &&
-                    current.selectionStart === state.selectionStart &&
-                    current.selectionEnd === state.selectionEnd
-                ) {
+                if (current && current.value === state.value && current.selectionStart === state.selectionStart && current.selectionEnd === state.selectionEnd) {
                     return;
                 }
-
                 if (history.index < history.stack.length - 1) {
                     history.stack = history.stack.slice(0, history.index + 1);
                 }
-
                 history.stack.push(state);
                 if (history.stack.length > 200) {
                     history.stack.shift();
@@ -1181,9 +1438,10 @@
                 history.lock = true;
                 helpers.withInternalChange(textarea, 'history', function () {
                     textarea.value = state.value;
-                    textarea.focus();
                     textarea.setSelectionRange(state.selectionStart, state.selectionEnd);
                     $(textarea).trigger('input');
+                    helpers.syncEditableFromTextarea(textarea, true);
+                    helpers.focusEditor(textarea);
                 });
                 history.lock = false;
             },
@@ -1192,7 +1450,6 @@
                 if (history.index <= 0) {
                     return;
                 }
-
                 history.index -= 1;
                 helpers.applyHistoryState(textarea, history.stack[history.index]);
             },
@@ -1201,7 +1458,6 @@
                 if (history.index >= history.stack.length - 1) {
                     return;
                 }
-
                 history.index += 1;
                 helpers.applyHistoryState(textarea, history.stack[history.index]);
             },
@@ -1225,23 +1481,7 @@
                     helpers.replaceSelection(textarea, selected + '\n' + template);
                     return;
                 }
-
                 helpers.replaceSelection(textarea, template);
-            },
-            parseTableRow(line) {
-                return sharedConverters.parseTableRow(line);
-            },
-            isTableHeaderLine(line) {
-                return sharedConverters.isTableHeaderLine(line);
-            },
-            isTableSeparatorLine(line) {
-                return sharedConverters.isTableSeparatorLine(line);
-            },
-            isTableDataLine(line) {
-                return sharedConverters.isTableDataLine(line);
-            },
-            parseTableAlignments(line) {
-                return sharedConverters.parseTableAlignments(line);
             },
             buildMarkdownTable(rows, columns) {
                 const safeRows = Math.min(30, Math.max(1, parseInt(rows, 10) || 1));
@@ -1251,12 +1491,10 @@
                 const body = [];
                 const tableColumnLabel = t('placeholders.tableColumn', 'Spalte');
                 const tableValueLabel = t('placeholders.tableValue', 'Wert');
-
                 for (let col = 1; col <= safeColumns; col += 1) {
                     header.push(`${tableColumnLabel} ${col}`);
                     separator.push('---');
                 }
-
                 for (let row = 1; row <= safeRows; row += 1) {
                     const cells = [];
                     for (let col = 1; col <= safeColumns; col += 1) {
@@ -1264,103 +1502,42 @@
                     }
                     body.push(cells);
                 }
-
-                const lines = [
-                    `| ${header.join(' | ')} |`,
-                    `| ${separator.join(' | ')} |`
-                ];
-
+                const lines = [`| ${header.join(' | ')} |`, `| ${separator.join(' | ')} |`];
                 body.forEach(function (cells) {
                     lines.push(`| ${cells.join(' | ')} |`);
                 });
-
                 return lines.join('\n');
-            },
-            openTableModal(textarea) {
-                const modalId = `bsMarkdownEditorTableModal${Math.random().toString(36).slice(2, 10)}`;
-                const $modal = $(`
-<div class="modal fade" id="${modalId}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-sm modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">${helpers.escapeHtml(t('modal.tableTitle', 'Tabelle erstellen'))}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label" for="${modalId}Rows">${helpers.escapeHtml(t('modal.rows', 'Zeilen'))}</label>
-                    <input id="${modalId}Rows" class="form-control" type="number" min="1" max="30" value="2">
-                </div>
-                <div>
-                    <label class="form-label" for="${modalId}Columns">${helpers.escapeHtml(t('modal.columns', 'Spalten'))}</label>
-                    <input id="${modalId}Columns" class="form-control" type="number" min="1" max="12" value="2">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}</button>
-                <button type="button" class="btn btn-primary js-bs-parsedown-insert-table">${helpers.escapeHtml(t('modal.insert', 'Einfügen'))}</button>
-            </div>
-        </div>
-    </div>
-</div>
-`);
-
-                $('body').append($modal);
-                const modalElement = $modal.get(0);
-
-                if (!window.bootstrap || typeof window.bootstrap.Modal !== 'function') {
-                    const fallback = helpers.buildMarkdownTable(2, 2);
-                    helpers.insertTemplate(textarea, fallback);
-                    $modal.remove();
-                    return;
-                }
-
-                const modal = new window.bootstrap.Modal(modalElement, {
-                    backdrop: true,
-                    keyboard: true
-                });
-
-                $modal.find('.js-bs-parsedown-insert-table').on('click', function () {
-                    const rows = $modal.find(`#${modalId}Rows`).val();
-                    const columns = $modal.find(`#${modalId}Columns`).val();
-                    const markdown = helpers.buildMarkdownTable(rows, columns);
-                    helpers.insertTemplate(textarea, markdown);
-                    modal.hide();
-                });
-
-                $modal.on('hidden.bs.modal', function () {
-                    modal.dispose();
-                    $modal.remove();
-                });
-
-                modal.show();
             },
             replaceSelection(textarea, replacement, selectionStartOffset = 0, selectionEndOffset = replacement.length, source = 'toolbar') {
                 const start = textarea.selectionStart;
                 const end = textarea.selectionEnd;
                 const value = textarea.value;
-
                 helpers.withInternalChange(textarea, source, function () {
                     textarea.value = value.substring(0, start) + replacement + value.substring(end);
-                    textarea.focus();
                     textarea.setSelectionRange(start + selectionStartOffset, start + selectionEndOffset);
                     $(textarea).trigger('input');
+                    helpers.syncEditableFromTextarea(textarea, true);
+                    helpers.focusEditor(textarea);
                 });
             },
             wrapSelection(textarea, before, after, placeholder) {
                 const selected = helpers.getSelection(textarea);
                 const content = selected === '' ? placeholder : selected;
                 const replacement = `${before}${content}${after}`;
-                const startOffset = before.length;
-                const endOffset = before.length + content.length;
-                helpers.replaceSelection(textarea, replacement, startOffset, endOffset);
+                helpers.replaceSelection(textarea, replacement, before.length, before.length + content.length);
             },
             stripListPrefix(line) {
                 const match = String(line).match(/^(\s*)(?:[-*+]\s+|\d+\.\s+)(.*)$/);
                 if (!match) {
                     return line;
                 }
-
+                return `${match[1]}${match[2]}`;
+            },
+            stripHeadingPrefix(line) {
+                const match = String(line).match(/^(\s{0,3})#{1,6}\s+(.*)$/);
+                if (!match) {
+                    return line;
+                }
                 return `${match[1]}${match[2]}`;
             },
             transformSelectedLines(textarea, transform) {
@@ -1374,8 +1551,6 @@
                 const transformed = selectedLines.map(transform).join('\n');
                 const startOffset = selectionStart - lineStart;
                 const endOffset = startOffset + transformed.length;
-
-                textarea.focus();
                 textarea.setSelectionRange(lineStart, lineEnd);
                 helpers.replaceSelection(textarea, transformed, startOffset, endOffset);
             },
@@ -1404,80 +1579,299 @@
             prefixLines(textarea, prefix) {
                 const selected = helpers.getSelection(textarea);
                 const content = selected === '' ? t('placeholders.defaultText', 'Text') : selected;
-                const replacement = content
-                    .split('\n')
-                    .map(function (line) {
-                        if (line.trim() === '') {
-                            return line;
-                        }
-                        return prefix + helpers.stripListPrefix(line).trimStart();
-                    })
-                    .join('\n');
+                const replacement = content.split('\n').map(function (line) {
+                    if (line.trim() === '') {
+                        return line;
+                    }
+                    return prefix + helpers.stripListPrefix(line).trimStart();
+                }).join('\n');
                 helpers.replaceSelection(textarea, replacement);
             },
             prefixNumberedLines(textarea) {
                 const selected = helpers.getSelection(textarea);
                 const content = selected === '' ? t('placeholders.defaultItem', 'Eintrag') : selected;
                 let counter = 1;
-                const replacement = content
-                    .split('\n')
-                    .map(function (line) {
-                        if (line.trim() === '') {
-                            return line;
-                        }
-                        const normalized = helpers.stripListPrefix(line).trimStart();
-                        const value = `${counter}. ${normalized}`;
-                        counter += 1;
-                        return value;
-                    })
-                    .join('\n');
+                const replacement = content.split('\n').map(function (line) {
+                    if (line.trim() === '') {
+                        return line;
+                    }
+                    const normalized = helpers.stripListPrefix(line).trimStart();
+                    const value = `${counter}. ${normalized}`;
+                    counter += 1;
+                    return value;
+                }).join('\n');
                 helpers.replaceSelection(textarea, replacement);
+            },
+            removeInlineFormatting(text) {
+                return String(text || '')
+                    .replace(/<\s*\/?\s*(sup|sub)\s*>/gi, '')
+                    .replace(/~~(.+?)~~/g, '$1')
+                    .replace(/==(.+?)==/g, '$1')
+                    .replace(/\*\*(.+?)\*\*/g, '$1')
+                    .replace(/(^|[\s(])_([^_]+)_(?=$|[\s).,!?:;])/g, '$1$2')
+                    .replace(/(^|[\s(])\*([^*]+)\*(?=$|[\s).,!?:;])/g, '$1$2')
+                    .replace(/`([^`]+)`/g, '$1');
             }
         };
 
         return this.each(function () {
             const textarea = this;
             const $textarea = $(textarea);
-
             if ($textarea.data('bsMarkdownEditorInitialized')) {
                 return;
             }
-
             $textarea.data('bsMarkdownEditorInitialized', true);
-            $textarea.css('min-height', settings.minHeight + 'px');
+
+            const wrapperClass = helpers.getWrapperClass();
+            const wrapperClasses = wrapperClass === '' ? 'bs-parsedown-wrapper' : `bs-parsedown-wrapper ${wrapperClass}`;
+            $textarea.wrap($(`<div class="${wrapperClasses}"></div>`));
+            const $wrapperRef = $textarea.closest('.bs-parsedown-wrapper');
+            const $editor = $('<div class="js-bs-parsedown-editor"></div>');
+            $textarea.wrap($editor);
+            const $editorRef = $textarea.closest('.js-bs-parsedown-editor');
+            const $editable = $(`<div class="js-bs-parsedown-editable form-control" contenteditable="true" spellcheck="true" aria-label="${helpers.escapeHtml(t('actions.textStyles', 'Textstil'))}"></div>`);
+            $editable.css({minHeight: settings.minHeight + 'px', whiteSpace: 'pre-wrap', overflowWrap: 'break-word'});
+            $editorRef.prepend($editable);
+            $textarea.addClass('visually-hidden js-bs-parsedown-source').attr('aria-hidden', 'true').css({
+                position: 'absolute',
+                left: '-9999px',
+                top: '0',
+                width: '1px',
+                height: '1px',
+                opacity: 0
+            });
+            $textarea.data('bsMarkdownEditorEditable', $editable.get(0));
+
+            if (settings.showStats) {
+                const $statsWrap = $('<div class="d-flex justify-content-end mt-2"></div>');
+                const $stats = $('<span class="js-bs-parsedown-stats badge rounded-pill text-bg-light border fw-normal"></span>');
+                $statsWrap.append($stats);
+                $editorRef.append($statsWrap);
+                $textarea.data('bsMarkdownEditorStatsEl', $stats);
+            }
+
+            helpers.syncEditableFromTextarea(textarea, false);
+            helpers.updateStats(textarea);
+
+            $editable.on('input.bsMarkdownEditorEditable', function () {
+                helpers.syncTextareaFromEditable(textarea, 'editable');
+                if (/<\/?(sup|sub)>/i.test(textarea.value)) {
+                    helpers.syncEditableFromTextarea(textarea, true);
+                }
+            });
+
+            $editable.on('paste.bsMarkdownEditorEditable', function (e) {
+                e.preventDefault();
+                const clipboardData = e.originalEvent && e.originalEvent.clipboardData ? e.originalEvent.clipboardData : window.clipboardData;
+                const text = clipboardData ? (clipboardData.getData('text/plain') || '') : '';
+                if (document.queryCommandSupported && document.queryCommandSupported('insertText')) {
+                    document.execCommand('insertText', false, text);
+                } else {
+                    const selection = window.getSelection();
+                    if (!selection || selection.rangeCount === 0) {
+                        return;
+                    }
+                    const range = selection.getRangeAt(0);
+                    range.deleteContents();
+                    range.insertNode(document.createTextNode(text));
+                    range.collapse(false);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+                helpers.syncTextareaFromEditable(textarea, 'editable');
+                if (/<\/?(sup|sub)>/i.test(textarea.value)) {
+                    helpers.syncEditableFromTextarea(textarea, true);
+                }
+            });
+
             helpers.pushHistoryState(textarea, helpers.createHistoryState(textarea));
             $textarea.on('input.bsMarkdownEditorHistory', function () {
                 helpers.pushHistoryState(textarea, helpers.createHistoryState(textarea));
                 const source = $textarea.data('bsMarkdownEditorChangeSource') || 'user';
-                helpers.emitPluginEvent(textarea, 'change.bs.markdown-editor', {
-                    source: source,
-                    value: textarea.value
-                });
-                if (source === 'user') {
-                    helpers.emitPluginEvent(textarea, 'userChange.bs.markdown-editor', {
-                        source: source,
-                        value: textarea.value
-                    });
+                if (source !== 'editable') {
+                    helpers.syncEditableFromTextarea(textarea, false);
+                }
+                helpers.updateStats(textarea);
+                helpers.emitPluginEvent(textarea, 'change.bs.markdown-editor', {source: source, value: textarea.value});
+                if (source === 'user' || source === 'editable') {
+                    helpers.emitPluginEvent(textarea, 'userChange.bs.markdown-editor', {source: source, value: textarea.value});
                 }
             });
 
-            const wrapperClass = helpers.getWrapperClass();
-            const wrapperClasses = wrapperClass === '' ? 'bs-parsedown-wrapper' : `bs-parsedown-wrapper ${wrapperClass}`;
-            const $wrapper = $(`<div class="${wrapperClasses}"></div>`);
-            $textarea.wrap($wrapper);
-            const $wrapperRef = $textarea.closest('.bs-parsedown-wrapper');
-            const $editor = $('<div class="js-bs-parsedown-editor"></div>');
-            $textarea.wrap($editor);
             const groupSizeClass = helpers.getGroupSizeClass();
             const buttonClassBase = `btn ${helpers.getButtonClass()}`;
             const $toolbar = $('<div class="btn-toolbar mb-2 d-flex flex-wrap justify-content-between align-items-start gap-2 w-100" role="toolbar"></div>');
             const $toolbarLeft = $('<div class="d-flex flex-wrap align-items-center gap-1 flex-grow-1"></div>');
             const $toolbarRight = $('<div class="d-flex flex-wrap align-items-center gap-1"></div>');
-            helpers.getResolvedActionKeys().forEach(function (key) {
-                const action = actions[key];
+            const resolvedActionKeys = helpers.getResolvedActionKeys();
+            const groupedInlineStyleKeys = ['bold', 'italic', 'textStyles', 'code', 'codeBlock'];
+            const groupedInsertKeys = ['link', 'image'];
+            const groupedListKeys = ['ul', 'ol', 'taskList'];
+            let inlineStylesDropdownRendered = false;
+            let insertDropdownRendered = false;
+            let listDropdownRendered = false;
 
+            resolvedActionKeys.forEach(function (key) {
+                const action = actions[key];
                 if (key === 'preview' && !settings.preview) {
                     return;
+                }
+
+                if (groupedInlineStyleKeys.indexOf(key) !== -1) {
+                    if (inlineStylesDropdownRendered) {
+                        return;
+                    }
+                    inlineStylesDropdownRendered = true;
+                    const inlineStyleItems = [];
+                    if (resolvedActionKeys.indexOf('bold') !== -1 && actions.bold) {
+                        inlineStyleItems.push({label: actions.bold.title, icon: actions.bold.icon, run() { actions.bold.run(textarea); }});
+                    }
+                    if (resolvedActionKeys.indexOf('italic') !== -1 && actions.italic) {
+                        inlineStyleItems.push({label: actions.italic.title, icon: actions.italic.icon, run() { actions.italic.run(textarea); }});
+                    }
+                    if (resolvedActionKeys.indexOf('textStyles') !== -1 && actions.textStyles && Array.isArray(actions.textStyles.items)) {
+                        actions.textStyles.items.forEach(function (item) {
+                            inlineStyleItems.push({
+                                label: item.label,
+                                icon: item.icon || actions.textStyles.icon,
+                                run() { actions.textStyles.run(textarea, item); }
+                            });
+                        });
+                    }
+                    if (resolvedActionKeys.indexOf('code') !== -1 && actions.code) {
+                        inlineStyleItems.push({label: actions.code.title, icon: actions.code.icon, run() { actions.code.run(textarea); }});
+                    }
+                    if (resolvedActionKeys.indexOf('codeBlock') !== -1 && actions.codeBlock) {
+                        inlineStyleItems.push({label: actions.codeBlock.title, icon: actions.codeBlock.icon, run() { actions.codeBlock.run(textarea); }});
+                    }
+                    inlineStyleItems.push({type: 'divider'});
+                    inlineStyleItems.push({
+                        label: t('actions.clearFormatting', 'Formatierung löschen'),
+                        icon: 'bi-eraser',
+                        run() {
+                            const selected = helpers.getSelection(textarea);
+                            if (selected === '') {
+                                return;
+                            }
+                            const cleaned = helpers.removeInlineFormatting(selected);
+                            helpers.replaceSelection(textarea, cleaned, 0, cleaned.length);
+                        }
+                    });
+
+                    if (inlineStyleItems.length > 1) {
+                        const dropdownId = 'bsMarkdownEditorInlineStyles' + Math.random().toString(36).slice(2, 10);
+                        const $dropdown = $(`
+<div class="btn-group ${groupSizeClass}" role="group">
+    <button type="button"
+            class="${buttonClassBase} dropdown-toggle js-bs-parsedown-action"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            id="${dropdownId}"
+            title="${t('actions.textStyles', 'Textstil')}">
+        <i class="bi bi-type-bold"></i>
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="${dropdownId}"></ul>
+</div>
+`);
+                        const $menu = $dropdown.find('.dropdown-menu');
+                        inlineStyleItems.forEach(function (item) {
+                            if (item.type === 'divider') {
+                                $menu.append('<li><hr class="dropdown-divider"></li>');
+                                return;
+                            }
+                            const $link = $(`<a href="#" class="dropdown-item"><i class="bi ${item.icon} me-2"></i>${item.label}</a>`);
+                            $link.on('click', function (e) {
+                                e.preventDefault();
+                                helpers.syncTextareaFromEditable(textarea, 'editableSelection');
+                                item.run();
+                                $dropdown.find('[data-bs-toggle="dropdown"]').dropdown('hide');
+                            });
+                            $menu.append($('<li></li>').append($link));
+                        });
+                        $toolbarLeft.append($dropdown);
+                        return;
+                    }
+                }
+
+                if (groupedListKeys.indexOf(key) !== -1) {
+                    if (listDropdownRendered) {
+                        return;
+                    }
+                    listDropdownRendered = true;
+                    const availableListKeys = groupedListKeys.filter(function (listKey) {
+                        return resolvedActionKeys.indexOf(listKey) !== -1 && actions[listKey];
+                    });
+                    if (availableListKeys.length > 1) {
+                        const dropdownId = 'bsMarkdownEditorLists' + Math.random().toString(36).slice(2, 10);
+                        const $dropdown = $(`
+<div class="btn-group ${groupSizeClass}" role="group">
+    <button type="button"
+            class="${buttonClassBase} dropdown-toggle js-bs-parsedown-action"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            id="${dropdownId}"
+            title="${t('actions.lists', 'Listen')}">
+        <i class="bi bi-list-task"></i>
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="${dropdownId}"></ul>
+</div>
+`);
+                        const $menu = $dropdown.find('.dropdown-menu');
+                        availableListKeys.forEach(function (listKey) {
+                            const listAction = actions[listKey];
+                            const $link = $(`<a href="#" class="dropdown-item"><i class="bi ${listAction.icon} me-2"></i>${listAction.title}</a>`);
+                            $link.on('click', function (e) {
+                                e.preventDefault();
+                                helpers.syncTextareaFromEditable(textarea, 'editableSelection');
+                                listAction.run(textarea);
+                                $dropdown.find('[data-bs-toggle="dropdown"]').dropdown('hide');
+                            });
+                            $menu.append($('<li></li>').append($link));
+                        });
+                        $toolbarLeft.append($dropdown);
+                        return;
+                    }
+                }
+
+                if (groupedInsertKeys.indexOf(key) !== -1) {
+                    if (insertDropdownRendered) {
+                        return;
+                    }
+                    insertDropdownRendered = true;
+                    const insertItems = groupedInsertKeys.filter(function (insertKey) {
+                        return resolvedActionKeys.indexOf(insertKey) !== -1 && actions[insertKey];
+                    }).map(function (insertKey) {
+                        return actions[insertKey];
+                    });
+                    if (insertItems.length > 1) {
+                        const dropdownId = 'bsMarkdownEditorInsert' + Math.random().toString(36).slice(2, 10);
+                        const $dropdown = $(`
+<div class="btn-group ${groupSizeClass}" role="group">
+    <button type="button"
+            class="${buttonClassBase} dropdown-toggle js-bs-parsedown-action"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            id="${dropdownId}"
+            title="${t('actions.insert', 'Einfügen')}">
+        <i class="bi bi-plus-lg"></i>
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="${dropdownId}"></ul>
+</div>
+`);
+                        const $menu = $dropdown.find('.dropdown-menu');
+                        insertItems.forEach(function (insertAction) {
+                            const $link = $(`<a href="#" class="dropdown-item"><i class="bi ${insertAction.icon} me-2"></i>${insertAction.title}</a>`);
+                            $link.on('click', function (e) {
+                                e.preventDefault();
+                                helpers.syncTextareaFromEditable(textarea, 'editableSelection');
+                                insertAction.run(textarea);
+                                $dropdown.find('[data-bs-toggle="dropdown"]').dropdown('hide');
+                            });
+                            $menu.append($('<li></li>').append($link));
+                        });
+                        $toolbarLeft.append($dropdown);
+                        return;
+                    }
                 }
 
                 if (Array.isArray(action.items) && action.items.length > 0) {
@@ -1497,17 +1891,57 @@
 </div>
 `);
                     const $menu = $dropdown.find('.dropdown-menu');
-
                     action.items.forEach(function (item) {
-                        const $link = $(`<a href="#" class="dropdown-item">${item.label}</a>`);
+                        if (item.type === 'divider') {
+                            $menu.append('<li><hr class="dropdown-divider"></li>');
+                            return;
+                        }
+                        if (item.customForm) {
+                            const formId = 'bsMarkdownEditorTableCustom' + Math.random().toString(36).slice(2, 10);
+                            const $custom = $(`
+<li class="px-3 py-2">
+    <div class="small text-body-secondary mb-2">${helpers.escapeHtml(item.label)}</div>
+    <div class="d-flex align-items-end gap-2">
+        <div>
+            <label class="form-label form-label-sm mb-1" for="${formId}Rows">${helpers.escapeHtml(t('modal.rows', 'Zeilen'))}</label>
+            <input id="${formId}Rows" class="form-control form-control-sm" type="number" min="1" max="30" value="2" style="width:5rem;">
+        </div>
+        <div>
+            <label class="form-label form-label-sm mb-1" for="${formId}Columns">${helpers.escapeHtml(t('modal.columns', 'Spalten'))}</label>
+            <input id="${formId}Columns" class="form-control form-control-sm" type="number" min="1" max="12" value="2" style="width:5rem;">
+        </div>
+        <button type="button" class="btn btn-sm btn-primary js-bs-parsedown-table-custom-insert">${helpers.escapeHtml(t('modal.insert', 'Einfügen'))}</button>
+    </div>
+</li>
+`);
+                            $custom.on('click', function (e) {
+                                e.stopPropagation();
+                            });
+                            $custom.find('.js-bs-parsedown-table-custom-insert').on('click', function (e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                helpers.syncTextareaFromEditable(textarea, 'editableSelection');
+                                action.run(textarea, {
+                                    rows: $custom.find(`#${formId}Rows`).val(),
+                                    columns: $custom.find(`#${formId}Columns`).val()
+                                });
+                                $dropdown.find('[data-bs-toggle="dropdown"]').dropdown('hide');
+                            });
+                            $menu.append($custom);
+                            return;
+                        }
+                        const itemIcon = item.icon || null;
+                        const iconHtml = itemIcon ? `<i class="bi ${itemIcon} me-2"></i>` : '';
+                        const labelStyle = item.textStyle ? ` style="${item.textStyle}"` : '';
+                        const $link = $(`<a href="#" class="dropdown-item">${iconHtml}<span${labelStyle}>${item.label}</span></a>`);
                         $link.on('click', function (e) {
                             e.preventDefault();
+                            helpers.syncTextareaFromEditable(textarea, 'editableSelection');
                             action.run(textarea, item);
                             $dropdown.find('[data-bs-toggle="dropdown"]').dropdown('hide');
                         });
                         $menu.append($('<li></li>').append($link));
                     });
-
                     if (key === 'preview') {
                         $toolbarRight.append($dropdown);
                     } else {
@@ -1516,22 +1950,15 @@
                     return;
                 }
 
-                const buttonClass = key === 'preview'
-                    ? `${buttonClassBase} js-bs-parsedown-preview-toggle`
-                    : `${buttonClassBase} js-bs-parsedown-action`;
-                const $button = $(`
-<button type="button" class="${buttonClass}" title="${action.title}">
-    <i class="bi ${action.icon}"></i>
-</button>
-`);
+                const buttonClass = key === 'preview' ? `${buttonClassBase} js-bs-parsedown-preview-toggle` : `${buttonClassBase} js-bs-parsedown-action`;
+                const $button = $(`<button type="button" class="${buttonClass}" title="${action.title}"><i class="bi ${action.icon}"></i></button>`);
                 const $buttonGroup = $(`<div class="btn-group ${groupSizeClass}" role="group"></div>`);
                 $buttonGroup.append($button);
-
                 $button.on('click', function (e) {
                     e.preventDefault();
+                    helpers.syncTextareaFromEditable(textarea, 'editableSelection');
                     action.run(textarea);
                 });
-
                 if (key === 'preview') {
                     $toolbarRight.append($buttonGroup);
                 } else {
@@ -1565,6 +1992,7 @@
             $textarea.data('bsMarkdownEditorApi', api);
 
             helpers.setMode(textarea, settings.mode, 'init');
+            helpers.updateStats(textarea);
             helpers.emitPluginEvent(textarea, 'ready.bs.markdown-editor', {
                 mode: helpers.getMode(textarea),
                 value: helpers.getValue(textarea),
