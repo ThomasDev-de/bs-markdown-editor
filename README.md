@@ -148,3 +148,9 @@ const markdown = $.bsMarkdownEditor.toMarkdown('<h1>Hello</h1>');
 - Preview rendering is built in and does not require an external Markdown package.
 - Preview supports inline image syntax (`![alt](url)`), task list checkboxes, nested lists (including sublists), fenced code blocks, and basic Markdown tables.
 - The generated UI uses Bootstrap 5 theme-aware utility classes and is compatible with `data-bs-theme="dark"` without requiring separate dark-mode markup.
+
+## Support this project
+
+If this project helps you, feel free to support its development:
+
+[☕ Buy me a coffee via PayPal](https://paypal.me/thomaskirsch1529)
