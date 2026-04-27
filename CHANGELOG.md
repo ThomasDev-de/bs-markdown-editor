@@ -7,6 +7,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-04-27
+
+### Changed
+
+- Markdown preview line break behavior is now CommonMark-style in paragraphs: hard breaks are rendered only for lines ending with two trailing spaces or a trailing backslash. Plain single newlines no longer render as `<br>`.
+
 ## [1.0.3] - 2026-04-17
 
 ### Added

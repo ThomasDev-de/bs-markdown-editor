@@ -62,11 +62,15 @@
             let i = 0;
 
             function renderParagraph(rawLines) {
-                const joined = rawLines.join('\n').trim();
-                if (joined === '') {
+                const joined = rawLines.join('\n');
+                if (joined.trim() === '') {
                     return '';
                 }
-                return `<p>${sharedConverters.renderInline(joined).replace(/\n/g, '<br>')}</p>`;
+                const rendered = sharedConverters.renderInline(joined);
+                const withHardBreaks = rendered
+                    .replace(/\\\n/g, '<br>')
+                    .replace(/[ \t]{2,}\n/g, '<br>');
+                return `<p>${withHardBreaks.replace(/\n/g, ' ').trim()}</p>`;
             }
 
             while (i < lines.length) {
