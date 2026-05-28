@@ -44,19 +44,41 @@
 
             content = content.replace(/&lt;(\/?[a-z][a-z0-9]*)([\s\S]*?)&gt;/gi, function(_, tag, attrs) {
                 let safeAttrs = attrs.replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+                const tagName = tag.toLowerCase();
 
-                if (tag.toLowerCase() === 'table') {
-                    if (!/class=["']/.test(safeAttrs)) {
-                        safeAttrs = ' class="table table-sm"' + safeAttrs;
+                const addClass = function(existingAttrs, className) {
+                    if (!/class=["']/.test(existingAttrs)) {
+                        return ' class="' + className + '"' + existingAttrs;
                     } else {
-                        if (!/\btable-sm\b/.test(safeAttrs)) {
-                            safeAttrs = safeAttrs.replace(/class=(["'])/, 'class=$1table-sm ');
+                        const classRegex = new RegExp('\\b' + className + '\\b');
+                        if (!classRegex.test(existingAttrs)) {
+                            return existingAttrs.replace(/class=(["'])/, 'class=$1' + className + ' ');
                         }
-                        if (!/\btable\b/.test(safeAttrs)) {
-                            safeAttrs = safeAttrs.replace(/class=(["'])/, 'class=$1table ');
-                        }
-                        safeAttrs = safeAttrs.replace(/\s{2,}/g, ' ').replace(/class=(["'])\s+/, 'class=$1');
                     }
+                    return existingAttrs;
+                };
+
+                if (tagName === 'table') {
+                    safeAttrs = addClass(safeAttrs, 'table-sm');
+                    safeAttrs = addClass(safeAttrs, 'table');
+                } else if (tagName === 'blockquote') {
+                    safeAttrs = addClass(safeAttrs, 'blockquote');
+                } else if (tagName === 'figure') {
+                    safeAttrs = addClass(safeAttrs, 'figure');
+                } else if (tagName === 'figcaption') {
+                    safeAttrs = addClass(safeAttrs, 'figure-caption');
+                } else if (tagName === 'dl') {
+                    safeAttrs = addClass(safeAttrs, 'row');
+                } else if (tagName === 'dt') {
+                    safeAttrs = addClass(safeAttrs, 'col-sm-3');
+                } else if (tagName === 'dd') {
+                    safeAttrs = addClass(safeAttrs, 'col-sm-9');
+                } else if (tagName === 'img') {
+                    safeAttrs = addClass(safeAttrs, 'img-fluid');
+                }
+
+                if (/class=["']/.test(safeAttrs)) {
+                    safeAttrs = safeAttrs.replace(/\s{2,}/g, ' ').replace(/class=(["'])\s+/, 'class=$1').replace(/\s+(["'])$/, '$1');
                 }
 
                 return '<' + tag + safeAttrs + '>';
@@ -149,7 +171,7 @@
                         quoteLines.push(lines[i].replace(/^\s*>\s?/, ''));
                         i += 1;
                     }
-                    html.push(`<blockquote>${sharedConverters.renderMarkdown(quoteLines.join('\n'))}</blockquote>`);
+                    html.push(`<blockquote class="blockquote">${sharedConverters.renderMarkdown(quoteLines.join('\n'))}</blockquote>`);
                     continue;
                 }
 
@@ -320,7 +342,7 @@
                     return '';
                 }
                 return inner.split('\n').map(function (line) {
-                    return line === '' ? '>' : `> ${line}`;
+                    return line === '' ? '>' : '> ' + line;
                 }).join('\n') + '\n\n';
             }
             if (tagName === 'pre') {
