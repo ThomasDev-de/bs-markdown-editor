@@ -42,19 +42,11 @@
                 return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer">${label}</a>`;
             });
 
-            content = content.replace(/&lt;sub&gt;([\s\S]*?)&lt;\/sub&gt;/gi, '<sub>$1</sub>');
-            content = content.replace(/&lt;sup&gt;([\s\S]*?)&lt;\/sup&gt;/gi, '<sup>$1</sup>');
-            content = content.replace(/&lt;table([\s\S]*?)&gt;([\s\S]*?)&lt;\/table&gt;/gi, '<table$1>$2</table>');
-            content = content.replace(/&lt;thead&gt;([\s\S]*?)&lt;\/thead&gt;/gi, '<thead>$1</thead>');
-            content = content.replace(/&lt;tbody&gt;([\s\S]*?)&lt;\/tbody&gt;/gi, '<tbody>$1</tbody>');
-            content = content.replace(/&lt;tr&gt;([\s\S]*?)&lt;\/tr&gt;/gi, '<tr>$1</tr>');
-            content = content.replace(/&lt;th([\s\S]*?)&gt;([\s\S]*?)&lt;\/th&gt;/gi, '<th$1>$2</th>');
-            content = content.replace(/&lt;td([\s\S]*?)&gt;([\s\S]*?)&lt;\/td&gt;/gi, '<td$1>$2</td>');
-            content = content.replace(/&lt;b&gt;([\s\S]*?)&lt;\/b&gt;/gi, '<b>$1</b>');
-            content = content.replace(/&lt;i&gt;([\s\S]*?)&lt;\/i&gt;/gi, '<i>$1</i>');
-            content = content.replace(/&lt;em&gt;([\s\S]*?)&lt;\/em&gt;/gi, '<em>$1</em>');
-            content = content.replace(/&lt;strong&gt;([\s\S]*?)&lt;\/strong&gt;/gi, '<strong>$1</strong>');
-            content = content.replace(/&lt;span([\s\S]*?)&gt;([\s\S]*?)&lt;\/span&gt;/gi, '<span$1>$2</span>');
+            content = content.replace(/&lt;(\/?[a-z][a-z0-9]*)([\s\S]*?)&gt;/gi, function(_, tag, attrs) {
+                const safeAttrs = attrs.replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+                return '<' + tag + safeAttrs + '>';
+            });
+
             content = content.replace(/~~([^~]+)~~/g, '<del>$1</del>');
             content = content.replace(/==([^=]+)==/g, '<u>$1</u>');
             content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
@@ -93,18 +85,18 @@
                     continue;
                 }
 
-                if (/^<table[\s>]/.test(trimmed)) {
+                if (/^<table[\s>]/i.test(trimmed)) {
                     const tableLines = [];
                     while (i < lines.length) {
                         const currentLine = lines[i];
                         tableLines.push(currentLine);
-                        if (/<\/table>/.test(currentLine)) {
+                        if (/<\/table>/i.test(currentLine)) {
                             i += 1;
                             break;
                         }
                         i += 1;
                     }
-                    html.push(tableLines.join('\n'));
+                    html.push(sharedConverters.renderInline(tableLines.join('\n')));
                     continue;
                 }
 
@@ -190,7 +182,7 @@
                     const current = lines[i];
                     if (
                         current.trim() === '' ||
-                        /^<table[\s>]/.test(current.trim()) ||
+                        /^<table[\s>]/i.test(current.trim()) ||
                         /^```/.test(current.trim()) ||
                         /^\s{0,3}(#{1,6})\s+/.test(current) ||
                         /^\s*>\s?/.test(current) ||
