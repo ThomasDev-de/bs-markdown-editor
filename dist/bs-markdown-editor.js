@@ -43,7 +43,22 @@
             });
 
             content = content.replace(/&lt;(\/?[a-z][a-z0-9]*)([\s\S]*?)&gt;/gi, function(_, tag, attrs) {
-                const safeAttrs = attrs.replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+                let safeAttrs = attrs.replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+
+                if (tag.toLowerCase() === 'table') {
+                    if (!/class=["']/.test(safeAttrs)) {
+                        safeAttrs = ' class="table table-sm"' + safeAttrs;
+                    } else {
+                        if (!/\btable-sm\b/.test(safeAttrs)) {
+                            safeAttrs = safeAttrs.replace(/class=(["'])/, 'class=$1table-sm ');
+                        }
+                        if (!/\btable\b/.test(safeAttrs)) {
+                            safeAttrs = safeAttrs.replace(/class=(["'])/, 'class=$1table ');
+                        }
+                        safeAttrs = safeAttrs.replace(/\s{2,}/g, ' ').replace(/class=(["'])\s+/, 'class=$1');
+                    }
+                }
+
                 return '<' + tag + safeAttrs + '>';
             });
 
