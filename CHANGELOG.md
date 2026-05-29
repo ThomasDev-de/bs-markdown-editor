@@ -7,6 +7,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-05-29
+
+### Added
+
+- Added locale distribution files in `dist/locale/` for `en-US` and multiple European locales (with matching minified variants).
+
+### Changed
+
+- i18n bootstrap was simplified to a single built-in English default translation.
+- If present, preloaded `window.bsMarkdownEditorTranslations` now overrides built-in defaults.
+- `settings.translations` remains the final override layer after preloaded locale data.
+- Wrapper handling was hardened: plugin internals now always rely on `.bs-markdown-editor`, while `wrapperClass` is appended as additional class(es).
+- Markdown table rendering now uses Bootstrap class `table` (without `table-sm`).
+
 ## [1.0.4] - 2026-04-27
 
 ### Changed

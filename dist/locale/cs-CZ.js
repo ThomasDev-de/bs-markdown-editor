@@ -1,0 +1,76 @@
+window.bsMarkdownEditorTranslations = {
+    "actions": {
+        "bold": "Tučné",
+        "italic": "Kurzíva",
+        "textStyles": "Styl textu",
+        "clearFormatting": "Vymazat formátování",
+        "normalText": "Normální text",
+        "heading1": "Nadpis 1",
+        "heading2": "Nadpis 2",
+        "heading3": "Nadpis 3",
+        "heading4": "Nadpis 4",
+        "heading5": "Nadpis 5",
+        "heading6": "Nadpis 6",
+        "customTable": "Vlastní…",
+        "strikethrough": "Přeškrtnuté",
+        "underline": "Podtržené",
+        "subscript": "Dolní index",
+        "superscript": "Horní index",
+        "heading": "Nadpis",
+        "insert": "Vložit",
+        "lists": "Seznamy",
+        "ul": "Odrážkový seznam",
+        "ol": "Číslovaný seznam",
+        "indent": "Zvětšit odsazení",
+        "outdent": "Zmenšit odsazení",
+        "quote": "Citace",
+        "link": "Odkaz",
+        "code": "Kód",
+        "codeBlock": "Blok kódu",
+        "table": "Tabulka",
+        "image": "Obrázek",
+        "hr": "Vodorovná čára",
+        "taskList": "Seznam úkolů",
+        "undo": "Zpět",
+        "redo": "Znovu",
+        "preview": "Náhled"
+    },
+    "prompts": {
+        "linkUrl": "Zadejte URL",
+        "codeLang": "Jazyk (volitelné)",
+        "imageAlt": "Zadejte alternativní text",
+        "imageUrl": "Zadejte URL obrázku"
+    },
+    "placeholders": {
+        "bold": "tučné",
+        "italic": "kurzíva",
+        "strikethrough": "přeškrtnuté",
+        "underline": "podtržené",
+        "subscript": "dolní index",
+        "superscript": "horní index",
+        "linkText": "Text odkazu",
+        "code": "kód",
+        "defaultText": "Text",
+        "defaultItem": "Položka",
+        "defaultTask": "Úkol",
+        "imageAlt": "Obrázek",
+        "tableColumn": "Sloupec",
+        "tableValue": "Hodnota"
+    },
+    "preview": {
+        "loading": "Vykreslování náhledu...",
+        "error": "Náhled se nepodařilo vykreslit."
+    },
+    "modal": {
+        "tableTitle": "Vytvořit tabulku",
+        "rows": "Řádky",
+        "columns": "Sloupce",
+        "cancel": "Zrušit",
+        "insert": "Vložit"
+    },
+    "stats": {
+        "mode": "Režim",
+        "chars": "Znaky",
+        "words": "Slova"
+    }
+};

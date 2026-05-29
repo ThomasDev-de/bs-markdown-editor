@@ -1,0 +1,76 @@
+window.bsMarkdownEditorTranslations = {
+    "actions": {
+        "bold": "Pogrubienie",
+        "italic": "Kursywa",
+        "textStyles": "Styl tekstu",
+        "clearFormatting": "Wyczyść formatowanie",
+        "normalText": "Tekst zwykły",
+        "heading1": "Nagłówek 1",
+        "heading2": "Nagłówek 2",
+        "heading3": "Nagłówek 3",
+        "heading4": "Nagłówek 4",
+        "heading5": "Nagłówek 5",
+        "heading6": "Nagłówek 6",
+        "customTable": "Niestandardowa…",
+        "strikethrough": "Przekreślenie",
+        "underline": "Podkreślenie",
+        "subscript": "Indeks dolny",
+        "superscript": "Indeks górny",
+        "heading": "Nagłówek",
+        "insert": "Wstaw",
+        "lists": "Listy",
+        "ul": "Lista punktowana",
+        "ol": "Lista numerowana",
+        "indent": "Zwiększ wcięcie",
+        "outdent": "Zmniejsz wcięcie",
+        "quote": "Cytat",
+        "link": "Link",
+        "code": "Kod",
+        "codeBlock": "Blok kodu",
+        "table": "Tabela",
+        "image": "Obraz",
+        "hr": "Linia pozioma",
+        "taskList": "Lista zadań",
+        "undo": "Cofnij",
+        "redo": "Ponów",
+        "preview": "Podgląd"
+    },
+    "prompts": {
+        "linkUrl": "Wprowadź URL",
+        "codeLang": "Język (opcjonalnie)",
+        "imageAlt": "Wprowadź tekst alternatywny",
+        "imageUrl": "Wprowadź URL obrazu"
+    },
+    "placeholders": {
+        "bold": "pogrubienie",
+        "italic": "kursywa",
+        "strikethrough": "przekreślenie",
+        "underline": "podkreślenie",
+        "subscript": "indeks dolny",
+        "superscript": "indeks górny",
+        "linkText": "Tekst linku",
+        "code": "kod",
+        "defaultText": "Tekst",
+        "defaultItem": "Element",
+        "defaultTask": "Zadanie",
+        "imageAlt": "Obraz",
+        "tableColumn": "Kolumna",
+        "tableValue": "Wartość"
+    },
+    "preview": {
+        "loading": "Renderowanie podglądu...",
+        "error": "Nie można wyrenderować podglądu."
+    },
+    "modal": {
+        "tableTitle": "Utwórz tabelę",
+        "rows": "Wiersze",
+        "columns": "Kolumny",
+        "cancel": "Anuluj",
+        "insert": "Wstaw"
+    },
+    "stats": {
+        "mode": "Tryb",
+        "chars": "Znaki",
+        "words": "Słowa"
+    }
+};

@@ -59,7 +59,6 @@
                 };
 
                 if (tagName === 'table') {
-                    safeAttrs = addClass(safeAttrs, 'table-sm');
                     safeAttrs = addClass(safeAttrs, 'table');
                 } else if (tagName === 'blockquote') {
                     safeAttrs = addClass(safeAttrs, 'blockquote');
@@ -200,7 +199,7 @@
                             }).join('') + '</tr>';
                         }).join('') + '</tbody>';
 
-                    html.push(`<table class="table table-sm">${thead}${tbody}</table>`);
+                    html.push(`<table class="table">${thead}${tbody}</table>`);
                     continue;
                 }
 
@@ -678,6 +677,8 @@
             return this;
         }
 
+        const DEFAULT_WRAPPER_CLASS = 'bs-markdown-editor';
+
         const settings = $.extend(true, {
             minHeight: 220,
             preview: true,
@@ -686,171 +687,93 @@
             showStats: false,
             size: null,
             btnClass: 'border-0',
-            wrapperClass: null,
+            wrapperClass: '',
             actions: 'all',
             lang: null,
             translations: {}
         }, options);
 
         const defaultTranslations = {
-            de: {
-                actions: {
-                    bold: 'Fett',
-                    italic: 'Kursiv',
-                    textStyles: 'Textstil',
-                    clearFormatting: 'Formatierung löschen',
-                    normalText: 'Normaler Text',
-                    heading1: 'Überschrift 1',
-                    heading2: 'Überschrift 2',
-                    heading3: 'Überschrift 3',
-                    heading4: 'Überschrift 4',
-                    heading5: 'Überschrift 5',
-                    heading6: 'Überschrift 6',
-                    customTable: 'Benutzerdefiniert…',
-                    strikethrough: 'Durchgestrichen',
-                    underline: 'Unterstrichen',
-                    subscript: 'Tiefgestellt',
-                    superscript: 'Hochgestellt',
-                    heading: 'Überschrift',
-                    insert: 'Einfügen',
-                    lists: 'Listen',
-                    ul: 'Liste',
-                    ol: 'Nummerierte Liste',
-                    indent: 'Einrücken',
-                    outdent: 'Ausrücken',
-                    quote: 'Zitat',
-                    link: 'Link',
-                    code: 'Code',
-                    codeBlock: 'Codeblock',
-                    table: 'Tabelle',
-                    image: 'Bild',
-                    hr: 'Trennlinie',
-                    taskList: 'Task-Liste',
-                    undo: 'Rückgängig',
-                    redo: 'Wiederholen',
-                    preview: 'Vorschau'
-                },
-                prompts: {
-                    linkUrl: 'URL eingeben',
-                    codeLang: 'Sprache (optional)',
-                    imageAlt: 'Alt-Text eingeben',
-                    imageUrl: 'Bild-URL eingeben'
-                },
-                placeholders: {
-                    bold: 'fett',
-                    italic: 'kursiv',
-                    strikethrough: 'durchgestrichen',
-                    underline: 'unterstrichen',
-                    subscript: 'tiefgestellt',
-                    superscript: 'hochgestellt',
-                    linkText: 'Linktext',
-                    code: 'code',
-                    defaultText: 'Text',
-                    defaultItem: 'Eintrag',
-                    defaultTask: 'Aufgabe',
-                    imageAlt: 'Bild',
-                    tableColumn: 'Spalte',
-                    tableValue: 'Wert'
-                },
-                preview: {
-                    loading: 'Rendere Vorschau...',
-                    error: 'Vorschau konnte nicht gerendert werden.'
-                },
-                modal: {
-                    tableTitle: 'Tabelle erstellen',
-                    rows: 'Zeilen',
-                    columns: 'Spalten',
-                    cancel: 'Abbrechen',
-                    insert: 'Einfügen'
-                },
-                stats: {
-                    mode: 'Modus',
-                    chars: 'Zeichen',
-                    words: 'Wörter'
-                }
+            actions: {
+                bold: 'Bold',
+                italic: 'Italic',
+                textStyles: 'Text style',
+                clearFormatting: 'Clear formatting',
+                normalText: 'Normal text',
+                heading1: 'Heading 1',
+                heading2: 'Heading 2',
+                heading3: 'Heading 3',
+                heading4: 'Heading 4',
+                heading5: 'Heading 5',
+                heading6: 'Heading 6',
+                customTable: 'Custom…',
+                strikethrough: 'Strikethrough',
+                underline: 'Underline',
+                subscript: 'Subscript',
+                superscript: 'Superscript',
+                heading: 'Heading',
+                insert: 'Insert',
+                lists: 'Lists',
+                ul: 'List',
+                ol: 'Numbered list',
+                indent: 'Indent',
+                outdent: 'Outdent',
+                quote: 'Quote',
+                link: 'Link',
+                code: 'Code',
+                codeBlock: 'Code block',
+                table: 'Table',
+                image: 'Image',
+                hr: 'Horizontal rule',
+                taskList: 'Task list',
+                undo: 'Undo',
+                redo: 'Redo',
+                preview: 'Preview'
             },
-            en: {
-                actions: {
-                    bold: 'Bold',
-                    italic: 'Italic',
-                    textStyles: 'Text style',
-                    clearFormatting: 'Clear formatting',
-                    normalText: 'Normal text',
-                    heading1: 'Heading 1',
-                    heading2: 'Heading 2',
-                    heading3: 'Heading 3',
-                    heading4: 'Heading 4',
-                    heading5: 'Heading 5',
-                    heading6: 'Heading 6',
-                    customTable: 'Custom…',
-                    strikethrough: 'Strikethrough',
-                    underline: 'Underline',
-                    subscript: 'Subscript',
-                    superscript: 'Superscript',
-                    heading: 'Heading',
-                    insert: 'Insert',
-                    lists: 'Lists',
-                    ul: 'List',
-                    ol: 'Numbered list',
-                    indent: 'Indent',
-                    outdent: 'Outdent',
-                    quote: 'Quote',
-                    link: 'Link',
-                    code: 'Code',
-                    codeBlock: 'Code block',
-                    table: 'Table',
-                    image: 'Image',
-                    hr: 'Horizontal rule',
-                    taskList: 'Task list',
-                    undo: 'Undo',
-                    redo: 'Redo',
-                    preview: 'Preview'
-                },
-                prompts: {
-                    linkUrl: 'Enter URL',
-                    codeLang: 'Language (optional)',
-                    imageAlt: 'Enter alt text',
-                    imageUrl: 'Enter image URL'
-                },
-                placeholders: {
-                    bold: 'bold',
-                    italic: 'italic',
-                    strikethrough: 'strikethrough',
-                    underline: 'underlined',
-                    subscript: 'subscript',
-                    superscript: 'superscript',
-                    linkText: 'Link text',
-                    code: 'code',
-                    defaultText: 'Text',
-                    defaultItem: 'Item',
-                    defaultTask: 'Task',
-                    imageAlt: 'Image',
-                    tableColumn: 'Column',
-                    tableValue: 'Value'
-                },
-                preview: {
-                    loading: 'Rendering preview...',
-                    error: 'Preview could not be rendered.'
-                },
-                modal: {
-                    tableTitle: 'Create table',
-                    rows: 'Rows',
-                    columns: 'Columns',
-                    cancel: 'Cancel',
-                    insert: 'Insert'
-                },
-                stats: {
-                    mode: 'Mode',
-                    chars: 'chars',
-                    words: 'words'
-                }
+            prompts: {
+                linkUrl: 'Enter URL',
+                codeLang: 'Language (optional)',
+                imageAlt: 'Enter alt text',
+                imageUrl: 'Enter image URL'
+            },
+            placeholders: {
+                bold: 'bold',
+                italic: 'italic',
+                strikethrough: 'strikethrough',
+                underline: 'underlined',
+                subscript: 'subscript',
+                superscript: 'superscript',
+                linkText: 'Link text',
+                code: 'code',
+                defaultText: 'Text',
+                defaultItem: 'Item',
+                defaultTask: 'Task',
+                imageAlt: 'Image',
+                tableColumn: 'Column',
+                tableValue: 'Value'
+            },
+            preview: {
+                loading: 'Rendering preview...',
+                error: 'Preview could not be rendered.'
+            },
+            modal: {
+                tableTitle: 'Create table',
+                rows: 'Rows',
+                columns: 'Columns',
+                cancel: 'Cancel',
+                insert: 'Insert'
+            },
+            stats: {
+                mode: 'Mode',
+                chars: 'chars',
+                words: 'words'
             }
         };
 
-        const normalizedLang = String(settings.lang || document.documentElement.lang || 'de').trim().toLowerCase();
-        const lang = normalizedLang.split('-')[0];
-        const baseTranslations = defaultTranslations[lang] || defaultTranslations.de;
-        const i18n = $.extend(true, {}, baseTranslations, settings.translations || {});
+        const preloadedTranslations = window.bsMarkdownEditorTranslations && typeof window.bsMarkdownEditorTranslations === 'object'
+            ? window.bsMarkdownEditorTranslations
+            : {};
+        const i18n = $.extend(true, {}, defaultTranslations, preloadedTranslations, settings.translations || {});
 
         function t(key, fallback) {
             const value = key.split('.').reduce(function (current, part) {
@@ -1086,6 +1009,10 @@
             },
             getWrapperClass() {
                 return String(settings.wrapperClass || '').trim();
+            },
+
+            getWrapperSelector() {
+                return '.' + DEFAULT_WRAPPER_CLASS;
             },
             getResizeMode() {
                 if (settings.resize === true) {
@@ -1340,7 +1267,7 @@
             },
             refreshPreview(textarea) {
                 const $textarea = $(textarea);
-                const $wrapper = $textarea.closest('.bs-parsedown-wrapper');
+                const $wrapper = $textarea.closest(helpers.getWrapperSelector());
                 const $preview = $wrapper.find('.js-bs-parsedown-preview');
                 if ($preview.length === 0 || !$preview.is(':visible')) {
                     return;
@@ -1473,7 +1400,7 @@
                 $stats.text(`${t('stats.mode', 'Mode')}: ${mode} | ${value.length} ${t('stats.chars', 'chars')} / ${words} ${t('stats.words', 'words')}`);
             },
             getMode(textarea) {
-                const $preview = $(textarea).closest('.bs-parsedown-wrapper').find('.js-bs-parsedown-preview');
+                const $preview = $(textarea).closest(helpers.getWrapperSelector()).find('.js-bs-parsedown-preview');
                 return $preview.is(':visible') ? 'preview' : 'editor';
             },
             setMode(textarea, mode, source = 'api') {
@@ -1482,7 +1409,7 @@
                     return helpers.getMode(textarea);
                 }
                 const $textarea = $(textarea);
-                const $wrapper = $textarea.closest('.bs-parsedown-wrapper');
+                const $wrapper = $textarea.closest(helpers.getWrapperSelector());
                 const $preview = $wrapper.find('.js-bs-parsedown-preview');
                 const $button = $wrapper.find('.js-bs-parsedown-preview-toggle');
                 const $editor = $wrapper.find('.js-bs-parsedown-editor');
@@ -1810,9 +1737,11 @@
             $textarea.data('bsMarkdownEditorInitialized', true);
 
             const wrapperClass = helpers.getWrapperClass();
-            const wrapperClasses = wrapperClass === '' ? 'bs-parsedown-wrapper' : `bs-parsedown-wrapper ${wrapperClass}`;
+            const wrapperClasses = [DEFAULT_WRAPPER_CLASS]
+                .concat(wrapperClass.split(/\s+/).filter(Boolean))
+                .join(' ');
             $textarea.wrap($(`<div class="${wrapperClasses}"></div>`));
-            const $wrapperRef = $textarea.closest('.bs-parsedown-wrapper');
+            const $wrapperRef = $textarea.closest(helpers.getWrapperSelector());
             const $editor = $('<div class="js-bs-parsedown-editor"></div>');
             $textarea.wrap($editor);
             const $editorRef = $textarea.closest('.js-bs-parsedown-editor');
