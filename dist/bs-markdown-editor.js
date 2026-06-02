@@ -1133,7 +1133,7 @@
                 title: t('actions.hr', 'Trennlinie'),
                 icon: 'bi-hr',
                 run(textarea) {
-                    helpers.insertBlock(textarea, '---', true);
+                    helpers.insertBlock(textarea, '---');
                 }
             },
             taskList: {
@@ -1761,7 +1761,7 @@
                 const needsLeadingNewline = before !== '' && !before.endsWith('\n');
                 const needsTrailingNewline = after !== '' && !after.startsWith('\n');
                 const prefix = needsLeadingNewline ? '\n' : '';
-                const suffix = needsTrailingNewline ? '\n' : '';
+                const suffix = '\n\n';
                 const content = appendToSelection && selected !== '' ? selected + '\n' + block : block;
                 helpers.replaceSelection(textarea, prefix + content + suffix);
             },
