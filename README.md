@@ -64,6 +64,7 @@ Or use a GitHub CDN (replace `x.y.z` with a release tag):
 | `btnClass`     | `string`                          | `'border-0'` | Bootstrap button style class used by toolbar buttons (example: `btn-outline-dark`, `btn-secondary`).                                                                                                        |
 | `wrapperClass` | `string \| null`                  | `null`       | Additional class name(s) applied to the editor wrapper. The plugin always keeps its internal wrapper class `.bs-markdown-editor` and appends your classes on top.                                           |
 | `actions`      | `'all' \| string[]`               | `'all'`      | Toolbar action filter. `'all'` renders all actions. Array mode renders only matching action keys and keeps array order. Unknown keys are ignored.                                                           |
+| `customActions` | `object \| array`                | `{}`         | Additional toolbar actions. `run(context)` receives the editor context, including `textarea`, `editable`, and `helpers`.                                                                                   |
 | `lang`         | `string`                          | `auto`       | Reserved for compatibility. Locale selection is now handled by preloaded locale files plus `translations` overrides.                                                                                        |
 | `translations` | `object`                          | `{}`         | Deep-merged text overrides for labels, prompts, placeholders, modal text, and preview messages. Merge order: built-in English defaults -> `window.bsMarkdownEditorTranslations` (if loaded) -> this option. |
 
@@ -90,6 +91,134 @@ Or use a GitHub CDN (replace `x.y.z` with a release tag):
 | `undo`       | Undo via plugin history                    |
 | `redo`       | Redo via plugin history                    |
 | `preview`    | Toggle preview/editor mode                 |
+
+### Custom Actions
+
+`customActions` adds project-specific controls to the toolbar. It accepts either an object keyed by action name or an array of action objects.
+
+```js
+$('#editor').bsMarkdownEditor({
+    customActions: {
+        spoiler: {
+            title: 'Spoiler',
+            icon: 'bi-eye-slash',
+            run(context) {
+                const selected = context.helpers.getSelection(context.textarea);
+                const content = selected || 'spoiler text';
+                context.helpers.replaceSelection(
+                    context.textarea,
+                    `>! ${content} !<`,
+                    3,
+                    3 + content.length,
+                    'customAction'
+                );
+            }
+        }
+    }
+});
+```
+
+Use `context.helpers.replaceSelection(...)` when a custom action should insert text at the cursor or replace selected text. Directly appending to `textarea.value` always writes at the end and bypasses the current selection.
+
+#### Custom Action Options
+
+| Property      | Type       | Details                                                                 |
+|---------------|------------|-------------------------------------------------------------------------|
+| `title`       | `string`   | Button title/tooltip. Also used as fallback button text when no icon is set. |
+| `icon`        | `string`   | Bootstrap Icons class, for example `bi-eye-slash`.                      |
+| `run`         | `function` | Called as `run(context)` for default button actions.                    |
+| `render`      | `function` | Called as `render(context)` when the action renders its own toolbar UI. Must return an element, jQuery object, or HTML. |
+| `position`    | `string`   | Use `'right'` to append the action to the right toolbar group. Defaults to the left toolbar group. |
+| `buttonClass` | `string`   | Optional Bootstrap class override for the generated `run` button.       |
+| `enabled`     | `boolean`  | Set to `false` to skip rendering the custom action.                     |
+
+#### Custom Action Context
+
+| Property | Details |
+|----------|---------|
+| `key` | Custom action key. |
+| `textarea` / `editable` | Underlying textarea and visible `contenteditable` editor elements. |
+| `$editable`, `$wrapper`, `$toolbar`, `$toolbarLeft`, `$toolbarRight` | jQuery references for editor UI integration. |
+| `helpers` | Editor helper API, including `getSelection`, `replaceSelection`, and `syncTextareaFromEditable`. |
+| `settings` | Resolved editor settings. |
+| `buttonClassBase` / `groupSizeClass` | Toolbar classes matching the current editor configuration. |
+
+For default `run(context)` buttons, the editor synchronizes the visible selection before calling `run`. If you render custom interactive UI with `render(context)`, capture the editor selection before your UI steals focus.
+
+#### Advanced: Emoji Picker
+
+The example below renders `bs-emoji-picker` as a toolbar custom action. The picker itself is initialized without `targetInput`, so the Markdown editor keeps control over selection, history, preview refreshes, and events.
+
+```js
+// Load bs-emoji-picker after jQuery and Bootstrap.
+// <script src="https://cdn.jsdelivr.net/gh/ThomasDev-de/bs-emoji-picker@main/dist/bs-emoji-picker.min.js"></script>
+
+$('#editor').bsMarkdownEditor({
+    customActions: {
+        emoji: {
+            position: 'right',
+            render(context) {
+                const $picker = $('<div class="btn-group"></div>');
+                let lastSelection = {
+                    start: context.textarea.selectionStart || 0,
+                    end: context.textarea.selectionEnd || 0
+                };
+
+                function captureEditorSelection() {
+                    const selection = window.getSelection();
+                    if (!selection || selection.rangeCount === 0) {
+                        return;
+                    }
+                    const range = selection.getRangeAt(0);
+                    if (!context.editable.contains(range.startContainer) || !context.editable.contains(range.endContainer)) {
+                        return;
+                    }
+                    const offsets = context.helpers.getEditableSelectionOffsets(context.editable);
+                    lastSelection = {
+                        start: offsets.start,
+                        end: offsets.end
+                    };
+                    context.textarea.setSelectionRange(lastSelection.start, lastSelection.end);
+                }
+
+                function rememberSelection() {
+                    captureEditorSelection();
+                    $picker.data('bsMarkdownEditorEmojiSelection', lastSelection);
+                }
+
+                context.$editable.on('keyup.bsMarkdownEditorEmoji mouseup.bsMarkdownEditorEmoji touchend.bsMarkdownEditorEmoji input.bsMarkdownEditorEmoji', captureEditorSelection);
+                $(document).on('selectionchange.bsMarkdownEditorEmoji', captureEditorSelection);
+                captureEditorSelection();
+
+                $picker.bsEmojiPicker({
+                    btnClass: context.buttonClassBase,
+                    btnText: '<i class="bi bi-emoji-smile"></i>',
+                    targetInput: null,
+                    onClickEmoji(emoji) {
+                        const selection = $picker.data('bsMarkdownEditorEmojiSelection') || lastSelection || {
+                            start: context.textarea.selectionStart,
+                            end: context.textarea.selectionEnd
+                        };
+                        context.textarea.setSelectionRange(selection.start, selection.end);
+                        context.helpers.replaceSelection(
+                            context.textarea,
+                            emoji,
+                            emoji.length,
+                            emoji.length,
+                            'customAction'
+                        );
+                    }
+                });
+
+                $picker.on('mousedown', '[data-bs-toggle="dropdown"]', rememberSelection);
+                $picker.on('show.bs.dropdown', '.dropdown-emoji', rememberSelection);
+
+                return $picker;
+            }
+        }
+    }
+});
+```
 
 ## Methods
 
