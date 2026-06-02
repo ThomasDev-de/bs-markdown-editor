@@ -881,9 +881,6 @@
             wrapperClass: '',
             actions: 'all',
             customActions: {},
-            hooks: {},
-            emojiPicker: false,
-            emojiPickerOptions: {},
             lang: null,
             translations: {}
         }, options);
@@ -919,7 +916,6 @@
                 codeBlock: 'Code block',
                 table: 'Table',
                 image: 'Image',
-                emoji: 'Emoji',
                 hr: 'Horizontal rule',
                 taskList: 'Task list',
                 undo: 'Undo',
@@ -1216,39 +1212,6 @@
             getWrapperClass() {
                 return String(settings.wrapperClass || '').trim();
             },
-            getHook(name) {
-                const hooks = settings.hooks && typeof settings.hooks === 'object' ? settings.hooks : {};
-                return typeof hooks[name] === 'function' ? hooks[name] : null;
-            },
-            createExtensionContext(textarea, extra = {}) {
-                const $textarea = $(textarea);
-                const editable = helpers.getEditableElement(textarea);
-                const $editable = editable ? $(editable) : $();
-                const $wrapper = $textarea.closest(helpers.getWrapperSelector());
-
-                return $.extend({
-                    textarea: textarea,
-                    $textarea: $textarea,
-                    editable: editable,
-                    $editable: $editable,
-                    wrapper: $wrapper.get(0) || null,
-                    $wrapper: $wrapper,
-                    helpers: helpers,
-                    settings: settings,
-                    value: helpers.getValue(textarea),
-                    mode: helpers.getMode(textarea)
-                }, extra || {});
-            },
-            callHook(name, payload, fallback) {
-                const hook = helpers.getHook(name);
-
-                if (!hook) {
-                    return fallback;
-                }
-
-                const result = hook(payload || {});
-                return typeof result === 'undefined' ? fallback : result;
-            },
 
             getWrapperSelector() {
                 return '.' + DEFAULT_WRAPPER_CLASS;
@@ -1271,6 +1234,33 @@
                 return settings.actions.filter(function (key, index) {
                     return allKeys.indexOf(key) !== -1 && settings.actions.indexOf(key) === index;
                 });
+            },
+            getResolvedCustomActionEntries() {
+                const customActions = settings.customActions;
+
+                if (!customActions) {
+                    return [];
+                }
+
+                if (Array.isArray(customActions)) {
+                    return customActions
+                        .map(function (action, index) {
+                            return {key: action && action.key ? String(action.key) : `custom${index}`, action: action};
+                        })
+                        .filter(function (entry) {
+                            return entry.action && typeof entry.action === 'object';
+                        });
+                }
+
+                if (typeof customActions === 'object') {
+                    return Object.keys(customActions).map(function (key) {
+                        return {key: key, action: customActions[key]};
+                    }).filter(function (entry) {
+                        return entry.action && typeof entry.action === 'object';
+                    });
+                }
+
+                return [];
             },
             getEditableElement(textarea) {
                 return $(textarea).data('bsMarkdownEditorEditable') || null;
@@ -1512,23 +1502,9 @@
                     return;
                 }
                 try {
-                    const beforeContext = helpers.createExtensionContext(textarea, {
-                        markdown: $textarea.val(),
-                        $preview: $preview,
-                        preview: $preview.get(0) || null
-                    });
-                    const markdown = helpers.callHook('beforePreview', beforeContext, beforeContext.markdown);
-                    const html = helpers.renderMarkdown(markdown);
-                    $preview.html(`<div class="markdown">${html}</div>`);
-                    helpers.callHook('afterPreview', helpers.createExtensionContext(textarea, {
-                        markdown: markdown,
-                        html: html,
-                        $preview: $preview,
-                        preview: $preview.get(0) || null
-                    }));
+                    $preview.html(`<div class="markdown">${helpers.renderMarkdown($textarea.val())}</div>`);
                 } catch (error) {
                     $preview.html(`<div class="text-danger">${helpers.escapeHtml(t('preview.error', 'Vorschau konnte nicht gerendert werden.'))}</div>`);
-                    helpers.callHook('previewError', helpers.createExtensionContext(textarea, {error: error, $preview: $preview, preview: $preview.get(0) || null}));
                 }
             },
             refreshRenderedState(textarea, preserveSelection = true) {
@@ -2276,12 +2252,9 @@
                     helpers.refreshPreview(textarea);
                     helpers.updateStats(textarea);
                 }
-                const changePayload = {source: source, value: textarea.value};
-                helpers.emitPluginEvent(textarea, 'change.bs.markdown-editor', changePayload);
-                helpers.callHook('change', helpers.createExtensionContext(textarea, changePayload));
+                helpers.emitPluginEvent(textarea, 'change.bs.markdown-editor', {source: source, value: textarea.value});
                 if (helpers.isUserInitiatedChangeSource(source)) {
-                    helpers.emitPluginEvent(textarea, 'userChange.bs.markdown-editor', changePayload);
-                    helpers.callHook('userChange', helpers.createExtensionContext(textarea, changePayload));
+                    helpers.emitPluginEvent(textarea, 'userChange.bs.markdown-editor', {source: source, value: textarea.value});
                 }
             });
 
@@ -2553,90 +2526,68 @@
                 }
             });
 
-            const renderCustomAction = function (key, customAction) {
-                if (!customAction || typeof customAction !== 'object') {
+            helpers.getResolvedCustomActionEntries().forEach(function (entry) {
+                const customAction = entry.action;
+                const customKey = entry.key;
+
+                if (customAction.enabled === false) {
                     return;
                 }
 
-                const context = helpers.createExtensionContext(textarea, {
-                    key: key,
-                    action: customAction,
-                    toolbar: $toolbar.get(0) || null,
+                const context = {
+                    key: customKey,
+                    textarea: textarea,
+                    editable: $editable.get(0),
+                    $editable: $editable,
+                    wrapper: $wrapperRef.get(0),
+                    $wrapper: $wrapperRef,
+                    toolbar: $toolbar.get(0),
                     $toolbar: $toolbar,
-                    toolbarLeft: $toolbarLeft.get(0) || null,
+                    toolbarLeft: $toolbarLeft.get(0),
                     $toolbarLeft: $toolbarLeft,
-                    toolbarRight: $toolbarRight.get(0) || null,
+                    toolbarRight: $toolbarRight.get(0),
                     $toolbarRight: $toolbarRight,
+                    helpers: helpers,
+                    settings: settings,
                     buttonClassBase: buttonClassBase,
-                    groupSizeClass: groupSizeClass
-                });
+                    groupSizeClass: groupSizeClass,
+                    $: $
+                };
 
-                let $element = null;
+                let $element = $();
 
                 if (typeof customAction.render === 'function') {
-                    $element = customAction.render(context);
+                    const rendered = customAction.render(context);
+                    if (rendered) {
+                        $element = rendered.jquery ? rendered : $(rendered);
+                    }
                 } else if (typeof customAction.run === 'function') {
-                    const title = customAction.title || key;
-                    const icon = customAction.icon || 'bi-plus-lg';
-                    const buttonClass = `${buttonClassBase} js-bs-parsedown-action`;
-                    const $button = $(`<button type="button" class="${buttonClass}" title="${helpers.escapeHtml(title)}"><i class="bi ${helpers.escapeHtml(icon)}"></i></button>`);
-                    $element = $(`<div class="btn-group ${groupSizeClass}" role="group"></div>`).append($button);
-                    $button.on('click', function (e) {
-                        e.preventDefault();
+                    const title = customAction.title || customKey;
+                    const icon = customAction.icon ? `<i class="bi ${helpers.escapeHtml(customAction.icon)}"></i>` : helpers.escapeHtml(title);
+                    const buttonClass = customAction.buttonClass || `${buttonClassBase} js-bs-parsedown-action`;
+                    const $button = $(`<button type="button" class="${buttonClass}" title="${helpers.escapeHtml(title)}">${icon}</button>`);
+                    const $buttonGroup = $(`<div class="btn-group ${groupSizeClass}" role="group"></div>`);
+
+                    $button.on('click', function (event) {
+                        event.preventDefault();
                         helpers.syncTextareaFromEditable(textarea, 'editableSelection');
-                        customAction.run(helpers.createExtensionContext(textarea, context));
+                        customAction.run(context);
                     });
+
+                    $buttonGroup.append($button);
+                    $element = $buttonGroup;
                 }
 
-                if (!$element) {
+                if (!$element || $element.length === 0) {
                     return;
                 }
-
-                const $normalizedElement = $element.jquery ? $element : $($element);
-
-                if ($normalizedElement.length === 0) {
-                    return;
-                }
-
-                helpers.callHook('customActionRendered', helpers.createExtensionContext(textarea, {
-                    key: key,
-                    action: customAction,
-                    $element: $normalizedElement,
-                    element: $normalizedElement.get(0) || null
-                }));
 
                 if (customAction.position === 'right') {
-                    $toolbarRight.append($normalizedElement);
-                } else {
-                    $toolbarLeft.append($normalizedElement);
+                    $toolbarRight.append($element);
+                    return;
                 }
-            };
 
-            if (settings.emojiPicker && $.fn.bsEmojiPicker) {
-                renderCustomAction('emojiPicker', {
-                    title: t('actions.emoji', 'Emoji'),
-                    icon: 'bi-emoji-smile',
-                    position: 'left',
-                    render(ctx) {
-                        const $picker = $(`<div class="btn-group ${ctx.groupSizeClass}" role="group"></div>`);
-                        const emojiOptions = $.extend(true, {
-                            btnClass: ctx.buttonClassBase + ' js-bs-parsedown-action',
-                            btnText: '<i class="bi bi-emoji-smile"></i>',
-                            targetInput: ctx.$editable
-                        }, settings.emojiPickerOptions || {});
-
-                        $picker.bsEmojiPicker(emojiOptions);
-                        return $picker;
-                    }
-                });
-            }
-
-            const customActions = settings.customActions && typeof settings.customActions === 'object'
-                ? settings.customActions
-                : {};
-
-            Object.keys(customActions).forEach(function (key) {
-                renderCustomAction(key, customActions[key]);
+                $toolbarLeft.append($element);
             });
 
             $toolbar.append($toolbarLeft);
@@ -2660,22 +2611,17 @@
                     }
                     helpers.setValue(textarea, value, 'api');
                     return helpers.getValue(textarea);
-                },
-                context(extra = {}) {
-                    return helpers.createExtensionContext(textarea, extra);
                 }
             };
             $textarea.data('bsMarkdownEditorApi', api);
 
             helpers.setMode(textarea, settings.mode, 'init');
             helpers.updateStats(textarea);
-            const readyPayload = {
+            helpers.emitPluginEvent(textarea, 'ready.bs.markdown-editor', {
                 mode: helpers.getMode(textarea),
                 value: helpers.getValue(textarea),
                 api: api
-            };
-            helpers.emitPluginEvent(textarea, 'ready.bs.markdown-editor', readyPayload);
-            helpers.callHook('ready', helpers.createExtensionContext(textarea, readyPayload));
+            });
         });
     };
 }(jQuery));
