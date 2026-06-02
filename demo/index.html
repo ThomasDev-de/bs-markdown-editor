@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -133,13 +133,6 @@
                 <h1>bs-markdown-editor Demo Playground</h1>
                 <p>Live preview updates over plugin events and uses <code>$.bsMarkdownEditor.toHtml()</code>.</p>
             </div>
-            <div class="hero-actions d-flex align-items-center gap-2">
-                <span class="stat-pill" id="themeBadge"><i class="bi bi-palette me-1"></i>Theme: dark</span>
-                <div class="btn-group btn-group-sm" role="group" aria-label="Theme selector">
-                    <button id="themeLight" class="btn btn-outline-secondary">Light</button>
-                    <button id="themeDark" class="btn btn-outline-secondary">Dark</button>
-                </div>
-            </div>
         </div>
     </section>
 
@@ -195,7 +188,6 @@
     const $editor = $('#editor');
     const $eventLog = $('#eventLog');
     const $modeBadge = $('#modeBadge');
-    const $themeBadge = $('#themeBadge');
     const $livePreview = $('#livePreview');
     const $root = $(document.documentElement);
 
@@ -212,12 +204,6 @@
         $modeBadge.html(`<i class="bi bi-dot me-1"></i>Mode: ${mode}`);
     }
 
-    function updateThemeMeta() {
-        const theme = $root.attr('data-bs-theme') || 'light';
-        $themeBadge.html(`<i class="bi bi-palette me-1"></i>Theme: ${theme}`);
-        $('#themeLight, #themeDark').removeClass('active');
-        $('#theme' + theme.charAt(0).toUpperCase() + theme.slice(1)).addClass('active');
-    }
 
     function updateLivePreview(value) {
         const text = String(value || '');
@@ -236,7 +222,6 @@
         btnClass: 'border-0',
     });
 
-    updateThemeMeta();
 
     $editor.on('ready.bs.markdown-editor', function (event, data) {
         const value = $editor.bsMarkdownEditor('val') || '';
@@ -287,16 +272,7 @@
     $('#clearLog').on('click', function () {
         $eventLog.empty();
     });
-    $('#themeLight').on('click', function () {
-        $root.attr('data-bs-theme', 'light');
-        updateThemeMeta();
-        addLog('theme.change', {theme: 'light'});
-    });
-    $('#themeDark').on('click', function () {
-        $root.attr('data-bs-theme', 'dark');
-        updateThemeMeta();
-        addLog('theme.change', {theme: 'dark'});
-    });
+
 </script>
 </body>
 </html>
