@@ -81,7 +81,7 @@ Or use a GitHub CDN (replace `x.y.z` with a release tag):
 | `outdent`    | Outdent selected lines                     |
 | `quote`      | Prefix lines with `>`                      |
 | `link`       | Insert markdown link                       |
-| `image`      | Insert markdown image                      |
+| `image`      | Open image modal and insert markdown image |
 | `code`       | Inline code                                |
 | `codeBlock`  | Fenced code block                          |
 | `hr`         | Horizontal rule (`---`)                    |
@@ -121,10 +121,10 @@ document.querySelector('form').reset();
 
 These helpers are available directly on `$.bsMarkdownEditor` and are not bound to a specific editor instance.
 
-| Method       | Signature          | Returns  | Description                                                                                                                        |
-|--------------|--------------------|----------|------------------------------------------------------------------------------------------------------------------------------------|
-| `toHtml`     | `toHtml(markdown)` | `string` | Converts Markdown to the same HTML used by the built-in preview renderer.                                                          |
-| `toMarkdown` | `toMarkdown(html)` | `string` | Converts HTML back to Markdown for common editor output such as headings, lists, links, tables, blockquotes, code, and task lists. |
+| Method       | Signature          | Returns  | Description                                                                                                                                |
+|--------------|--------------------|----------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| `toHtml`     | `toHtml(markdown)` | `string` | Converts Markdown to the same HTML used by the built-in preview renderer.                                                                  |
+| `toMarkdown` | `toMarkdown(html)` | `string` | Converts HTML back to Markdown for common editor output such as headings, lists, links, images, tables, blockquotes, code, and task lists. |
 
 Example:
 
@@ -148,9 +148,16 @@ const markdown = $.bsMarkdownEditor.toMarkdown('<h1>Hello</h1>');
 - The toolbar includes bold, italic, text styles (`~~strikethrough~~`, `==underline==`), headings, unordered/ordered/task lists,
   indent/outdent, quote, link, image, inline code, code block, horizontal rule, table, undo/redo, and preview actions.
 - The table action opens a Bootstrap modal where users can choose row/column count; the modal is removed from the DOM when closed.
+- The image action opens a Bootstrap modal where users can enter URL, alt text, and optional width/height values.
 - Preview rendering is built in and does not require an external Markdown package.
 - Preview supports inline image syntax (`![alt](url)`), task list checkboxes, nested lists (including sublists), fenced code blocks, and
   basic Markdown tables.
+- Image syntax supports optional dimensions as a plugin extension: `![Alt text](image.jpg){width=320 height=180}` renders
+  `width` and `height` attributes plus matching pixel styles on the generated `<img>` tag so values also apply with Bootstrap `.img-fluid`.
+  Numeric values are treated as pixels; `auto` is also allowed, for example `{height=30 width=auto}`.
+- Fenced code blocks with a language hint (for example `php`, `javascript`, `typescript`, `css`, `json`, `sql`, `bash`, or `python`) are
+  rendered with
+  `language-*` classes, a small language badge, and built-in Bootstrap-based syntax highlighting.
 - The generated UI uses Bootstrap 5 theme-aware utility classes and is compatible with `data-bs-theme="dark"` without requiring separate
   dark-mode markup.
 

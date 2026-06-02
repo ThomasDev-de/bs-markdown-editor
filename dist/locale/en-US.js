@@ -9,5 +9,25 @@ window.bsMarkdownEditorTranslations = {
     "stats": {
         "chars": "Characters",
         "words": "Words"
+    },
+    "modal": {
+        "tableTitle": "Create table",
+        "imageTitle": "Insert image",
+        "linkTitle": "Insert link",
+        "rows": "Rows",
+        "columns": "Columns",
+        "alt": "Alt text",
+        "url": "URL",
+        "linkText": "Link text",
+        "width": "Width",
+        "height": "Height",
+        "align": "Alignment",
+        "alignNone": "None",
+        "alignLeft": "Left",
+        "alignCenter": "Center",
+        "alignRight": "Right",
+        "imageDimensionsHelp": "Numeric values are pixels; auto is allowed.",
+        "cancel": "Cancel",
+        "insert": "Insert"
     }
 };

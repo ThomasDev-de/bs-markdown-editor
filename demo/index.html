@@ -278,7 +278,7 @@
         addLog('method.val()', {value: $editor.bsMarkdownEditor('val')});
     });
     $('#valSet').on('click', function () {
-        $editor.bsMarkdownEditor('val', '# Demo Heading\n\nA little **bold** text with `inline code`.\n\n- item 1\n- item 2\n\nx<sup>2</sup> and H<sub>2</sub>O');
+        $editor.bsMarkdownEditor('val', '# Demo Heading\n\nA little **bold** text with `inline code`.\n\n![Placeholder image](https://placehold.co/320x180){width=320 height=180}\n\n- item 1\n- item 2\n\nx<sup>2</sup> and H<sub>2</sub>O');
     });
     $('#valAppend').on('click', function () {
         const value = $editor.bsMarkdownEditor('val');

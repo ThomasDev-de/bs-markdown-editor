@@ -7,6 +7,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-06-02
+
+### Added
+
+- Added built-in syntax highlighting for fenced code blocks with a language hint such as `php`, including preserved `language-*` classes in preview output.
+- Added a small hoverable language badge to fenced code blocks with a language hint.
+- Added optional image dimensions via the Markdown extension syntax `![Alt](image.jpg){width=320 height=180}`, rendered as attributes plus matching pixel styles for Bootstrap `.img-fluid` compatibility. Dimension values may be numeric pixels or `auto`.
+- Added a Bootstrap image insertion modal for URL, alt text, and optional width/height values.
+
+### Changed
+
+- Image and code block toolbar insertions now preserve block boundaries by adding line breaks when inserted next to existing content.
+- Package version bumped from `1.0.5` to `1.0.6`.
+
 ## [1.0.5] - 2026-05-29
 
 ### Added

@@ -21,6 +21,192 @@
 
             return '#';
         },
+        renderImageAttrs(attributes) {
+            const htmlAttrs = [];
+            const classRules = ['img-fluid'];
+            const styleRules = [];
+            const source = String(attributes || '');
+
+            const valuePattern = '(?:"(\\d+|auto)"|&quot;(\\d+|auto)&quot;|\'(\\d+|auto)\'|&#39;(\\d+|auto)&#39;|(\\d+|auto))';
+            const alignPattern = '(?:"(left|right|center|none)"|&quot;(left|right|center|none)&quot;|\'(left|right|center|none)\'|&#39;(left|right|center|none)&#39;|(left|right|center|none))';
+
+            const widthMatch = source.match(new RegExp('(?:^|\\s)width\\s*=\\s*' + valuePattern + '(?:\\s|$)', 'i'));
+            const heightMatch = source.match(new RegExp('(?:^|\\s)height\\s*=\\s*' + valuePattern + '(?:\\s|$)', 'i'));
+            const alignMatch = source.match(new RegExp('(?:^|\\s)align\\s*=\\s*' + alignPattern + '(?:\\s|$)', 'i'));
+
+            if (widthMatch) {
+                const width = widthMatch.slice(1).find(Boolean).toLowerCase();
+
+                if (width === 'auto') {
+                    styleRules.push('width:auto');
+                } else {
+                    htmlAttrs.push(`width="${sharedConverters.escapeHtml(width)}"`);
+                    styleRules.push(`width:${sharedConverters.escapeHtml(width)}px`);
+                }
+            }
+
+            if (heightMatch) {
+                const height = heightMatch.slice(1).find(Boolean).toLowerCase();
+
+                if (height === 'auto') {
+                    styleRules.push('height:auto');
+                } else {
+                    htmlAttrs.push(`height="${sharedConverters.escapeHtml(height)}"`);
+                    styleRules.push(`height:${sharedConverters.escapeHtml(height)}px`);
+                }
+            }
+
+            if (alignMatch) {
+                const align = alignMatch.slice(1).find(Boolean).toLowerCase();
+
+                if (align === 'left') {
+                    styleRules.push('float:left', 'margin-right:1rem', 'margin-bottom:.5rem');
+                } else if (align === 'right') {
+                    styleRules.push('float:right', 'margin-left:1rem', 'margin-bottom:.5rem');
+                } else if (align === 'center') {
+                    classRules.push('d-block', 'mx-auto');
+                }
+            }
+
+            if (classRules.length > 0) {
+                htmlAttrs.push(`class="${classRules.join(' ')}"`);
+            }
+
+            if (styleRules.length > 0) {
+                htmlAttrs.push(`style="${styleRules.join(';')}"`);
+            }
+
+            return htmlAttrs.length === 0 ? '' : ' ' + htmlAttrs.join(' ');
+        },
+        renderMarkdownImageAttrs(node) {
+            const attrs = [];
+
+            const width = String(node.getAttribute('width') || '').trim();
+            const height = String(node.getAttribute('height') || '').trim();
+
+            const styleWidth = node.style && node.style.width ? node.style.width.trim().toLowerCase() : '';
+            const styleHeight = node.style && node.style.height ? node.style.height.trim().toLowerCase() : '';
+            const styleFloat = node.style && node.style.float ? node.style.float.trim().toLowerCase() : '';
+
+            if (/^\d+$/.test(width)) {
+                attrs.push(`width=${width}`);
+            } else if (styleWidth === 'auto') {
+                attrs.push('width=auto');
+            } else if (/^\d+px$/.test(styleWidth)) {
+                attrs.push(`width=${styleWidth.replace('px', '')}`);
+            }
+
+            if (/^\d+$/.test(height)) {
+                attrs.push(`height=${height}`);
+            } else if (styleHeight === 'auto') {
+                attrs.push('height=auto');
+            } else if (/^\d+px$/.test(styleHeight)) {
+                attrs.push(`height=${styleHeight.replace('px', '')}`);
+            }
+
+            if (styleFloat === 'left' || styleFloat === 'right') {
+                attrs.push(`align=${styleFloat}`);
+            } else if (
+                node.classList &&
+                node.classList.contains('d-block') &&
+                node.classList.contains('mx-auto')
+            ) {
+                attrs.push('align=center');
+            }
+
+            return attrs.length === 0 ? '' : `{${attrs.join(' ')}}`;
+        },
+        normalizeCodeLanguage(language) {
+            const aliases = {
+                js: 'javascript',
+                ts: 'typescript',
+                sh: 'bash',
+                shell: 'bash',
+                py: 'python',
+                rb: 'ruby',
+                html: 'markup',
+                xml: 'markup'
+            };
+            const normalized = String(language || '').trim().toLowerCase();
+
+            if (!/^[a-z0-9_+.#-]+$/.test(normalized)) {
+                return '';
+            }
+
+            return aliases[normalized] || normalized;
+        },
+        getCodeLanguageFromClass(className) {
+            const match = String(className || '').match(/(?:^|\s)(?:language|lang)-([a-z0-9_+.#-]+)(?:\s|$)/i);
+            return match ? sharedConverters.normalizeCodeLanguage(match[1]) : '';
+        },
+        highlightCode(code, language) {
+            const normalizedLanguage = sharedConverters.normalizeCodeLanguage(language);
+
+            const keywordMap = {
+                bash: 'alias case cd do done elif else esac export fi for function if in local readonly return set shift then unset until while',
+                css: 'align-items animation background border bottom color content display flex font gap grid height justify-content left margin max-width min-height opacity overflow padding position right top transform transition width z-index',
+                javascript: 'async await break case catch class const continue default delete do else export extends finally for from function if import in instanceof let new of return static super switch this throw try typeof var void while yield',
+                json: 'false null true',
+                markup: 'a article aside body button code div footer form h1 h2 h3 h4 h5 h6 head header html img input label li link main meta nav ol option p pre script section select span style table tbody td textarea th thead title tr ul',
+                php: 'abstract and array as break callable case catch class clone const continue declare default die do echo else elseif empty enddeclare endfor endforeach endif endswitch endwhile enum eval exit extends final finally fn for foreach function global if implements include include_once instanceof insteadof interface isset list match namespace new or print private protected public readonly require require_once return static switch throw trait try unset use var while xor yield',
+                python: 'and as assert async await break class continue def del elif else except false finally for from global if import in is lambda none nonlocal not or pass raise return true try while with yield',
+                sql: 'alter and as by case create delete desc distinct drop else exists from group having in inner insert into is join left like limit not null on or order outer right select set table then union update values when where',
+                typescript: 'abstract any as async await boolean break case catch class const constructor continue declare default delete do else enum export extends false finally for from function if implements import in infer instanceof interface keyof let module namespace never new null number object of private protected public readonly return static string super switch symbol this throw true try type typeof undefined unknown var void while yield'
+            };
+
+            if (normalizedLanguage === '' || !keywordMap[normalizedLanguage]) {
+                return sharedConverters.escapeHtml(code);
+            }
+
+            const sourceCode = String(code || '');
+            const keywordSource = keywordMap[normalizedLanguage];
+            const keywords = keywordSource.split(/\s+/).sort(function (a, b) {
+                return b.length - a.length;
+            }).join('|');
+            const hashCommentLanguages = ['bash', 'php', 'python', 'ruby', 'perl'];
+            const hashCommentPattern = hashCommentLanguages.indexOf(normalizedLanguage) !== -1 ? '|#[^\\n]*' : '';
+            const tokenPattern = new RegExp(
+                '\\/\\*[\\s\\S]*?\\*\\/|\\/\\/[^\\n]*' + hashCommentPattern +
+                '|"(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\'|`(?:\\\\.|[^`\\\\])*`' +
+                '|\\$[a-zA-Z_][\\w]*' +
+                '|\\b(?:' + keywords + ')\\b' +
+                '|\\b\\d+(?:\\.\\d+)?\\b',
+                'gi'
+            );
+            let highlighted = '';
+            let lastIndex = 0;
+
+            sourceCode.replace(tokenPattern, function (token, offset) {
+                highlighted += sharedConverters.escapeHtml(sourceCode.slice(lastIndex, offset));
+                lastIndex = offset + token.length;
+
+                if (/^(?:\/\*[\s\S]*?\*\/|\/\/[^\n]*|#[^\n]*)$/.test(token)) {
+                    highlighted += `<span class="text-body-secondary fst-italic">${sharedConverters.escapeHtml(token)}</span>`;
+                } else if (/^(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)$/.test(token)) {
+                    highlighted += `<span class="text-success">${sharedConverters.escapeHtml(token)}</span>`;
+                } else if (/^\$[a-zA-Z_][\w]*$/.test(token)) {
+                    highlighted += `<span class="text-primary">${sharedConverters.escapeHtml(token)}</span>`;
+                } else if (/^\d+(?:\.\d+)?$/.test(token)) {
+                    highlighted += `<span class="text-warning">${sharedConverters.escapeHtml(token)}</span>`;
+                } else {
+                    highlighted += `<span class="text-info fw-semibold">${sharedConverters.escapeHtml(token)}</span>`;
+                }
+
+                return token;
+            });
+
+            highlighted += sharedConverters.escapeHtml(sourceCode.slice(lastIndex));
+            return highlighted;
+        },
+        renderCodeLanguageBadge(language) {
+            const normalizedLanguage = sharedConverters.normalizeCodeLanguage(language);
+
+            if (normalizedLanguage === '') {
+                return '';
+            }
+
+            return `<span class="badge text-bg-secondary position-absolute top-0 end-0 m-2 opacity-75 bs-markdown-code-language-badge" style="transition: opacity .16s ease;">${sharedConverters.escapeHtml(normalizedLanguage)}</span>`;
+        },
         renderInline(text) {
             const codeStore = [];
             let content = sharedConverters.escapeHtml(text);
@@ -31,11 +217,10 @@
                 return token;
             });
 
-            content = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function (_, alt, url) {
+            content = content.replace(/!\[([^\]]*)\]\(([^)]+)\)(?:\s*\{([^}]*)\})?/g, function (_, alt, url, attrs) {
                 const safeSrc = sharedConverters.escapeHtml(sharedConverters.sanitizeUrl(url));
                 const safeAlt = sharedConverters.escapeHtml(alt || '');
-                return `<img src="${safeSrc}" alt="${safeAlt}" class="img-fluid">`;
-            });
+                return `<img src="${safeSrc}" alt="${safeAlt}"${sharedConverters.renderImageAttrs(attrs)}>`;            });
 
             content = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (_, label, url) {
                 const safeHref = sharedConverters.escapeHtml(sharedConverters.sanitizeUrl(url));
@@ -136,8 +321,11 @@
                     continue;
                 }
 
-                if (/^```/.test(trimmed)) {
+                const fenceMatch = trimmed.match(/^```\s*([a-zA-Z0-9_+.#-]+)?(?:\s.*)?$/);
+                if (fenceMatch) {
                     const fenceLines = [];
+                    const language = sharedConverters.normalizeCodeLanguage(fenceMatch[1] || '');
+                    const languageClass = language === '' ? '' : ` class="language-${sharedConverters.escapeHtml(language)}"`;
                     i += 1;
                     while (i < lines.length && !/^```/.test(lines[i].trim())) {
                         fenceLines.push(lines[i]);
@@ -146,7 +334,8 @@
                     if (i < lines.length) {
                         i += 1;
                     }
-                    html.push(`<pre><code>${sharedConverters.escapeHtml(fenceLines.join('\n'))}</code></pre>`);
+                    const preClass = language === '' ? '' : ' class="position-relative pt-4"';
+                    html.push(`<pre${preClass}>${sharedConverters.renderCodeLanguageBadge(language)}<code${languageClass}>${sharedConverters.highlightCode(fenceLines.join('\n'), language)}</code></pre>`);
                     continue;
                 }
 
@@ -300,7 +489,8 @@
                 return `[${label}](${node.getAttribute('href') || ''})`;
             }
             if (tagName === 'img') {
-                return `![${sharedConverters.escapeMarkdownText(node.getAttribute('alt') || '')}](${node.getAttribute('src') || ''})`;
+                const attrs = sharedConverters.renderMarkdownImageAttrs(node);
+                return `![${sharedConverters.escapeMarkdownText(node.getAttribute('alt') || '')}](${node.getAttribute('src') || ''})${attrs}`;
             }
             if (tagName === 'input') {
                 return '';
@@ -347,7 +537,8 @@
             if (tagName === 'pre') {
                 const codeNode = node.querySelector('code');
                 const code = codeNode ? codeNode.textContent : node.textContent;
-                return `\`\`\`\n${String(code || '').replace(/\r\n?/g, '\n').replace(/\n$/, '')}\n\`\`\`\n\n`;
+                const language = codeNode ? sharedConverters.getCodeLanguageFromClass(codeNode.getAttribute('class')) : '';
+                return `\`\`\`${language}\n${String(code || '').replace(/\r\n?/g, '\n').replace(/\n$/, '')}\n\`\`\`\n\n`;
             }
             if (tagName === 'hr') {
                 return '---\n\n';
@@ -758,8 +949,21 @@
             },
             modal: {
                 tableTitle: 'Create table',
+                imageTitle: 'Insert image',
+                linkTitle: 'Insert link',
                 rows: 'Rows',
                 columns: 'Columns',
+                alt: 'Alt text',
+                url: 'URL',
+                linkText: 'Link text',
+                width: 'Width',
+                height: 'Height',
+                align: 'Alignment',
+                alignNone: 'None',
+                alignLeft: 'Left',
+                alignCenter: 'Center',
+                alignRight: 'Right',
+                imageDimensionsHelp: 'Numeric values are pixels; auto is allowed.',
                 cancel: 'Cancel',
                 insert: 'Insert'
             },
@@ -880,12 +1084,7 @@
                 title: t('actions.link', 'Link'),
                 icon: 'bi-link-45deg',
                 run(textarea) {
-                    const selected = helpers.getSelection(textarea) || t('placeholders.linkText', 'Linktext');
-                    const url = window.prompt(t('prompts.linkUrl', 'URL eingeben'), 'https://');
-                    if (!url) {
-                        return;
-                    }
-                    helpers.replaceSelection(textarea, `[${selected}](${url})`, selected.length + 3, selected.length + url.length + 3);
+                    helpers.openLinkModal(textarea);
                 }
             },
             code: {
@@ -902,7 +1101,7 @@
                     const selected = helpers.getSelection(textarea);
                     const language = (window.prompt(t('prompts.codeLang', 'Sprache (optional)'), '') || '').trim();
                     const placeholder = selected === '' ? t('placeholders.code', 'code') : selected;
-                    helpers.replaceSelection(textarea, `\`\`\`${language}\n${placeholder}\n\`\`\``);
+                    helpers.insertBlock(textarea, `\`\`\`${language}\n${placeholder}\n\`\`\``);
                 }
             },
             table: {
@@ -927,15 +1126,7 @@
                 title: t('actions.image', 'Bild'),
                 icon: 'bi-image',
                 run(textarea) {
-                    const alt = window.prompt(t('prompts.imageAlt', 'Alt-Text eingeben'), t('placeholders.imageAlt', 'Bild'));
-                    if (alt === null) {
-                        return;
-                    }
-                    const url = window.prompt(t('prompts.imageUrl', 'Bild-URL eingeben'), 'https://');
-                    if (!url) {
-                        return;
-                    }
-                    helpers.replaceSelection(textarea, `![${alt}](${url})`);
+                    helpers.openImageModal(textarea);
                 }
             },
             hr: {
@@ -986,6 +1177,16 @@
         const helpers = {
             escapeHtml(value) {
                 return sharedConverters.escapeHtml(value);
+            },
+            ensurePluginStyles() {
+                if ($('#bsMarkdownEditorRuntimeStyles').length > 0) {
+                    return;
+                }
+                $('head').append(`
+<style id="bsMarkdownEditorRuntimeStyles">
+.bs-markdown-code-language-badge:hover{opacity:1!important;}
+</style>
+`);
             },
             sanitizeUrl(url) {
                 return sharedConverters.sanitizeUrl(url);
@@ -1597,6 +1798,209 @@
                 });
                 return lines.join('\n');
             },
+            normalizeImageDimensionValue(value) {
+                const normalized = String(value || '').trim().toLowerCase();
+                return /^\d+$/.test(normalized) || normalized === 'auto' ? normalized : '';
+            },
+            buildMarkdownImage(alt, url, width, height, align) {
+                const attrs = [];
+                const safeWidth = helpers.normalizeImageDimensionValue(width);
+                const safeHeight = helpers.normalizeImageDimensionValue(height);
+                const safeAlign = String(align || '').trim().toLowerCase();
+
+                if (safeWidth !== '') {
+                    attrs.push(`width=${safeWidth}`);
+                }
+
+                if (safeHeight !== '') {
+                    attrs.push(`height=${safeHeight}`);
+                }
+
+                if (['left', 'right', 'center', 'none'].indexOf(safeAlign) !== -1 && safeAlign !== 'none') {
+                    attrs.push(`align=${safeAlign}`);
+                }
+
+                return `![${sharedConverters.escapeMarkdownText(alt || '')}](${String(url || '').trim()})${attrs.length > 0 ? ` {${attrs.join(' ')}}` : ''}`;
+            },
+            insertImageWithPromptFallback(textarea) {
+                const selected = helpers.getSelection(textarea);
+                const alt = window.prompt(t('prompts.imageAlt', 'Alt-Text eingeben'), selected || t('placeholders.imageAlt', 'Bild'));
+                if (alt === null) {
+                    return;
+                }
+                const url = window.prompt(t('prompts.imageUrl', 'Bild-URL eingeben'), 'https://');
+                if (!url) {
+                    return;
+                }
+                helpers.insertBlock(textarea, helpers.buildMarkdownImage(alt, url, '', ''));
+            },
+            insertLinkWithPromptFallback(textarea) {
+                const selected = helpers.getSelection(textarea) || t('placeholders.linkText', 'Linktext');
+                const url = window.prompt(t('prompts.linkUrl', 'URL eingeben'), 'https://');
+                if (!url) {
+                    return;
+                }
+                helpers.replaceSelection(textarea, `[${selected}](${url})`, selected.length + 3, selected.length + url.length + 3);
+            },
+            openLinkModal(textarea) {
+                if (!window.bootstrap || !window.bootstrap.Modal) {
+                    helpers.insertLinkWithPromptFallback(textarea);
+                    return;
+                }
+
+                const selected = helpers.getSelection(textarea);
+                const modalId = 'bsMarkdownEditorLinkModal' + Math.random().toString(36).slice(2, 10);
+                const $modal = $(`
+<div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}Title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="${modalId}Title">${helpers.escapeHtml(t('modal.linkTitle', 'Link einfügen'))}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label" for="${modalId}Url">${helpers.escapeHtml(t('modal.url', 'URL'))}</label>
+                    <input id="${modalId}Url" class="form-control js-bs-markdown-link-url" type="url" value="https://" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="${modalId}Text">${helpers.escapeHtml(t('modal.linkText', 'Linktext'))}</label>
+                    <input id="${modalId}Text" class="form-control js-bs-markdown-link-text" type="text" value="${helpers.escapeHtml(selected || t('placeholders.linkText', 'Linktext'))}">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}</button>
+                <button type="button" class="btn btn-primary js-bs-markdown-link-insert">${helpers.escapeHtml(t('modal.insert', 'Einfügen'))}</button>
+            </div>
+        </div>
+    </div>
+</div>
+`);
+                const modalElement = $modal[0];
+                const modalInstance = new window.bootstrap.Modal(modalElement);
+
+                $modal.on('hidden.bs.modal', function () {
+                    modalInstance.dispose();
+                    $modal.remove();
+                });
+                $modal.on('shown.bs.modal', function () {
+                    $modal.find('.js-bs-markdown-link-url').trigger('focus').trigger('select');
+                });
+
+                $modal.find('.js-bs-markdown-link-insert').on('click', function () {
+                    const url = $modal.find('.js-bs-markdown-link-url').val();
+                    if (!String(url || '').trim()) {
+                        $modal.find('.js-bs-markdown-link-url').trigger('focus');
+                        return;
+                    }
+                    const text = $modal.find('.js-bs-markdown-link-text').val() || url;
+                    const markdown = `[${text}](${url})`;
+                    helpers.replaceSelection(textarea, markdown, text.length + 3, text.length + url.length + 3);
+                    modalInstance.hide();
+                });
+
+                $modal.on('keydown', function (event) {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                        event.preventDefault();
+                        $modal.find('.js-bs-markdown-link-insert').trigger('click');
+                    }
+                });
+
+                $('body').append($modal);
+                modalInstance.show();
+            },
+            openImageModal(textarea) {
+                if (!window.bootstrap || !window.bootstrap.Modal) {
+                    helpers.insertImageWithPromptFallback(textarea);
+                    return;
+                }
+
+                const selected = helpers.getSelection(textarea);
+                const modalId = 'bsMarkdownEditorImageModal' + Math.random().toString(36).slice(2, 10);
+                const $modal = $(`
+<div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}Title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="${modalId}Title">${helpers.escapeHtml(t('modal.imageTitle', 'Bild einfügen'))}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label" for="${modalId}Url">${helpers.escapeHtml(t('modal.url', 'Bild-URL'))}</label>
+                    <input id="${modalId}Url" class="form-control js-bs-markdown-image-url" type="url" value="https://" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="${modalId}Alt">${helpers.escapeHtml(t('modal.alt', 'Alt-Text'))}</label>
+                    <input id="${modalId}Alt" class="form-control js-bs-markdown-image-alt" type="text" value="${helpers.escapeHtml(selected || t('placeholders.imageAlt', 'Bild'))}">
+                </div>
+                <div class="row g-3">
+    <div class="col-sm-4">
+        <label class="form-label" for="${modalId}Width">${helpers.escapeHtml(t('modal.width', 'Breite'))}</label>
+        <input id="${modalId}Width" class="form-control js-bs-markdown-image-width" type="text" inputmode="numeric" placeholder="320">
+    </div>
+    <div class="col-sm-4">
+        <label class="form-label" for="${modalId}Height">${helpers.escapeHtml(t('modal.height', 'Höhe'))}</label>
+        <input id="${modalId}Height" class="form-control js-bs-markdown-image-height" type="text" inputmode="numeric" placeholder="180">
+    </div>
+    <div class="col-sm-4">
+        <label class="form-label" for="${modalId}Align">${helpers.escapeHtml(t('modal.align', 'Ausrichtung'))}</label>
+        <select id="${modalId}Align" class="form-select js-bs-markdown-image-align">
+            <option value="">${helpers.escapeHtml(t('modal.alignNone', 'Keine'))}</option>
+            <option value="left">${helpers.escapeHtml(t('modal.alignLeft', 'Links'))}</option>
+            <option value="center">${helpers.escapeHtml(t('modal.alignCenter', 'Zentriert'))}</option>
+            <option value="right">${helpers.escapeHtml(t('modal.alignRight', 'Rechts'))}</option>
+        </select>
+    </div>
+</div>
+                <div class="form-text mt-2">${helpers.escapeHtml(t('modal.imageDimensionsHelp', 'Zahlenwerte sind Pixel; auto ist erlaubt.'))}</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}</button>
+                <button type="button" class="btn btn-primary js-bs-markdown-image-insert">${helpers.escapeHtml(t('modal.insert', 'Einfügen'))}</button>
+            </div>
+        </div>
+    </div>
+</div>
+`);
+                const modalElement = $modal[0];
+                const modalInstance = new window.bootstrap.Modal(modalElement);
+
+                $modal.on('hidden.bs.modal', function () {
+                    modalInstance.dispose();
+                    $modal.remove();
+                });
+                $modal.on('shown.bs.modal', function () {
+                    $modal.find('.js-bs-markdown-image-url').trigger('focus').trigger('select');
+                });
+
+                $modal.find('.js-bs-markdown-image-insert').on('click', function () {
+                    const url = $modal.find('.js-bs-markdown-image-url').val();
+                    if (!String(url || '').trim()) {
+                        $modal.find('.js-bs-markdown-image-url').trigger('focus');
+                        return;
+                    }
+                    const markdown = helpers.buildMarkdownImage(
+                        $modal.find('.js-bs-markdown-image-alt').val(),
+                        url,
+                        $modal.find('.js-bs-markdown-image-width').val(),
+                        $modal.find('.js-bs-markdown-image-height').val(),
+                        $modal.find('.js-bs-markdown-image-align').val()
+                    );
+                    helpers.insertBlock(textarea, markdown);
+                    modalInstance.hide();
+                });
+
+                $modal.on('keydown', function (event) {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                        event.preventDefault();
+                        $modal.find('.js-bs-markdown-image-insert').trigger('click');
+                    }
+                });
+
+                $('body').append($modal);
+                modalInstance.show();
+            },
             replaceSelection(textarea, replacement, selectionStartOffset = 0, selectionEndOffset = replacement.length, source = 'toolbar') {
                 const start = textarea.selectionStart;
                 const end = textarea.selectionEnd;
@@ -1735,6 +2139,7 @@
                 return;
             }
             $textarea.data('bsMarkdownEditorInitialized', true);
+            helpers.ensurePluginStyles();
 
             const wrapperClass = helpers.getWrapperClass();
             const wrapperClasses = [DEFAULT_WRAPPER_CLASS]
