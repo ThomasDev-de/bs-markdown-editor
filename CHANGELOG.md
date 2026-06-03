@@ -18,6 +18,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Known highlighted code blocks now use subtle striped line backgrounds alongside line numbers.
 - Markdown table parsing now preserves escaped pipes and pipes inside inline code, preventing README option tables from splitting into extra columns.
 - Inline code rendering no longer double-escapes already escaped Markdown content inside table cells.
+- Markdown rendering no longer stalls on partially typed or invalid fenced code block markers such as extra backticks.
+- Empty highlighted code blocks no longer render line numbers or striped line backgrounds.
+- Code block insertion now uses a Bootstrap modal for optional language input instead of the browser prompt when Bootstrap Modal is available.
+- Custom actions with `position: 'right'` now render before the preview button in the right toolbar group.
+- Pressing `Tab` inside the editor now inserts spaces up to the next four-column tab stop instead of moving focus away.
+- PHP union and intersection return types now highlight all type names consistently without mis-highlighting `return $variable` as a type.
+- PHP casts such as `(float)` now highlight the cast type as a type, and trailing-dot float literals such as `1.` are highlighted as complete numbers.
+- Toolbar actions and custom actions now preserve the editor cursor or selection before opening modals, so inserted content lands at the previous position.
+- Empty placeholder lines in the editable source now serialize as a single newline, preventing one `Enter` at the end of a code block from rendering two blank code lines.
 
 ## [1.0.6] - 2026-06-02
 

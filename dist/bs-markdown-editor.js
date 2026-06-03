@@ -183,8 +183,11 @@
             const keywordPattern = new RegExp('^(?:' + keywords + ')$', 'i');
             const hashCommentLanguages = ['bash', 'php', 'python', 'ruby', 'perl'];
             const hashCommentPattern = hashCommentLanguages.indexOf(normalizedLanguage) !== -1 ? '|#[^\\n]*' : '';
-            const phpTypePattern = normalizedLanguage === 'php' ? '|\\??\\\\?[a-zA-Z_][\\w]*(?:\\\\[a-zA-Z_][\\w]*)*(?=\\s*(?:[|&]|\\$))' : '';
-            const phpReturnTypePattern = normalizedLanguage === 'php' ? '|:\\s*\\??\\\\?[a-zA-Z_][\\w]*(?:\\\\[a-zA-Z_][\\w]*)*' : '';
+            const phpTypeNamePattern = '\\??\\\\?[a-zA-Z_][\\w]*(?:\\\\[a-zA-Z_][\\w]*)*';
+            const phpTypePattern = normalizedLanguage === 'php' ? '|' + phpTypeNamePattern + '(?=\\s*(?:[|&]|\\$))' : '';
+            const phpReturnTypePattern = normalizedLanguage === 'php' ? '|:\\s*' + phpTypeNamePattern + '(?:\\s*[|&]\\s*' + phpTypeNamePattern + ')*' : '';
+            const phpBuiltinTypePattern = /^(?:array|bool|boolean|callable|false|float|int|integer|iterable|mixed|never|null|object|parent|real|self|static|string|true|void)$/i;
+            const phpCastPattern = normalizedLanguage === 'php' ? '|\\(\\s*(?:array|bool|boolean|double|float|int|integer|object|real|string|unset)\\s*\\)' : '';
             const phpHeredocPattern = normalizedLanguage === 'php' ? '<<<[ \\t]*(?:[a-zA-Z_][\\w]*|\\\'[a-zA-Z_][\\w]*\\\')\\r?\\n[\\s\\S]*?\\r?\\n\\s*[a-zA-Z_][\\w]*;?|' : '';
             const tokenPattern = new RegExp(
                 phpHeredocPattern +
@@ -193,9 +196,10 @@
                 '|\\$[a-zA-Z_][\\w]*' +
                 '|\\b[a-zA-Z_$][\\w$]*\\b(?=\\s*\\()' +
                 phpReturnTypePattern +
+                phpCastPattern +
                 phpTypePattern +
                 '|\\b(?:' + keywords + ')\\b' +
-                '|\\b\\d+(?:\\.\\d+)?\\b',
+                '|(?<![\\w.])(?:\\d+\\.\\d*|\\.\\d+|\\d+)(?![\\w.])',
                 'gi'
             );
             let highlighted = '';
@@ -218,13 +222,18 @@
                         : `<span class="text-success">${sharedConverters.escapeHtml(token)}</span>`;
                 } else if (/^\$[a-zA-Z_][\w]*$/.test(token)) {
                     highlighted += `<span class="text-primary">${sharedConverters.escapeHtml(token)}</span>`;
-                } else if (/^\d+(?:\.\d+)?$/.test(token)) {
+                } else if (/^(?:\d+\.\d*|\.\d+|\d+)$/.test(token)) {
                     highlighted += `<span class="text-warning">${sharedConverters.escapeHtml(token)}</span>`;
-                } else if (normalizedLanguage === 'php' && /^:\s*\??\\?[a-zA-Z_][\w]*(?:\\[a-zA-Z_][\w]*)*$/.test(token)) {
-                    const returnTypeMatch = token.match(/^(:\s*)(\??\\?[a-zA-Z_][\w]*(?:\\[a-zA-Z_][\w]*)*)$/);
+                } else if (normalizedLanguage === 'php' && /^:\s*\??\\?[a-zA-Z_][\w]*(?:\\[a-zA-Z_][\w]*)*(?:\s*[|&]\s*\??\\?[a-zA-Z_][\w]*(?:\\[a-zA-Z_][\w]*)*)*$/.test(token)) {
+                    const returnTypeMatch = token.match(/^(:\s*)([\s\S]+)$/);
                     highlighted += sharedConverters.escapeHtml(returnTypeMatch[1]);
-                    highlighted += `<span class="text-secondary fw-semibold">${sharedConverters.escapeHtml(returnTypeMatch[2])}</span>`;
-                } else if (normalizedLanguage === 'php' && /^\s*(?:[|&]|\$)/.test(followingSource) && /^\??\\?[a-zA-Z_][\w]*(?:\\[a-zA-Z_][\w]*)*$/.test(token)) {
+                    highlighted += sharedConverters.renderPhpTypeExpression(returnTypeMatch[2]);
+                } else if (normalizedLanguage === 'php' && /^\(\s*(?:array|bool|boolean|double|float|int|integer|object|real|string|unset)\s*\)$/i.test(token)) {
+                    const castMatch = token.match(/^(\(\s*)([a-z]+)(\s*\))$/i);
+                    highlighted += sharedConverters.escapeHtml(castMatch[1]);
+                    highlighted += `<span class="text-secondary fw-semibold">${sharedConverters.escapeHtml(castMatch[2])}</span>`;
+                    highlighted += sharedConverters.escapeHtml(castMatch[3]);
+                } else if (normalizedLanguage === 'php' && /^\s*(?:[|&]|\$)/.test(followingSource) && (!keywordPattern.test(token) || phpBuiltinTypePattern.test(token)) && /^\??\\?[a-zA-Z_][\w]*(?:\\[a-zA-Z_][\w]*)*$/.test(token)) {
                     highlighted += `<span class="text-secondary fw-semibold">${sharedConverters.escapeHtml(token)}</span>`;
                 } else if (!keywordPattern.test(token) && /^[a-zA-Z_$][\w$]*$/.test(token)) {
                     highlighted += `<span class="text-danger fw-semibold">${sharedConverters.escapeHtml(token)}</span>`;
@@ -236,6 +245,22 @@
             });
 
             highlighted += sharedConverters.escapeHtml(sourceCode.slice(lastIndex));
+            return highlighted;
+        },
+        renderPhpTypeExpression(expression) {
+            const source = String(expression || '');
+            let highlighted = '';
+            let lastIndex = 0;
+            const typePattern = /\??\\?[a-zA-Z_][\w]*(?:\\[a-zA-Z_][\w]*)*/g;
+
+            source.replace(typePattern, function (typeName, offset) {
+                highlighted += sharedConverters.escapeHtml(source.slice(lastIndex, offset));
+                highlighted += `<span class="text-secondary fw-semibold">${sharedConverters.escapeHtml(typeName)}</span>`;
+                lastIndex = offset + typeName.length;
+                return typeName;
+            });
+
+            highlighted += sharedConverters.escapeHtml(source.slice(lastIndex));
             return highlighted;
         },
         renderPhpDocComment(token) {
@@ -472,9 +497,13 @@
                         const preClass = ' class="position-relative pt-4 bg-dark text-light overflow-auto"';
                         const codeClass = ` class="${languageClass} d-block flex-grow-1"`;
                         const codeStyle = ' style="padding-top:3px;"';
-                        const stripedStyle = ' style="line-height:1.5;background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 1.5em, rgba(255,255,255,.035) 1.5em, rgba(255,255,255,.035) 3em);"';
-                        const lineNumbers = sharedConverters.renderCodeLineNumbers(code);
-                        html.push(`<pre${preClass}>${sharedConverters.renderCodeLanguageBadge(language)}<span class="d-flex align-items-start"${stripedStyle}><span aria-hidden="true" class="text-secondary user-select-none pe-3 me-3 border-end border-secondary" style="padding-top:3px;text-align:right;">${lineNumbers}</span><code${codeClass}${codeStyle}>${sharedConverters.highlightCode(code, language)}</code></span></pre>`);
+                        if (code.trim() === '') {
+                            html.push(`<pre${preClass}>${sharedConverters.renderCodeLanguageBadge(language)}<code${codeClass}${codeStyle}></code></pre>`);
+                        } else {
+                            const stripedStyle = ' style="line-height:1.5;background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 1.5em, rgba(255,255,255,.035) 1.5em, rgba(255,255,255,.035) 3em);"';
+                            const lineNumbers = sharedConverters.renderCodeLineNumbers(code);
+                            html.push(`<pre${preClass}>${sharedConverters.renderCodeLanguageBadge(language)}<span class="d-flex align-items-start"${stripedStyle}><span aria-hidden="true" class="text-secondary user-select-none pe-3 me-3 border-end border-secondary" style="padding-top:3px;text-align:right;">${lineNumbers}</span><code${codeClass}${codeStyle}>${sharedConverters.highlightCode(code, language)}</code></span></pre>`);
+                        }
                     } else {
                         const codeClass = languageClass === '' ? '' : ` class="${languageClass}"`;
                         const preClass = language === '' ? '' : ' class="position-relative pt-4"';
@@ -553,7 +582,7 @@
                     if (
                         current.trim() === '' ||
                         /^<table[\s>]/i.test(current.trim()) ||
-                        /^```/.test(current.trim()) ||
+                        /^```\s*([a-zA-Z0-9_+.#-]+)?(?:\s.*)?$/.test(current.trim()) ||
                         /^\s{0,3}(#{1,6})\s+/.test(current) ||
                         /^\s*>\s?/.test(current) ||
                         sharedConverters.isListLine(current) ||
@@ -568,6 +597,11 @@
                     }
                     paragraphLines.push(current);
                     i += 1;
+                }
+                if (paragraphLines.length === 0) {
+                    html.push(renderParagraph([line]));
+                    i += 1;
+                    continue;
                 }
                 html.push(renderParagraph(paragraphLines));
             }
@@ -1277,10 +1311,7 @@
                 title: t('actions.codeBlock', 'Codeblock'),
                 icon: 'bi-braces-asterisk',
                 run(textarea) {
-                    const selected = helpers.getSelection(textarea);
-                    const language = (window.prompt(t('prompts.codeLang', 'Sprache (optional)'), '') || '').trim();
-                    const placeholder = selected === '' ? t('placeholders.code', 'code') : selected;
-                    helpers.insertBlock(textarea, `\`\`\`${language}\n${placeholder}\n\`\`\``);
+                    helpers.openCodeBlockModal(textarea);
                 }
             },
             table: {
@@ -1526,6 +1557,18 @@
                 }
                 return Array.prototype.indexOf.call(node.parentNode.childNodes, node);
             },
+            isEditablePlaceholderBreakBlock(node) {
+                if (!node || node.nodeType !== Node.ELEMENT_NODE) {
+                    return false;
+                }
+                const tag = String(node.tagName || '').toLowerCase();
+                if (tag !== 'div' && tag !== 'p') {
+                    return false;
+                }
+                return node.childNodes.length === 1 &&
+                    node.childNodes[0].nodeType === Node.ELEMENT_NODE &&
+                    String(node.childNodes[0].tagName || '').toLowerCase() === 'br';
+            },
             getEditableNodeMarkdownLength(node, root) {
                 if (!node) {
                     return 0;
@@ -1546,7 +1589,9 @@
                         length += helpers.getEditableNodeMarkdownLength(child, root);
                     });
                     if ((tag === 'div' || tag === 'p') && node !== root) {
-                        length += 1;
+                        if (!helpers.isEditablePlaceholderBreakBlock(node)) {
+                            length += 1;
+                        }
                     }
                     if (tag === 'sup' || tag === 'sub') {
                         length += (`</${tag}>`).length;
@@ -1582,6 +1627,9 @@
                         return `<${tag}>${content}</${tag}>`;
                     }
                     if ((tag === 'div' || tag === 'p') && node !== root) {
+                        if (helpers.isEditablePlaceholderBreakBlock(node)) {
+                            return '\n';
+                        }
                         return content + '\n';
                     }
                     return content;
@@ -1605,17 +1653,20 @@
                 }
                 return value;
             },
-            getEditableSelectionOffsets(editable) {
+            getEditableSelectionOffsets(editable, fallbackOffsets = null) {
+                const fallback = fallbackOffsets && typeof fallbackOffsets.start === 'number' && typeof fallbackOffsets.end === 'number'
+                    ? {start: fallbackOffsets.start, end: fallbackOffsets.end}
+                    : {start: 0, end: 0};
                 if (!editable) {
-                    return {start: 0, end: 0};
+                    return fallback;
                 }
                 const selection = window.getSelection();
                 if (!selection || selection.rangeCount === 0) {
-                    return {start: 0, end: 0};
+                    return fallback;
                 }
                 const range = selection.getRangeAt(0);
                 if (!editable.contains(range.startContainer) || !editable.contains(range.endContainer)) {
-                    return {start: 0, end: 0};
+                    return fallback;
                 }
                 const startRange = range.cloneRange();
                 startRange.selectNodeContents(editable);
@@ -1627,6 +1678,35 @@
                     start: helpers.serializeEditableNode(startRange.cloneContents(), editable).length,
                     end: helpers.serializeEditableNode(endRange.cloneContents(), editable).length
                 };
+            },
+            getRememberedEditableSelection(textarea) {
+                const remembered = $(textarea).data('bsMarkdownEditorEditableSelection');
+                if (!remembered || typeof remembered.start !== 'number' || typeof remembered.end !== 'number') {
+                    return null;
+                }
+                return {start: remembered.start, end: remembered.end};
+            },
+            rememberEditableSelection(textarea) {
+                const editable = helpers.getEditableElement(textarea);
+                if (!editable) {
+                    return;
+                }
+                const selection = window.getSelection();
+                if (!selection || selection.rangeCount === 0) {
+                    return;
+                }
+                const range = selection.getRangeAt(0);
+                if (!editable.contains(range.startContainer) || !editable.contains(range.endContainer)) {
+                    return;
+                }
+                const offsets = helpers.getEditableSelectionOffsets(editable);
+                const valueLength = helpers.getEditableValue(editable).length;
+                const clampedStart = Math.max(0, Math.min(valueLength, offsets.start));
+                const clampedEnd = Math.max(clampedStart, Math.min(valueLength, offsets.end));
+                $(textarea).data('bsMarkdownEditorEditableSelection', {start: clampedStart, end: clampedEnd});
+                if (typeof textarea.setSelectionRange === 'function') {
+                    textarea.setSelectionRange(clampedStart, clampedEnd);
+                }
             },
             getEditableDomPointByMarkdownOffset(editable, offset) {
                 const target = Math.max(0, offset);
@@ -1715,15 +1795,56 @@
                     .replace(/&lt;sup&gt;([\s\S]*?)&lt;\/sup&gt;/gi, '<sup>$1</sup>')
                     .replace(/\n/g, '<br>');
             },
+            insertTextIntoEditable(editable, text) {
+                if (!editable) {
+                    return;
+                }
+                editable.focus();
+
+                if (document.queryCommandSupported && document.queryCommandSupported('insertText')) {
+                    document.execCommand('insertText', false, text);
+                    return;
+                }
+
+                const selection = window.getSelection();
+                if (!selection || selection.rangeCount === 0) {
+                    return;
+                }
+
+                const range = selection.getRangeAt(0);
+                if (!editable.contains(range.startContainer) || !editable.contains(range.endContainer)) {
+                    return;
+                }
+
+                const textNode = document.createTextNode(text);
+                range.deleteContents();
+                range.insertNode(textNode);
+                range.setStart(textNode, text.length);
+                range.setEnd(textNode, text.length);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            },
+            getEditableTabInsertion(editable, tabSize = 4) {
+                const offsets = helpers.getEditableSelectionOffsets(editable);
+                const value = helpers.getEditableValue(editable);
+                const safeStart = Math.max(0, Math.min(value.length, offsets.start));
+                const lineStart = value.lastIndexOf('\n', Math.max(0, safeStart - 1)) + 1;
+                const column = safeStart - lineStart;
+                const remaining = tabSize - (column % tabSize);
+                const spaceCount = remaining === 0 ? tabSize : remaining;
+
+                return ' '.repeat(spaceCount);
+            },
             syncTextareaFromEditable(textarea, source = 'editable') {
                 const editable = helpers.getEditableElement(textarea);
                 if (!editable) {
                     return;
                 }
-                const offsets = helpers.getEditableSelectionOffsets(editable);
+                const offsets = helpers.getEditableSelectionOffsets(editable, helpers.getRememberedEditableSelection(textarea));
                 const value = helpers.getEditableValue(editable);
                 const clampedStart = Math.max(0, Math.min(value.length, offsets.start));
                 const clampedEnd = Math.max(clampedStart, Math.min(value.length, offsets.end));
+                $(textarea).data('bsMarkdownEditorEditableSelection', {start: clampedStart, end: clampedEnd});
                 helpers.withInternalChange(textarea, source, function () {
                     textarea.value = value;
                     textarea.setSelectionRange(clampedStart, clampedEnd);
@@ -1740,6 +1861,7 @@
                 if (preserveSelection) {
                     helpers.setEditableSelectionOffsets(editable, offsets.start, offsets.end);
                 }
+                $(textarea).data('bsMarkdownEditorEditableSelection', offsets);
             },
             refreshPreview(textarea) {
                 const $textarea = $(textarea);
@@ -1765,6 +1887,7 @@
                 const selectionEnd = typeof textarea.selectionEnd === 'number' ? textarea.selectionEnd : valueLength;
                 const clampedStart = Math.max(0, Math.min(valueLength, selectionStart));
                 const clampedEnd = Math.max(clampedStart, Math.min(valueLength, selectionEnd));
+                $(textarea).data('bsMarkdownEditorEditableSelection', {start: clampedStart, end: clampedEnd});
                 helpers.withInternalChange(textarea, source, function () {
                     textarea.setSelectionRange(clampedStart, clampedEnd);
                     $(textarea).trigger('input');
@@ -2117,6 +2240,77 @@
                 }
                 helpers.replaceSelection(textarea, `[${selected}](${url})`, selected.length + 3, selected.length + url.length + 3);
             },
+            buildMarkdownCodeBlock(language, code) {
+                return `\`\`\`${String(language || '').trim()}\n${String(code || '')}\n\`\`\``;
+            },
+            insertCodeBlockWithPromptFallback(textarea) {
+                const selected = helpers.getSelection(textarea);
+                const languageInput = window.prompt(t('prompts.codeLang', 'Sprache (optional)'), '');
+                if (languageInput === null) {
+                    return;
+                }
+                const language = languageInput.trim();
+                const code = selected === '' ? t('placeholders.code', 'code') : selected;
+                helpers.insertBlock(textarea, helpers.buildMarkdownCodeBlock(language, code));
+            },
+            openCodeBlockModal(textarea) {
+                if (!window.bootstrap || !window.bootstrap.Modal) {
+                    helpers.insertCodeBlockWithPromptFallback(textarea);
+                    return;
+                }
+
+                const selected = helpers.getSelection(textarea);
+                const modalId = 'bsMarkdownEditorCodeBlockModal' + Math.random().toString(36).slice(2, 10);
+                const $modal = $(`
+<div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}Title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="${modalId}Title">${helpers.escapeHtml(t('actions.codeBlock', 'Codeblock'))}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-0">
+                    <label class="form-label" for="${modalId}Language">${helpers.escapeHtml(t('prompts.codeLang', 'Sprache (optional)'))}</label>
+                    <input id="${modalId}Language" class="form-control js-bs-markdown-code-language" type="text" placeholder="php">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}</button>
+                <button type="button" class="btn btn-primary js-bs-markdown-code-insert">${helpers.escapeHtml(t('modal.insert', 'Einfügen'))}</button>
+            </div>
+        </div>
+    </div>
+</div>
+`);
+                const modalElement = $modal[0];
+                const modalInstance = new window.bootstrap.Modal(modalElement);
+
+                $modal.on('hidden.bs.modal', function () {
+                    modalInstance.dispose();
+                    $modal.remove();
+                });
+                $modal.on('shown.bs.modal', function () {
+                    $modal.find('.js-bs-markdown-code-language').trigger('focus').trigger('select');
+                });
+
+                $modal.find('.js-bs-markdown-code-insert').on('click', function () {
+                    const language = $modal.find('.js-bs-markdown-code-language').val();
+                    const code = selected === '' ? t('placeholders.code', 'code') : selected;
+                    helpers.insertBlock(textarea, helpers.buildMarkdownCodeBlock(language, code));
+                    modalInstance.hide();
+                });
+
+                $modal.on('keydown', function (event) {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                        event.preventDefault();
+                        $modal.find('.js-bs-markdown-code-insert').trigger('click');
+                    }
+                });
+
+                $('body').append($modal);
+                modalInstance.show();
+            },
             openLinkModal(textarea) {
                 if (!window.bootstrap || !window.bootstrap.Modal) {
                     helpers.insertLinkWithPromptFallback(textarea);
@@ -2283,6 +2477,10 @@
                 helpers.withInternalChange(textarea, source, function () {
                     textarea.value = value.substring(0, start) + replacement + value.substring(end);
                     textarea.setSelectionRange(start + selectionStartOffset, start + selectionEndOffset);
+                    $(textarea).data('bsMarkdownEditorEditableSelection', {
+                        start: start + selectionStartOffset,
+                        end: start + selectionEndOffset
+                    });
                     $(textarea).trigger('input');
                     helpers.refreshRenderedState(textarea, true);
                     helpers.focusEditor(textarea);
@@ -2460,9 +2658,25 @@
 
             $editable.on('input.bsMarkdownEditorEditable', function () {
                 helpers.syncTextareaFromEditable(textarea, 'editable');
+                helpers.rememberEditableSelection(textarea);
                 if (/<\/?(sup|sub)>/i.test(textarea.value)) {
                     helpers.syncEditableFromTextarea(textarea, true);
                 }
+            });
+
+            $editable.on('keyup.bsMarkdownEditorEditable mouseup.bsMarkdownEditorEditable touchend.bsMarkdownEditorEditable focus.bsMarkdownEditorEditable', function () {
+                helpers.rememberEditableSelection(textarea);
+            });
+
+            $editable.on('keydown.bsMarkdownEditorEditable', function (e) {
+                if (e.key !== 'Tab' || e.shiftKey) {
+                    return;
+                }
+
+                e.preventDefault();
+                helpers.insertTextIntoEditable($editable.get(0), helpers.getEditableTabInsertion($editable.get(0), 4));
+                helpers.syncTextareaFromEditable(textarea, 'editable');
+                helpers.rememberEditableSelection(textarea);
             });
 
             $editable.on('paste.bsMarkdownEditorEditable', function (e) {
@@ -2484,6 +2698,7 @@
                     selection.addRange(range);
                 }
                 helpers.syncTextareaFromEditable(textarea, 'editable');
+                helpers.rememberEditableSelection(textarea);
                 if (/<\/?(sup|sub)>/i.test(textarea.value)) {
                     helpers.syncEditableFromTextarea(textarea, true);
                 }
@@ -2510,6 +2725,7 @@
             const $toolbar = $('<div class="btn-toolbar mb-2 d-flex flex-wrap justify-content-between align-items-start gap-2 w-100" role="toolbar"></div>');
             const $toolbarLeft = $('<div class="d-flex flex-wrap align-items-center gap-1 flex-grow-1"></div>');
             const $toolbarRight = $('<div class="d-flex flex-wrap align-items-center gap-1"></div>');
+            const $toolbarRightCustom = $('<div class="d-flex flex-wrap align-items-center gap-1"></div>');
             const resolvedActionKeys = helpers.getResolvedActionKeys();
             const groupedInlineStyleKeys = ['bold', 'italic', 'textStyles', 'code', 'codeBlock'];
             const groupedInsertKeys = ['link', 'image'];
@@ -2517,6 +2733,10 @@
             let inlineStylesDropdownRendered = false;
             let insertDropdownRendered = false;
             let listDropdownRendered = false;
+
+            $toolbar.on('mousedown.bsMarkdownEditorSelection touchstart.bsMarkdownEditorSelection', function () {
+                helpers.rememberEditableSelection(textarea);
+            });
 
             resolvedActionKeys.forEach(function (key) {
                 const action = actions[key];
@@ -2830,7 +3050,7 @@
                 }
 
                 if (customAction.position === 'right') {
-                    $toolbarRight.append($element);
+                    $toolbarRightCustom.append($element);
                     return;
                 }
 
@@ -2838,6 +3058,9 @@
             });
 
             $toolbar.append($toolbarLeft);
+            if ($toolbarRightCustom.children().length > 0) {
+                $toolbarRight.prepend($toolbarRightCustom.children());
+            }
             if ($toolbarRight.children().length > 0) {
                 $toolbar.append($toolbarRight);
             }
