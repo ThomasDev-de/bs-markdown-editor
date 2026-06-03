@@ -344,7 +344,7 @@
 
             content = content.replace(/`([^`]+)`/g, function (_, code) {
                 const token = `@@CODE_${codeStore.length}@@`;
-                codeStore.push(`<code>${sharedConverters.escapeHtml(code)}</code>`);
+                codeStore.push(`<code>${code}</code>`);
                 return token;
             });
 
@@ -842,9 +842,41 @@
             return sharedConverters.normalizeMarkdown(sharedConverters.renderBlockNodes(root.childNodes, 0));
         },
         parseTableRow(line) {
-            const normalized = String(line || '').trim().replace(/^\|/, '').replace(/\|$/, '');
-            return normalized.split('|').map(function (cell) {
-                return cell.trim();
+            const cells = [];
+            let current = '';
+            let inCode = false;
+            const source = String(line || '').trim();
+
+            for (let index = 0; index < source.length; index += 1) {
+                const char = source.charAt(index);
+                const previous = index > 0 ? source.charAt(index - 1) : '';
+
+                if (char === '`' && previous !== '\\') {
+                    inCode = !inCode;
+                    current += char;
+                    continue;
+                }
+
+                if (char === '|' && previous !== '\\' && !inCode) {
+                    cells.push(current);
+                    current = '';
+                    continue;
+                }
+
+                current += char;
+            }
+
+            cells.push(current);
+
+            if (cells.length > 0 && cells[0].trim() === '') {
+                cells.shift();
+            }
+            if (cells.length > 0 && cells[cells.length - 1].trim() === '') {
+                cells.pop();
+            }
+
+            return cells.map(function (cell) {
+                return cell.replace(/\\\|/g, '|').trim();
             });
         },
         isTableHeaderLine(line) {

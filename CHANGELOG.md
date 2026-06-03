@@ -16,6 +16,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Fenced code blocks with any valid language hint now show the language label and copy action, even when the language is not supported by the built-in highlighter.
 - Known highlighted code blocks now use subtle striped line backgrounds alongside line numbers.
+- Markdown table parsing now preserves escaped pipes and pipes inside inline code, preventing README option tables from splitting into extra columns.
+- Inline code rendering no longer double-escapes already escaped Markdown content inside table cells.
 
 ## [1.0.6] - 2026-06-02
 
