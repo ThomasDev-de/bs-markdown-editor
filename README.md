@@ -21,14 +21,12 @@ Or include the files manually from `dist/`.
 Or use a GitHub CDN (replace `x.y.z` with a release tag):
 
 ```html
-
 <script src="https://cdn.jsdelivr.net/gh/webcito/bs-markdown-editor@x.y.z/dist/bs-markdown-editor.min.js"></script>
 ```
 
 ## Usage
 
 ```html
-
 <link rel="stylesheet" href="vendor/twbs/bootstrap/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="vendor/twbs/bootstrap-icons/font/bootstrap-icons.min.css">
 
@@ -296,7 +294,6 @@ By default, the plugin ships with English UI text.
 To use another language, load one of the files from `dist/locale/` before `bs-markdown-editor.js`.
 
 ```html
-
 <script src="dist/locale/de-DE.min.js"></script>
 <script src="dist/bs-markdown-editor.min.js"></script>
 ```
