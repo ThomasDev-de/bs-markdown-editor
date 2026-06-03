@@ -27,6 +27,7 @@ window.bsMarkdownEditorTranslations = {
         "link": "Linkki",
         "code": "Koodi",
         "codeBlock": "Koodilohko",
+        "copyCode": "Kopioi koodi",
         "table": "Taulukko",
         "image": "Kuva",
         "hr": "Vaakaviiva",

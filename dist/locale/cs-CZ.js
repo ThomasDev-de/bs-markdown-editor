@@ -27,6 +27,7 @@ window.bsMarkdownEditorTranslations = {
         "link": "Odkaz",
         "code": "Kód",
         "codeBlock": "Blok kódu",
+        "copyCode": "Kopírovat kód",
         "table": "Tabulka",
         "image": "Obrázek",
         "hr": "Vodorovná čára",

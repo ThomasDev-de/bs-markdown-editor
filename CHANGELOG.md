@@ -7,6 +7,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Added a copy-code button next to fenced code block language labels, copying only the raw `<code>` content without labels or line numbers.
+- Added the `actions.copyCode` translation key to default translations and all locale files.
+
+### Changed
+
+- Fenced code blocks with any valid language hint now show the language label and copy action, even when the language is not supported by the built-in highlighter.
+- Known highlighted code blocks now use subtle striped line backgrounds alongside line numbers.
+
 ## [1.0.6] - 2026-06-02
 
 ### Added

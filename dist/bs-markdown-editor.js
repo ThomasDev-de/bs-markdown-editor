@@ -135,6 +135,16 @@
 
             return aliases[normalized] || normalized;
         },
+        getCodeCopyText() {
+            const translations = window.bsMarkdownEditorTranslations && typeof window.bsMarkdownEditorTranslations === 'object'
+                ? window.bsMarkdownEditorTranslations
+                : {};
+            const copyCode = translations.actions && typeof translations.actions.copyCode === 'string'
+                ? translations.actions.copyCode
+                : '';
+
+            return copyCode || 'Copy code';
+        },
         getCodeLanguageFromClass(className) {
             const match = String(className || '').match(/(?:^|\s)(?:language|lang)-([a-z0-9_+.#-]+)(?:\s|$)/i);
             return match ? sharedConverters.normalizeCodeLanguage(match[1]) : '';
@@ -263,11 +273,13 @@
         renderCodeLanguageBadge(language) {
             const normalizedLanguage = sharedConverters.normalizeCodeLanguage(language);
 
-            if (!sharedConverters.isKnownCodeLanguage(normalizedLanguage)) {
+            if (normalizedLanguage === '') {
                 return '';
             }
 
-            return `<span class="badge text-bg-secondary position-absolute top-0 end-0 m-2 opacity-75 bs-markdown-code-language-badge" style="transition: opacity .16s ease;">${sharedConverters.escapeHtml(normalizedLanguage)}</span>`;
+            const copyCodeText = sharedConverters.escapeHtml(sharedConverters.getCodeCopyText());
+
+            return `<span class="position-absolute top-0 end-0 m-2 d-flex align-items-center gap-1 bs-markdown-code-actions"><span class="badge text-bg-secondary opacity-75 bs-markdown-code-language-badge" style="transition: opacity .16s ease;">${sharedConverters.escapeHtml(normalizedLanguage)}</span><button type="button" class="btn btn-sm btn-secondary py-0 px-1 opacity-75 bs-markdown-code-copy" title="${copyCodeText}" aria-label="${copyCodeText}"><i class="bi bi-copy"></i></button></span>`;
         },
         renderCodeLineNumbers(code) {
             const lineCount = String(code || '').split('\n').length;
@@ -460,11 +472,14 @@
                         const preClass = ' class="position-relative pt-4 bg-dark text-light overflow-auto"';
                         const codeClass = ` class="${languageClass} d-block flex-grow-1"`;
                         const codeStyle = ' style="padding-top:3px;"';
+                        const stripedStyle = ' style="line-height:1.5;background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 1.5em, rgba(255,255,255,.035) 1.5em, rgba(255,255,255,.035) 3em);"';
                         const lineNumbers = sharedConverters.renderCodeLineNumbers(code);
-                        html.push(`<pre${preClass}>${sharedConverters.renderCodeLanguageBadge(language)}<span class="d-flex align-items-start"><span aria-hidden="true" class="text-secondary user-select-none pe-3 me-3 border-end border-secondary" style="padding-top:3px;text-align:right;">${lineNumbers}</span><code${codeClass}${codeStyle}>${sharedConverters.highlightCode(code, language)}</code></span></pre>`);
+                        html.push(`<pre${preClass}>${sharedConverters.renderCodeLanguageBadge(language)}<span class="d-flex align-items-start"${stripedStyle}><span aria-hidden="true" class="text-secondary user-select-none pe-3 me-3 border-end border-secondary" style="padding-top:3px;text-align:right;">${lineNumbers}</span><code${codeClass}${codeStyle}>${sharedConverters.highlightCode(code, language)}</code></span></pre>`);
                     } else {
                         const codeClass = languageClass === '' ? '' : ` class="${languageClass}"`;
-                        html.push(`<pre><code${codeClass}>${sharedConverters.escapeHtml(code)}</code></pre>`);
+                        const preClass = language === '' ? '' : ' class="position-relative pt-4"';
+                        const codeStyle = language === '' ? '' : ' style="padding-top:3px;"';
+                        html.push(`<pre${preClass}>${sharedConverters.renderCodeLanguageBadge(language)}<code${codeClass}${codeStyle}>${sharedConverters.escapeHtml(code)}</code></pre>`);
                     }
                     continue;
                 }
@@ -1044,6 +1059,7 @@
                 link: 'Link',
                 code: 'Code',
                 codeBlock: 'Code block',
+                copyCode: 'Copy code',
                 table: 'Table',
                 image: 'Image',
                 hr: 'Horizontal rule',
@@ -1311,13 +1327,82 @@
             },
             ensurePluginStyles() {
                 if ($('#bsMarkdownEditorRuntimeStyles').length > 0) {
+                    helpers.installCodeCopyHandler();
                     return;
                 }
                 $('head').append(`
 <style id="bsMarkdownEditorRuntimeStyles">
-.bs-markdown-code-language-badge:hover{opacity:1!important;}
+.bs-markdown-code-actions:hover .bs-markdown-code-language-badge,
+.bs-markdown-code-copy:hover{opacity:1!important;}
 </style>
 `);
+                helpers.installCodeCopyHandler();
+            },
+            installCodeCopyHandler() {
+                if (!$(document).data('bsMarkdownEditorCodeCopyInstalled')) {
+                    $(document).data('bsMarkdownEditorCodeCopyInstalled', true);
+                    $(document).on('click.bsMarkdownEditorCodeCopy', '.bs-markdown-code-copy', function (event) {
+                        event.preventDefault();
+                        const button = this;
+                        const codeNode = $(button).closest('pre').find('code').first().get(0);
+                        const code = codeNode ? codeNode.textContent : '';
+
+                        helpers.copyTextToClipboard(code, function () {
+                            helpers.showCodeCopyFeedback(button);
+                        });
+                    });
+                }
+            },
+            copyTextToClipboard(text, done) {
+                const value = String(text || '');
+                const clipboard = window.navigator && window.navigator.clipboard ? window.navigator.clipboard : null;
+
+                if (clipboard && typeof clipboard.writeText === 'function') {
+                    clipboard.writeText(value).then(function () {
+                        if (typeof done === 'function') {
+                            done();
+                        }
+                    }).catch(function () {
+                        helpers.copyTextWithFallback(value, done);
+                    });
+                    return;
+                }
+
+                helpers.copyTextWithFallback(value, done);
+            },
+            copyTextWithFallback(text, done) {
+                const $buffer = $('<textarea readonly></textarea>');
+                $buffer.val(String(text || ''));
+                $buffer.css({
+                    position: 'fixed',
+                    top: '-9999px',
+                    left: '-9999px',
+                    opacity: 0
+                });
+                $('body').append($buffer);
+                $buffer.get(0).select();
+
+                try {
+                    document.execCommand('copy');
+                    if (typeof done === 'function') {
+                        done();
+                    }
+                } finally {
+                    $buffer.remove();
+                }
+            },
+            showCodeCopyFeedback(button) {
+                const $button = $(button);
+                const originalHtml = $button.html();
+                const originalTitle = $button.attr('title') || '';
+
+                $button.html('<i class="bi bi-check2"></i>');
+                $button.attr('title', 'Copied');
+
+                window.setTimeout(function () {
+                    $button.html(originalHtml);
+                    $button.attr('title', originalTitle);
+                }, 1200);
             },
             sanitizeUrl(url) {
                 return sharedConverters.sanitizeUrl(url);

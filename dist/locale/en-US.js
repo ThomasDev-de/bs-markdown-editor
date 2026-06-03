@@ -1,5 +1,6 @@
 window.bsMarkdownEditorTranslations = {
     "actions": {
+        "copyCode": "Copy code",
         "ul": "Bullet list",
         "ol": "Numbered list"
     },

@@ -27,6 +27,7 @@ window.bsMarkdownEditorTranslations = {
         "link": "Σύνδεσμος",
         "code": "Κώδικας",
         "codeBlock": "Μπλοκ κώδικα",
+        "copyCode": "Αντιγραφή κώδικα",
         "table": "Πίνακας",
         "image": "Εικόνα",
         "hr": "Οριζόντια γραμμή",

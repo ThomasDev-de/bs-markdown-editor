@@ -27,6 +27,7 @@ window.bsMarkdownEditorTranslations = {
         "link": "Hivatkozás",
         "code": "Kód",
         "codeBlock": "Kódblokk",
+        "copyCode": "Kód másolása",
         "table": "Táblázat",
         "image": "Kép",
         "hr": "Vízszintes vonal",

@@ -27,6 +27,7 @@ window.bsMarkdownEditorTranslations = {
         "link": "Ligação",
         "code": "Código",
         "codeBlock": "Bloco de código",
+        "copyCode": "Copiar código",
         "table": "Tabela",
         "image": "Imagem",
         "hr": "Linha horizontal",
