@@ -139,20 +139,27 @@
             const match = String(className || '').match(/(?:^|\s)(?:language|lang)-([a-z0-9_+.#-]+)(?:\s|$)/i);
             return match ? sharedConverters.normalizeCodeLanguage(match[1]) : '';
         },
-        highlightCode(code, language) {
-            const normalizedLanguage = sharedConverters.normalizeCodeLanguage(language);
-
-            const keywordMap = {
+        getCodeKeywordMap() {
+            return {
                 bash: 'alias case cd do done elif else esac export fi for function if in local readonly return set shift then unset until while',
                 css: 'align-items animation background border bottom color content display flex font gap grid height justify-content left margin max-width min-height opacity overflow padding position right top transform transition width z-index',
                 javascript: 'async await break case catch class const continue default delete do else export extends finally for from function if import in instanceof let new of return static super switch this throw try typeof var void while yield',
                 json: 'false null true',
                 markup: 'a article aside body button code div footer form h1 h2 h3 h4 h5 h6 head header html img input label li link main meta nav ol option p pre script section select span style table tbody td textarea th thead title tr ul',
-                php: 'abstract and array as break callable case catch class clone const continue declare default die do echo else elseif empty enddeclare endfor endforeach endif endswitch endwhile enum eval exit extends final finally fn for foreach function global if implements include include_once instanceof insteadof interface isset list match namespace new or print private protected public readonly require require_once return static switch throw trait try unset use var while xor yield',
+                php: 'abstract and array as bool boolean break callable case catch class clone const continue declare default die do echo else elseif empty enddeclare endfor endforeach endif endswitch endwhile enum eval exit extends false final finally float fn for foreach function global if implements include include_once int integer instanceof insteadof interface isset iterable list match mixed namespace never new null object or parent print private protected public readonly real require require_once return self static string switch throw trait true try unset use var void while xor yield',
                 python: 'and as assert async await break class continue def del elif else except false finally for from global if import in is lambda none nonlocal not or pass raise return true try while with yield',
                 sql: 'alter and as by case create delete desc distinct drop else exists from group having in inner insert into is join left like limit not null on or order outer right select set table then union update values when where',
                 typescript: 'abstract any as async await boolean break case catch class const constructor continue declare default delete do else enum export extends false finally for from function if implements import in infer instanceof interface keyof let module namespace never new null number object of private protected public readonly return static string super switch symbol this throw true try type typeof undefined unknown var void while yield'
             };
+        },
+        isKnownCodeLanguage(language) {
+            const normalizedLanguage = sharedConverters.normalizeCodeLanguage(language);
+            return normalizedLanguage !== '' && Object.prototype.hasOwnProperty.call(sharedConverters.getCodeKeywordMap(), normalizedLanguage);
+        },
+        highlightCode(code, language) {
+            const normalizedLanguage = sharedConverters.normalizeCodeLanguage(language);
+
+            const keywordMap = sharedConverters.getCodeKeywordMap();
 
             if (normalizedLanguage === '' || !keywordMap[normalizedLanguage]) {
                 return sharedConverters.escapeHtml(code);
@@ -163,12 +170,20 @@
             const keywords = keywordSource.split(/\s+/).sort(function (a, b) {
                 return b.length - a.length;
             }).join('|');
+            const keywordPattern = new RegExp('^(?:' + keywords + ')$', 'i');
             const hashCommentLanguages = ['bash', 'php', 'python', 'ruby', 'perl'];
             const hashCommentPattern = hashCommentLanguages.indexOf(normalizedLanguage) !== -1 ? '|#[^\\n]*' : '';
+            const phpTypePattern = normalizedLanguage === 'php' ? '|\\??\\\\?[a-zA-Z_][\\w]*(?:\\\\[a-zA-Z_][\\w]*)*(?=\\s*(?:[|&]|\\$))' : '';
+            const phpReturnTypePattern = normalizedLanguage === 'php' ? '|:\\s*\\??\\\\?[a-zA-Z_][\\w]*(?:\\\\[a-zA-Z_][\\w]*)*' : '';
+            const phpHeredocPattern = normalizedLanguage === 'php' ? '<<<[ \\t]*(?:[a-zA-Z_][\\w]*|\\\'[a-zA-Z_][\\w]*\\\')\\r?\\n[\\s\\S]*?\\r?\\n\\s*[a-zA-Z_][\\w]*;?|' : '';
             const tokenPattern = new RegExp(
+                phpHeredocPattern +
                 '\\/\\*[\\s\\S]*?\\*\\/|\\/\\/[^\\n]*' + hashCommentPattern +
                 '|"(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\'|`(?:\\\\.|[^`\\\\])*`' +
                 '|\\$[a-zA-Z_][\\w]*' +
+                '|\\b[a-zA-Z_$][\\w$]*\\b(?=\\s*\\()' +
+                phpReturnTypePattern +
+                phpTypePattern +
                 '|\\b(?:' + keywords + ')\\b' +
                 '|\\b\\d+(?:\\.\\d+)?\\b',
                 'gi'
@@ -179,15 +194,30 @@
             sourceCode.replace(tokenPattern, function (token, offset) {
                 highlighted += sharedConverters.escapeHtml(sourceCode.slice(lastIndex, offset));
                 lastIndex = offset + token.length;
+                const followingSource = sourceCode.slice(lastIndex);
 
                 if (/^(?:\/\*[\s\S]*?\*\/|\/\/[^\n]*|#[^\n]*)$/.test(token)) {
-                    highlighted += `<span class="text-body-secondary fst-italic">${sharedConverters.escapeHtml(token)}</span>`;
+                    highlighted += normalizedLanguage === 'php' && /^\/\*\*/.test(token)
+                        ? sharedConverters.renderPhpDocComment(token)
+                        : `<span class="text-white-50 fst-italic">${sharedConverters.escapeHtml(token)}</span>`;
+                } else if (normalizedLanguage === 'php' && /^<<<[ \t]*(?:[a-zA-Z_][\w]*|'[a-zA-Z_][\w]*')\r?\n[\s\S]*?\r?\n\s*[a-zA-Z_][\w]*;?$/.test(token)) {
+                    highlighted += sharedConverters.renderPhpStringToken(token);
                 } else if (/^(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)$/.test(token)) {
-                    highlighted += `<span class="text-success">${sharedConverters.escapeHtml(token)}</span>`;
+                    highlighted += normalizedLanguage === 'php'
+                        ? sharedConverters.renderPhpStringToken(token)
+                        : `<span class="text-success">${sharedConverters.escapeHtml(token)}</span>`;
                 } else if (/^\$[a-zA-Z_][\w]*$/.test(token)) {
                     highlighted += `<span class="text-primary">${sharedConverters.escapeHtml(token)}</span>`;
                 } else if (/^\d+(?:\.\d+)?$/.test(token)) {
                     highlighted += `<span class="text-warning">${sharedConverters.escapeHtml(token)}</span>`;
+                } else if (normalizedLanguage === 'php' && /^:\s*\??\\?[a-zA-Z_][\w]*(?:\\[a-zA-Z_][\w]*)*$/.test(token)) {
+                    const returnTypeMatch = token.match(/^(:\s*)(\??\\?[a-zA-Z_][\w]*(?:\\[a-zA-Z_][\w]*)*)$/);
+                    highlighted += sharedConverters.escapeHtml(returnTypeMatch[1]);
+                    highlighted += `<span class="text-secondary fw-semibold">${sharedConverters.escapeHtml(returnTypeMatch[2])}</span>`;
+                } else if (normalizedLanguage === 'php' && /^\s*(?:[|&]|\$)/.test(followingSource) && /^\??\\?[a-zA-Z_][\w]*(?:\\[a-zA-Z_][\w]*)*$/.test(token)) {
+                    highlighted += `<span class="text-secondary fw-semibold">${sharedConverters.escapeHtml(token)}</span>`;
+                } else if (!keywordPattern.test(token) && /^[a-zA-Z_$][\w$]*$/.test(token)) {
+                    highlighted += `<span class="text-danger fw-semibold">${sharedConverters.escapeHtml(token)}</span>`;
                 } else {
                     highlighted += `<span class="text-info fw-semibold">${sharedConverters.escapeHtml(token)}</span>`;
                 }
@@ -198,14 +228,103 @@
             highlighted += sharedConverters.escapeHtml(sourceCode.slice(lastIndex));
             return highlighted;
         },
+        renderPhpDocComment(token) {
+            const docTagPattern = /(@[a-zA-Z_][\w-]*)(\s+)([\\?a-zA-Z_][\w\\|&?]*|(?:\$[a-zA-Z_][\w]*))?(\s+)?(\$[a-zA-Z_][\w]*)?/g;
+            let highlighted = '';
+            let lastIndex = 0;
+            const source = String(token || '');
+
+            source.replace(docTagPattern, function (match, tag, spacingAfterTag, typeOrVariable, spacingAfterType, variable, offset) {
+                highlighted += sharedConverters.escapeHtml(source.slice(lastIndex, offset));
+                highlighted += `<span class="fw-semibold text-light">${sharedConverters.escapeHtml(tag)}</span>`;
+                highlighted += sharedConverters.escapeHtml(spacingAfterTag || '');
+
+                if (typeOrVariable) {
+                    if (/^\$/.test(typeOrVariable)) {
+                        highlighted += `<span class="text-primary">${sharedConverters.escapeHtml(typeOrVariable)}</span>`;
+                    } else {
+                        highlighted += `<span class="text-secondary fw-semibold">${sharedConverters.escapeHtml(typeOrVariable)}</span>`;
+                    }
+                }
+
+                highlighted += sharedConverters.escapeHtml(spacingAfterType || '');
+
+                if (variable) {
+                    highlighted += `<span class="text-primary">${sharedConverters.escapeHtml(variable)}</span>`;
+                }
+
+                lastIndex = offset + match.length;
+                return match;
+            });
+
+            highlighted += sharedConverters.escapeHtml(source.slice(lastIndex));
+            return `<span class="text-white-50 fst-italic">${highlighted}</span>`;
+        },
         renderCodeLanguageBadge(language) {
             const normalizedLanguage = sharedConverters.normalizeCodeLanguage(language);
 
-            if (normalizedLanguage === '') {
+            if (!sharedConverters.isKnownCodeLanguage(normalizedLanguage)) {
                 return '';
             }
 
             return `<span class="badge text-bg-secondary position-absolute top-0 end-0 m-2 opacity-75 bs-markdown-code-language-badge" style="transition: opacity .16s ease;">${sharedConverters.escapeHtml(normalizedLanguage)}</span>`;
+        },
+        renderCodeLineNumbers(code) {
+            const lineCount = String(code || '').split('\n').length;
+            const numbers = [];
+
+            for (let index = 1; index <= lineCount; index += 1) {
+                numbers.push(String(index));
+            }
+
+            return numbers.join('\n');
+        },
+        renderPhpStringToken(token) {
+            const source = String(token || '');
+            const isHeredoc = /^<<<[ \t]*[a-zA-Z_][\w]*\r?\n/.test(source);
+            const isNowdoc = /^<<<[ \t]*'[a-zA-Z_][\w]*'\r?\n/.test(source);
+
+            if (isHeredoc) {
+                const heredocMatch = source.match(/^(<<<[ \t]*[a-zA-Z_][\w]*\r?\n)([\s\S]*?)(\r?\n\s*[a-zA-Z_][\w]*;?)$/);
+
+                if (heredocMatch) {
+                    return sharedConverters.escapeHtml(heredocMatch[1])
+                        + `<span class="text-success">${sharedConverters.renderPhpInterpolatedStringBody(heredocMatch[2])}</span>`
+                        + sharedConverters.escapeHtml(heredocMatch[3]);
+                }
+            }
+            if (isNowdoc) {
+                const nowdocMatch = source.match(/^(<<<[ \t]*'[a-zA-Z_][\w]*'\r?\n)([\s\S]*?)(\r?\n\s*[a-zA-Z_][\w]*;?)$/);
+
+                if (nowdocMatch) {
+                    return sharedConverters.escapeHtml(nowdocMatch[1])
+                        + `<span class="text-success">${sharedConverters.escapeHtml(nowdocMatch[2])}</span>`
+                        + sharedConverters.escapeHtml(nowdocMatch[3]);
+                }
+            }
+
+            if (!isHeredoc && (!/^(?:"|`)/.test(source) || isNowdoc)) {
+                return `<span class="text-success">${sharedConverters.escapeHtml(source)}</span>`;
+            }
+
+            return `<span class="text-success">${sharedConverters.renderPhpInterpolatedStringBody(source)}</span>`;
+        },
+        renderPhpInterpolatedStringBody(source) {
+            const text = String(source || '');
+
+            let highlighted = '';
+            let lastIndex = 0;
+            const variablePattern = /(?<!\\)\$[a-zA-Z_][\w]*/g;
+
+            text.replace(variablePattern, function (variable, offset) {
+                highlighted += sharedConverters.escapeHtml(text.slice(lastIndex, offset));
+                highlighted += `<span class="text-primary">${sharedConverters.escapeHtml(variable)}</span>`;
+                lastIndex = offset + variable.length;
+                return variable;
+            });
+
+            highlighted += sharedConverters.escapeHtml(text.slice(lastIndex));
+            return highlighted;
         },
         renderInline(text) {
             const codeStore = [];
@@ -325,7 +444,8 @@
                 if (fenceMatch) {
                     const fenceLines = [];
                     const language = sharedConverters.normalizeCodeLanguage(fenceMatch[1] || '');
-                    const languageClass = language === '' ? '' : ` class="language-${sharedConverters.escapeHtml(language)}"`;
+                    const isKnownLanguage = sharedConverters.isKnownCodeLanguage(language);
+                    const languageClass = language === '' ? '' : `language-${sharedConverters.escapeHtml(language)}`;
                     i += 1;
                     while (i < lines.length && !/^```/.test(lines[i].trim())) {
                         fenceLines.push(lines[i]);
@@ -334,8 +454,18 @@
                     if (i < lines.length) {
                         i += 1;
                     }
-                    const preClass = language === '' ? '' : ' class="position-relative pt-4"';
-                    html.push(`<pre${preClass}>${sharedConverters.renderCodeLanguageBadge(language)}<code${languageClass}>${sharedConverters.highlightCode(fenceLines.join('\n'), language)}</code></pre>`);
+                    const code = fenceLines.join('\n');
+
+                    if (isKnownLanguage) {
+                        const preClass = ' class="position-relative pt-4 bg-dark text-light overflow-auto"';
+                        const codeClass = ` class="${languageClass} d-block flex-grow-1"`;
+                        const codeStyle = ' style="padding-top:3px;"';
+                        const lineNumbers = sharedConverters.renderCodeLineNumbers(code);
+                        html.push(`<pre${preClass}>${sharedConverters.renderCodeLanguageBadge(language)}<span class="d-flex align-items-start"><span aria-hidden="true" class="text-secondary user-select-none pe-3 me-3 border-end border-secondary" style="padding-top:3px;text-align:right;">${lineNumbers}</span><code${codeClass}${codeStyle}>${sharedConverters.highlightCode(code, language)}</code></span></pre>`);
+                    } else {
+                        const codeClass = languageClass === '' ? '' : ` class="${languageClass}"`;
+                        html.push(`<pre><code${codeClass}>${sharedConverters.escapeHtml(code)}</code></pre>`);
+                    }
                     continue;
                 }
 

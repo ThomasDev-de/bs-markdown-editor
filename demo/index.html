@@ -330,7 +330,7 @@
         addLog('method.val()', {value: $editor.bsMarkdownEditor('val')});
     });
     $('#valSet').on('click', function () {
-        $editor.bsMarkdownEditor('val', '# Demo Heading\n\nA little **bold** text with `inline code`.\n\n![Placeholder image](https://placehold.co/320x180){width=320 height=180}\n\n- item 1\n- item 2\n\nx<sup>2</sup> and H<sub>2</sub>O');
+        $editor.bsMarkdownEditor('val', '# Demo Heading\n\nA little **bold** text with `inline code`.\n\n```php\n/**\n * Noch en Testkommentar\n * @param string $test\n */\nfunction test(\n    string $test = "",\n    int $test2 = 3,\n    DB $pdo\n) {\n    // Test Ausgabe\n    echo "test $test";\n<<<ROFL\nHallo $test\nROFL;\n}\n```\n\n![Placeholder image](https://placehold.co/320x180){width=320 height=180}\n\n- item 1\n- item 2\n\nx<sup>2</sup> and H<sub>2</sub>O');
     });
     $('#valAppend').on('click', function () {
         const value = $editor.bsMarkdownEditor('val');
