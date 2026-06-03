@@ -28,10 +28,14 @@ window.bsMarkdownEditorTranslations = {
         "code": "Κώδικας",
         "codeBlock": "Μπλοκ κώδικα",
         "copyCode": "Αντιγραφή κώδικα",
+        "callout": "Πλαίσιο σημείωσης",
+        "details": "Λεπτομέρειες",
+        "definitionList": "Λίστα ορισμών",
         "table": "Πίνακας",
         "image": "Εικόνα",
         "hr": "Οριζόντια γραμμή",
         "taskList": "Λίστα εργασιών",
+        "toggleTask": "Εναλλαγή εργασίας",
         "undo": "Αναίρεση",
         "redo": "Επανάληψη",
         "preview": "Προεπισκόπηση"
@@ -54,9 +58,21 @@ window.bsMarkdownEditorTranslations = {
         "defaultText": "Κείμενο",
         "defaultItem": "Στοιχείο",
         "defaultTask": "Εργασία",
+        "defaultCallout": "Σημείωση",
+        "defaultCalloutText": "Κείμενο σημείωσης",
+        "defaultSummary": "Σύνοψη",
+        "defaultDetails": "Περιεχόμενο λεπτομερειών",
+        "defaultTerm": "Όρος",
+        "defaultDefinition": "Ορισμός",
         "imageAlt": "Εικόνα",
         "tableColumn": "Στήλη",
         "tableValue": "Τιμή"
+    },
+    "stats": {
+        "mode": "Mode",
+        "chars": "chars",
+        "words": "words",
+        "shortcuts": "Keyboard shortcuts"
     },
     "preview": {
         "loading": "Γίνεται απόδοση προεπισκόπησης...",
@@ -65,7 +81,8 @@ window.bsMarkdownEditorTranslations = {
     "modal": {
         "tableTitle": "Δημιουργία πίνακα",
         "imageTitle": "Εισαγωγή εικόνας",
-        "linkTitle": "Εισαγωγή συνδέσμου",
+        "linkTitle": "Insert link",
+        "shortcutsTitle": "Keyboard shortcuts",
         "rows": "Γραμμές",
         "columns": "Στήλες",
         "alt": "Εναλλακτικό κείμενο",

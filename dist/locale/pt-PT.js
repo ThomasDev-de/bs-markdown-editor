@@ -28,10 +28,14 @@ window.bsMarkdownEditorTranslations = {
         "code": "Código",
         "codeBlock": "Bloco de código",
         "copyCode": "Copiar código",
+        "callout": "Aviso",
+        "details": "Detalhes",
+        "definitionList": "Lista de definições",
         "table": "Tabela",
         "image": "Imagem",
         "hr": "Linha horizontal",
         "taskList": "Lista de tarefas",
+        "toggleTask": "Alternar tarefa",
         "undo": "Desfazer",
         "redo": "Refazer",
         "preview": "Pré-visualização"
@@ -54,9 +58,21 @@ window.bsMarkdownEditorTranslations = {
         "defaultText": "Texto",
         "defaultItem": "Item",
         "defaultTask": "Tarefa",
+        "defaultCallout": "Nota",
+        "defaultCalloutText": "Texto do aviso",
+        "defaultSummary": "Resumo",
+        "defaultDetails": "Conteúdo dos detalhes",
+        "defaultTerm": "Termo",
+        "defaultDefinition": "Definição",
         "imageAlt": "Imagem",
         "tableColumn": "Coluna",
         "tableValue": "Valor"
+    },
+    "stats": {
+        "mode": "Mode",
+        "chars": "chars",
+        "words": "words",
+        "shortcuts": "Keyboard shortcuts"
     },
     "preview": {
         "loading": "A renderizar pré-visualização...",
@@ -65,7 +81,8 @@ window.bsMarkdownEditorTranslations = {
     "modal": {
         "tableTitle": "Criar tabela",
         "imageTitle": "Inserir imagem",
-        "linkTitle": "Inserir ligação",
+        "linkTitle": "Insert link",
+        "shortcutsTitle": "Keyboard shortcuts",
         "rows": "Linhas",
         "columns": "Colunas",
         "alt": "Texto alternativo",

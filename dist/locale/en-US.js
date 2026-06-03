@@ -1,20 +1,88 @@
 window.bsMarkdownEditorTranslations = {
     "actions": {
-        "copyCode": "Copy code",
+        "bold": "Bold",
+        "italic": "Italic",
+        "textStyles": "Text style",
+        "clearFormatting": "Clear formatting",
+        "normalText": "Normal text",
+        "heading1": "Heading 1",
+        "heading2": "Heading 2",
+        "heading3": "Heading 3",
+        "heading4": "Heading 4",
+        "heading5": "Heading 5",
+        "heading6": "Heading 6",
+        "customTable": "Custom…",
+        "strikethrough": "Strikethrough",
+        "underline": "Underline",
+        "subscript": "Subscript",
+        "superscript": "Superscript",
+        "heading": "Heading",
+        "insert": "Insert",
+        "lists": "Lists",
         "ul": "Bullet list",
-        "ol": "Numbered list"
+        "ol": "Numbered list",
+        "indent": "Indent",
+        "outdent": "Outdent",
+        "quote": "Quote",
+        "link": "Link",
+        "code": "Code",
+        "codeBlock": "Code block",
+        "copyCode": "Copy code",
+        "callout": "Callout",
+        "details": "Details",
+        "definitionList": "Definition list",
+        "table": "Table",
+        "image": "Image",
+        "hr": "Horizontal rule",
+        "taskList": "Task list",
+        "toggleTask": "Toggle task",
+        "undo": "Undo",
+        "redo": "Redo",
+        "preview": "Preview"
+    },
+    "prompts": {
+        "linkUrl": "Enter URL",
+        "codeLang": "Language (optional)",
+        "imageAlt": "Enter alt text",
+        "imageUrl": "Enter image URL"
     },
     "placeholders": {
-        "defaultItem": "Item"
+        "bold": "bold",
+        "italic": "italic",
+        "strikethrough": "strikethrough",
+        "underline": "underline",
+        "subscript": "subscript",
+        "superscript": "superscript",
+        "linkText": "link text",
+        "code": "code",
+        "defaultText": "Text",
+        "defaultItem": "Item",
+        "defaultTask": "Task",
+        "defaultCallout": "Note",
+        "defaultCalloutText": "Callout text",
+        "defaultSummary": "Summary",
+        "defaultDetails": "Details content",
+        "defaultTerm": "Term",
+        "defaultDefinition": "Definition",
+        "imageAlt": "Image",
+        "tableColumn": "Column",
+        "tableValue": "Value"
     },
     "stats": {
-        "chars": "Characters",
-        "words": "Words"
+        "mode": "Mode",
+        "chars": "chars",
+        "words": "words",
+        "shortcuts": "Keyboard shortcuts"
+    },
+    "preview": {
+        "loading": "Rendering preview...",
+        "error": "Unable to render preview."
     },
     "modal": {
         "tableTitle": "Create table",
         "imageTitle": "Insert image",
         "linkTitle": "Insert link",
+        "shortcutsTitle": "Keyboard shortcuts",
         "rows": "Rows",
         "columns": "Columns",
         "alt": "Alt text",
@@ -30,5 +98,10 @@ window.bsMarkdownEditorTranslations = {
         "imageDimensionsHelp": "Numeric values are pixels; auto is allowed.",
         "cancel": "Cancel",
         "insert": "Insert"
+    },
+    "stats": {
+        "mode": "Mode",
+        "chars": "Characters",
+        "words": "Words"
     }
 };

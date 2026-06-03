@@ -51,7 +51,7 @@
                         linear-gradient(160deg, var(--demo-bg-a), var(--demo-bg-b));
         }
         .demo-shell {
-            max-width: 1300px;
+            max-width: 1500px;
             margin: 0 auto;
             padding: 2rem 1rem 2.5rem;
         }
@@ -150,6 +150,7 @@
                         <button id="modeGet" class="btn btn-sm btn-outline-secondary">Get Mode</button>
                         <button id="valGet" class="btn btn-sm btn-outline-secondary">Get Value</button>
                         <button id="valSet" class="btn btn-sm btn-outline-secondary">Set Sample</button>
+                        <button id="loadExample" class="btn btn-sm btn-outline-primary">Load example.md</button>
                         <button id="valAppend" class="btn btn-sm btn-outline-secondary">Append Timestamp</button>
                     </div>
                     <textarea id="editor" class="form-control"></textarea>
@@ -331,6 +332,25 @@
     });
     $('#valSet').on('click', function () {
         $editor.bsMarkdownEditor('val', '# Demo Heading\n\nA little **bold** text with `inline code`.\n\n```php\n/**\n * Noch en Testkommentar\n * @param string $test\n */\nfunction test(\n    string $test = "",\n    int $test2 = 3,\n    DB $pdo\n) {\n    // Test Ausgabe\n    echo "test $test";\n<<<ROFL\nHallo $test\nROFL;\n}\n```\n\n![Placeholder image](https://placehold.co/320x180){width=320 height=180}\n\n- item 1\n- item 2\n\nx<sup>2</sup> and H<sub>2</sub>O');
+    });
+    $('#loadExample').on('click', async function () {
+        const $button = $(this);
+        const originalText = $button.text();
+        $button.prop('disabled', true).text('Loading...');
+        try {
+            const response = await fetch('../example.md', {cache: 'no-cache'});
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            const markdown = await response.text();
+            $editor.bsMarkdownEditor('val', markdown);
+            $editor.bsMarkdownEditor('mode', 'editor');
+            addLog('demo.loadExample', {source: '../example.md', chars: markdown.length});
+        } catch (error) {
+            addLog('demo.loadExample.error', {message: error.message});
+        } finally {
+            $button.prop('disabled', false).text(originalText);
+        }
     });
     $('#valAppend').on('click', function () {
         const value = $editor.bsMarkdownEditor('val');

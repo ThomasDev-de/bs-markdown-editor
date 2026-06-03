@@ -28,10 +28,14 @@ window.bsMarkdownEditorTranslations = {
         "code": "Kód",
         "codeBlock": "Kódblokk",
         "copyCode": "Kód másolása",
+        "callout": "Kiemelés",
+        "details": "Részletek",
+        "definitionList": "Definíciós lista",
         "table": "Táblázat",
         "image": "Kép",
         "hr": "Vízszintes vonal",
         "taskList": "Feladatlista",
+        "toggleTask": "Feladat állapota",
         "undo": "Visszavonás",
         "redo": "Újra",
         "preview": "Előnézet"
@@ -54,9 +58,21 @@ window.bsMarkdownEditorTranslations = {
         "defaultText": "Szöveg",
         "defaultItem": "Elem",
         "defaultTask": "Feladat",
+        "defaultCallout": "Megjegyzés",
+        "defaultCalloutText": "Kiemelés szövege",
+        "defaultSummary": "Összegzés",
+        "defaultDetails": "Részletek tartalma",
+        "defaultTerm": "Kifejezés",
+        "defaultDefinition": "Definíció",
         "imageAlt": "Kép",
         "tableColumn": "Oszlop",
         "tableValue": "Érték"
+    },
+    "stats": {
+        "mode": "Mode",
+        "chars": "chars",
+        "words": "words",
+        "shortcuts": "Keyboard shortcuts"
     },
     "preview": {
         "loading": "Előnézet renderelése...",
@@ -65,7 +81,8 @@ window.bsMarkdownEditorTranslations = {
     "modal": {
         "tableTitle": "Táblázat létrehozása",
         "imageTitle": "Kép beszúrása",
-        "linkTitle": "Hivatkozás beszúrása",
+        "linkTitle": "Insert link",
+        "shortcutsTitle": "Keyboard shortcuts",
         "rows": "Sorok",
         "columns": "Oszlopok",
         "alt": "Alternatív szöveg",

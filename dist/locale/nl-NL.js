@@ -28,10 +28,14 @@ window.bsMarkdownEditorTranslations = {
         "code": "Code",
         "codeBlock": "Codeblok",
         "copyCode": "Code kopiëren",
+        "callout": "Infoblok",
+        "details": "Details",
+        "definitionList": "Definitielijst",
         "table": "Tabel",
         "image": "Afbeelding",
         "hr": "Horizontale lijn",
         "taskList": "Takenlijst",
+        "toggleTask": "Taak omschakelen",
         "undo": "Ongedaan maken",
         "redo": "Opnieuw",
         "preview": "Voorbeeld"
@@ -54,9 +58,21 @@ window.bsMarkdownEditorTranslations = {
         "defaultText": "Tekst",
         "defaultItem": "Item",
         "defaultTask": "Taak",
+        "defaultCallout": "Notitie",
+        "defaultCalloutText": "Infotekst",
+        "defaultSummary": "Samenvatting",
+        "defaultDetails": "Detailinhoud",
+        "defaultTerm": "Term",
+        "defaultDefinition": "Definitie",
         "imageAlt": "Afbeelding",
         "tableColumn": "Kolom",
         "tableValue": "Waarde"
+    },
+    "stats": {
+        "mode": "Mode",
+        "chars": "chars",
+        "words": "words",
+        "shortcuts": "Keyboard shortcuts"
     },
     "preview": {
         "loading": "Voorbeeld renderen...",
@@ -65,7 +81,8 @@ window.bsMarkdownEditorTranslations = {
     "modal": {
         "tableTitle": "Tabel maken",
         "imageTitle": "Afbeelding invoegen",
-        "linkTitle": "Link invoegen",
+        "linkTitle": "Insert link",
+        "shortcutsTitle": "Keyboard shortcuts",
         "rows": "Rijen",
         "columns": "Kolommen",
         "alt": "Alt-tekst",

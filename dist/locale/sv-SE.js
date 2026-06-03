@@ -28,10 +28,14 @@ window.bsMarkdownEditorTranslations = {
         "code": "Kod",
         "codeBlock": "Kodblock",
         "copyCode": "Kopiera kod",
+        "callout": "Faktaruta",
+        "details": "Detaljer",
+        "definitionList": "Definitionslista",
         "table": "Tabell",
         "image": "Bild",
         "hr": "Horisontell linje",
         "taskList": "Att-göra-lista",
+        "toggleTask": "Växla uppgift",
         "undo": "Ångra",
         "redo": "Gör om",
         "preview": "Förhandsvisning"
@@ -54,9 +58,21 @@ window.bsMarkdownEditorTranslations = {
         "defaultText": "Text",
         "defaultItem": "Post",
         "defaultTask": "Uppgift",
+        "defaultCallout": "Obs",
+        "defaultCalloutText": "Text i faktaruta",
+        "defaultSummary": "Sammanfattning",
+        "defaultDetails": "Detaljinnehåll",
+        "defaultTerm": "Term",
+        "defaultDefinition": "Definition",
         "imageAlt": "Bild",
         "tableColumn": "Kolumn",
         "tableValue": "Värde"
+    },
+    "stats": {
+        "mode": "Mode",
+        "chars": "chars",
+        "words": "words",
+        "shortcuts": "Keyboard shortcuts"
     },
     "preview": {
         "loading": "Renderar förhandsvisning...",
@@ -65,7 +81,8 @@ window.bsMarkdownEditorTranslations = {
     "modal": {
         "tableTitle": "Skapa tabell",
         "imageTitle": "Infoga bild",
-        "linkTitle": "Infoga länk",
+        "linkTitle": "Insert link",
+        "shortcutsTitle": "Keyboard shortcuts",
         "rows": "Rader",
         "columns": "Kolumner",
         "alt": "Alternativ text",

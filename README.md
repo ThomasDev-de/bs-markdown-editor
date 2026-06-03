@@ -18,10 +18,10 @@ composer require webcito/bs-markdown-editor
 
 Or include the files manually from `dist/`.
 
-Or use a GitHub CDN (replace `x.y.z` with a release tag):
+Or use a GitHub CDN (replace `VERSION` with a release tag):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/webcito/bs-markdown-editor@x.y.z/dist/bs-markdown-editor.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/webcito/bs-markdown-editor@VERSION/dist/bs-markdown-editor.min.js"></script>
 ```
 
 ## Usage
@@ -50,6 +50,8 @@ Or use a GitHub CDN (replace `x.y.z` with a release tag):
 </script>
 ```
 
+For a complete Markdown sample covering all standard toolbar actions, see [example.md](example.md).
+
 ## Options
 
 | Option         | Type                              | Default      | Details                                                                                                                                                                                                     |
@@ -63,6 +65,7 @@ Or use a GitHub CDN (replace `x.y.z` with a release tag):
 | `wrapperClass` | `string \| null`                  | `null`       | Additional class name(s) applied to the editor wrapper. The plugin always keeps its internal wrapper class `.bs-markdown-editor` and appends your classes on top.                                           |
 | `actions`      | `'all' \| string[]`               | `'all'`      | Toolbar action filter. `'all'` renders all actions. Array mode renders only matching action keys and keeps array order. Unknown keys are ignored.                                                           |
 | `customActions` | `object \| array`                | `{}`         | Additional toolbar actions. `run(context)` receives the editor context, including `textarea`, `editable`, and `helpers`.                                                                                   |
+| `shortcuts`     | `object`                          | `{...}`      | Keyboard shortcuts mapping action keys to shortcut strings (e.g., `'bold': 'ctrl+b'`). Supports `ctrl+` and `ctrl+shift+` modifiers.                                                                          |
 | `lang`         | `string`                          | `auto`       | Reserved for compatibility. Locale selection is now handled by preloaded locale files plus `translations` overrides.                                                                                        |
 | `translations` | `object`                          | `{}`         | Deep-merged text overrides for labels, prompts, placeholders, modal text, and preview messages. Merge order: built-in English defaults -> `window.bsMarkdownEditorTranslations` (if loaded) -> this option. |
 
@@ -73,6 +76,7 @@ Or use a GitHub CDN (replace `x.y.z` with a release tag):
 | `bold`       | Wrap selection with `**...**`              |
 | `italic`     | Wrap selection with `_..._`                |
 | `textStyles` | Dropdown: strikethrough / underline        |
+| `clearFormatting` | Remove inline Markdown formatting from the selection |
 | `heading`    | Dropdown: H1-H6                            |
 | `ul`         | Unordered list                             |
 | `ol`         | Ordered list                               |
@@ -81,14 +85,59 @@ Or use a GitHub CDN (replace `x.y.z` with a release tag):
 | `quote`      | Prefix lines with `>`                      |
 | `link`       | Insert markdown link                       |
 | `image`      | Open image modal and insert markdown image |
+| `callout`    | Insert a Markdown callout block            |
+| `details`    | Insert a collapsible details block         |
+| `definitionList` | Insert an HTML definition list block    |
 | `code`       | Inline code                                |
 | `codeBlock`  | Fenced code block                          |
 | `hr`         | Horizontal rule (`---`)                    |
 | `taskList`   | Task list (`- [ ] ...`)                    |
+| `toggleTask` | Toggle selected task list items            |
 | `table`      | Open table modal and insert markdown table |
 | `undo`       | Undo via plugin history                    |
 | `redo`       | Redo via plugin history                    |
 | `preview`    | Toggle preview/editor mode                 |
+
+### Shortcuts
+
+The editor supports keyboard shortcuts for common actions. Default shortcuts are:
+
+| Action    | Shortcut           |
+|-----------|--------------------|
+| Bold | `Ctrl + B` |
+| Italic | `Ctrl + I` |
+| List | `Ctrl + L` |
+| Num list | `Ctrl + Shift + O` |
+| Quote | `Ctrl + Q` |
+| Code | `Ctrl + K` |
+| Link | `Ctrl + Shift + L` |
+| Image | `Ctrl + Shift + I` |
+| Undo | `Ctrl + Z` |
+| Redo | `Ctrl + Y` |
+| Preview | `Ctrl + P` |
+| Horizontal rule | `Ctrl + H` |
+| Task list | `Ctrl + Shift + T` |
+| Toggle task | `Ctrl + Shift + M` |
+| Strikethrough | `Ctrl + Shift + S` |
+| Underline | `Ctrl + Alt + U` |
+| Callout | `Ctrl + Shift + C` |
+| Details | `Ctrl + Shift + D` |
+| Definition list | `Ctrl + Shift + U` |
+| Subscript | `Ctrl + Shift + B` |
+| Superscript | `Ctrl + Shift + P` |
+| Code block | `Ctrl + Shift + K` |
+| Heading 1-6 | `Ctrl + Shift + 1-6` |
+
+Shortcuts can be customized or disabled via the `shortcuts` option. On macOS, `Cmd` is used instead of `Ctrl`.
+
+```js
+$('#editor').bsMarkdownEditor({
+    shortcuts: {
+        'bold': 'ctrl+b',
+        'italic': 'ctrl+i'
+    }
+});
+```
 
 ### Custom Actions
 
@@ -272,8 +321,9 @@ const markdown = $.bsMarkdownEditor.toMarkdown('<h1>Hello</h1>');
 
 ## Notes
 
-- The toolbar includes bold, italic, text styles (`~~strikethrough~~`, `==underline==`), headings, unordered/ordered/task lists,
-  indent/outdent, quote, link, image, inline code, code block, horizontal rule, table, undo/redo, and preview actions.
+- The toolbar includes bold, italic, text styles (`~~strikethrough~~`, `==underline==`), clear formatting, headings,
+  unordered/ordered/task lists, task toggling, indent/outdent, quote, link, image, callout, details, definition list,
+  inline code, code block, horizontal rule, table, undo/redo, and preview actions.
 - The table action opens a Bootstrap modal where users can choose row/column count; the modal is removed from the DOM when closed.
 - The image action opens a Bootstrap modal where users can enter URL, alt text, and optional width/height values.
 - Preview rendering is built in and does not require an external Markdown package.

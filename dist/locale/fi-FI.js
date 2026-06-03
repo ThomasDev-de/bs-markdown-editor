@@ -28,10 +28,14 @@ window.bsMarkdownEditorTranslations = {
         "code": "Koodi",
         "codeBlock": "Koodilohko",
         "copyCode": "Kopioi koodi",
+        "callout": "Huomautus",
+        "details": "Tiedot",
+        "definitionList": "Määritelmälista",
         "table": "Taulukko",
         "image": "Kuva",
         "hr": "Vaakaviiva",
         "taskList": "Tehtävälista",
+        "toggleTask": "Vaihda tehtävän tila",
         "undo": "Kumoa",
         "redo": "Tee uudelleen",
         "preview": "Esikatselu"
@@ -54,9 +58,21 @@ window.bsMarkdownEditorTranslations = {
         "defaultText": "Teksti",
         "defaultItem": "Kohde",
         "defaultTask": "Tehtävä",
+        "defaultCallout": "Huomio",
+        "defaultCalloutText": "Huomioteksti",
+        "defaultSummary": "Yhteenveto",
+        "defaultDetails": "Lisätiedot",
+        "defaultTerm": "Termi",
+        "defaultDefinition": "Määritelmä",
         "imageAlt": "Kuva",
         "tableColumn": "Sarake",
         "tableValue": "Arvo"
+    },
+    "stats": {
+        "mode": "Mode",
+        "chars": "chars",
+        "words": "words",
+        "shortcuts": "Keyboard shortcuts"
     },
     "preview": {
         "loading": "Muodostetaan esikatselua...",
@@ -65,7 +81,8 @@ window.bsMarkdownEditorTranslations = {
     "modal": {
         "tableTitle": "Luo taulukko",
         "imageTitle": "Lisää kuva",
-        "linkTitle": "Lisää linkki",
+        "linkTitle": "Insert link",
+        "shortcutsTitle": "Keyboard shortcuts",
         "rows": "Rivit",
         "columns": "Sarakkeet",
         "alt": "Vaihtoehtoinen teksti",

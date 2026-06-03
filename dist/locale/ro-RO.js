@@ -28,10 +28,14 @@ window.bsMarkdownEditorTranslations = {
         "code": "Cod",
         "codeBlock": "Bloc de cod",
         "copyCode": "Copiază codul",
+        "callout": "Casetă informativă",
+        "details": "Detalii",
+        "definitionList": "Listă de definiții",
         "table": "Tabel",
         "image": "Imagine",
         "hr": "Linie orizontală",
         "taskList": "Listă de sarcini",
+        "toggleTask": "Comută sarcina",
         "undo": "Anulează",
         "redo": "Refă",
         "preview": "Previzualizare"
@@ -54,9 +58,21 @@ window.bsMarkdownEditorTranslations = {
         "defaultText": "Text",
         "defaultItem": "Element",
         "defaultTask": "Sarcină",
+        "defaultCallout": "Notă",
+        "defaultCalloutText": "Text informativ",
+        "defaultSummary": "Rezumat",
+        "defaultDetails": "Conținut detalii",
+        "defaultTerm": "Termen",
+        "defaultDefinition": "Definiție",
         "imageAlt": "Imagine",
         "tableColumn": "Coloană",
         "tableValue": "Valoare"
+    },
+    "stats": {
+        "mode": "Mode",
+        "chars": "chars",
+        "words": "words",
+        "shortcuts": "Keyboard shortcuts"
     },
     "preview": {
         "loading": "Se generează previzualizarea...",
@@ -65,7 +81,8 @@ window.bsMarkdownEditorTranslations = {
     "modal": {
         "tableTitle": "Creează tabel",
         "imageTitle": "Inserează imagine",
-        "linkTitle": "Inserează link",
+        "linkTitle": "Insert link",
+        "shortcutsTitle": "Keyboard shortcuts",
         "rows": "Rânduri",
         "columns": "Coloane",
         "alt": "Text alternativ",

@@ -462,12 +462,15 @@
                     continue;
                 }
 
-                if (/^<table[\s>]/i.test(trimmed)) {
+                const htmlBlockMatch = trimmed.match(/^<(table|details|dl)\b/i);
+                if (htmlBlockMatch) {
+                    const tagName = htmlBlockMatch[1].toLowerCase();
+                    const closePattern = new RegExp('</' + tagName + '>', 'i');
                     const tableLines = [];
                     while (i < lines.length) {
                         const currentLine = lines[i];
                         tableLines.push(currentLine);
-                        if (/<\/table>/i.test(currentLine)) {
+                        if (closePattern.test(currentLine)) {
                             i += 1;
                             break;
                         }
@@ -533,6 +536,11 @@
                         quoteLines.push(lines[i].replace(/^\s*>\s?/, ''));
                         i += 1;
                     }
+                    const calloutHtml = sharedConverters.renderCalloutBlock(quoteLines);
+                    if (calloutHtml !== '') {
+                        html.push(calloutHtml);
+                        continue;
+                    }
                     html.push(`<blockquote class="blockquote">${sharedConverters.renderMarkdown(quoteLines.join('\n'))}</blockquote>`);
                     continue;
                 }
@@ -581,7 +589,7 @@
                     const current = lines[i];
                     if (
                         current.trim() === '' ||
-                        /^<table[\s>]/i.test(current.trim()) ||
+                        /^<(table|details|dl)\b/i.test(current.trim()) ||
                         /^```\s*([a-zA-Z0-9_+.#-]+)?(?:\s.*)?$/.test(current.trim()) ||
                         /^\s{0,3}(#{1,6})\s+/.test(current) ||
                         /^\s*>\s?/.test(current) ||
@@ -607,6 +615,37 @@
             }
 
             return html.join('\n');
+        },
+        renderCalloutBlock(lines) {
+            if (!Array.isArray(lines) || lines.length === 0) {
+                return '';
+            }
+            const firstLine = String(lines[0] || '');
+            const match = firstLine.match(/^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*(.*)$/i);
+            if (!match) {
+                return '';
+            }
+            const type = match[1].toUpperCase();
+            const title = String(match[2] || '').trim() || type.charAt(0) + type.slice(1).toLowerCase();
+            const bodyLines = lines.slice(1);
+            const alertClassMap = {
+                NOTE: 'alert-info',
+                TIP: 'alert-success',
+                IMPORTANT: 'alert-primary',
+                WARNING: 'alert-warning',
+                CAUTION: 'alert-danger'
+            };
+            const iconClassMap = {
+                NOTE: 'bi-info-circle',
+                TIP: 'bi-lightbulb',
+                IMPORTANT: 'bi-exclamation-circle',
+                WARNING: 'bi-exclamation-triangle',
+                CAUTION: 'bi-exclamation-octagon'
+            };
+            const body = bodyLines.length > 0
+                ? sharedConverters.renderMarkdown(bodyLines.join('\n'))
+                : '';
+            return `<div class="alert ${alertClassMap[type] || 'alert-secondary'}" role="note"><div class="fw-semibold mb-1"><i class="bi ${iconClassMap[type] || 'bi-info-circle'} me-1"></i>${sharedConverters.renderInline(title)}</div>${body}</div>`;
         },
         escapeMarkdownText(text) {
             return String(text || '')
@@ -1093,7 +1132,37 @@
             actions: 'all',
             customActions: {},
             lang: null,
-            translations: {}
+            translations: {},
+            shortcuts: {
+                'bold': 'ctrl+b',
+                'italic': 'ctrl+i',
+                'ul': 'ctrl+l',
+                'ol': 'ctrl+shift+o',
+                'quote': 'ctrl+q',
+                'code': 'ctrl+k',
+                'link': 'ctrl+shift+l',
+                'image': 'ctrl+shift+i',
+                'codeBlock': 'ctrl+shift+k',
+                'undo': 'ctrl+z',
+                'redo': 'ctrl+y',
+                'preview': 'ctrl+p',
+                'hr': 'ctrl+h',
+                'taskList': 'ctrl+shift+t',
+                'toggleTask': 'ctrl+shift+m',
+                'strikethrough': 'ctrl+shift+s',
+                'underline': 'ctrl+alt+u',
+                'subscript': 'ctrl+shift+b',
+                'superscript': 'ctrl+shift+p',
+                'heading1': 'ctrl+shift+1',
+                'heading2': 'ctrl+shift+2',
+                'heading3': 'ctrl+shift+3',
+                'heading4': 'ctrl+shift+4',
+                'heading5': 'ctrl+shift+5',
+                'heading6': 'ctrl+shift+6',
+                'callout': 'ctrl+shift+c',
+                'details': 'ctrl+shift+d',
+                'definitionList': 'ctrl+shift+u'
+            }
         }, options);
 
         const defaultTranslations = {
@@ -1126,10 +1195,14 @@
                 code: 'Code',
                 codeBlock: 'Code block',
                 copyCode: 'Copy code',
+                callout: 'Callout',
+                details: 'Details',
+                definitionList: 'Definition list',
                 table: 'Table',
                 image: 'Image',
                 hr: 'Horizontal rule',
                 taskList: 'Task list',
+                toggleTask: 'Toggle task',
                 undo: 'Undo',
                 redo: 'Redo',
                 preview: 'Preview'
@@ -1152,6 +1225,12 @@
                 defaultText: 'Text',
                 defaultItem: 'Item',
                 defaultTask: 'Task',
+                defaultCallout: 'Note',
+                defaultCalloutText: 'Callout text',
+                defaultSummary: 'Summary',
+                defaultDetails: 'Details content',
+                defaultTerm: 'Term',
+                defaultDefinition: 'Definition',
                 imageAlt: 'Image',
                 tableColumn: 'Column',
                 tableValue: 'Value'
@@ -1160,10 +1239,17 @@
                 loading: 'Rendering preview...',
                 error: 'Preview could not be rendered.'
             },
+            stats: {
+                mode: 'Mode',
+                chars: 'chars',
+                words: 'words',
+                shortcuts: 'Keyboard shortcuts'
+            },
             modal: {
                 tableTitle: 'Create table',
                 imageTitle: 'Insert image',
                 linkTitle: 'Insert link',
+                shortcutsTitle: 'Keyboard shortcuts',
                 rows: 'Rows',
                 columns: 'Columns',
                 alt: 'Alt text',
@@ -1224,13 +1310,20 @@
                 title: t('actions.textStyles', 'Textstil'),
                 icon: 'bi-type',
                 items: [
-                    {label: t('actions.strikethrough', 'Durchgestrichen'), icon: 'bi-type-strikethrough', before: '~~', after: '~~', placeholder: t('placeholders.strikethrough', 'durchgestrichen')},
-                    {label: t('actions.underline', 'Unterstrichen'), icon: 'bi-type-underline', before: '==', after: '==', placeholder: t('placeholders.underline', 'unterstrichen')},
-                    {label: t('actions.subscript', 'Tiefgestellt'), icon: 'bi-subscript', before: '<sub>', after: '</sub>', placeholder: t('placeholders.subscript', 'tiefgestellt')},
-                    {label: t('actions.superscript', 'Hochgestellt'), icon: 'bi-superscript', before: '<sup>', after: '</sup>', placeholder: t('placeholders.superscript', 'hochgestellt')}
+                    {label: t('actions.strikethrough', 'Durchgestrichen'), icon: 'bi-type-strikethrough', before: '~~', after: '~~', shortcut: 'strikethrough', placeholder: t('placeholders.strikethrough', 'durchgestrichen')},
+                    {label: t('actions.underline', 'Unterstrichen'), icon: 'bi-type-underline', before: '==', after: '==', shortcut: 'underline', placeholder: t('placeholders.underline', 'unterstrichen')},
+                    {label: t('actions.subscript', 'Tiefgestellt'), icon: 'bi-subscript', before: '<sub>', after: '</sub>', shortcut: 'subscript', placeholder: t('placeholders.subscript', 'tiefgestellt')},
+                    {label: t('actions.superscript', 'Hochgestellt'), icon: 'bi-superscript', before: '<sup>', after: '</sup>', shortcut: 'superscript', placeholder: t('placeholders.superscript', 'hochgestellt')}
                 ],
                 run(textarea, item) {
                     helpers.wrapSelection(textarea, item.before, item.after, item.placeholder);
+                }
+            },
+            clearFormatting: {
+                title: t('actions.clearFormatting', 'Formatierung löschen'),
+                icon: 'bi-eraser',
+                run(textarea) {
+                    helpers.clearSelectedFormatting(textarea);
                 }
             },
             heading: {
@@ -1238,12 +1331,12 @@
                 icon: 'bi-fonts',
                 items: [
                     {label: t('actions.normalText', 'Normaler Text'), prefix: '', textStyle: 'font-size:1rem;'},
-                    {label: t('actions.heading1', 'Überschrift 1'), prefix: '# ', textStyle: 'font-size:1.15rem; font-weight:600;'},
-                    {label: t('actions.heading2', 'Überschrift 2'), prefix: '## ', textStyle: 'font-size:1.1rem; font-weight:600;'},
-                    {label: t('actions.heading3', 'Überschrift 3'), prefix: '### ', textStyle: 'font-size:1.05rem; font-weight:600;'},
-                    {label: t('actions.heading4', 'Überschrift 4'), prefix: '#### ', textStyle: 'font-size:1rem; font-weight:600;'},
-                    {label: t('actions.heading5', 'Überschrift 5'), prefix: '##### ', textStyle: 'font-size:0.95rem; font-weight:600;'},
-                    {label: t('actions.heading6', 'Überschrift 6'), prefix: '###### ', textStyle: 'font-size:0.9rem; font-weight:600;'}
+                    {label: t('actions.heading1', 'Überschrift 1'), prefix: '# ', shortcut: 'heading1', textStyle: 'font-size:1.15rem; font-weight:600;'},
+                    {label: t('actions.heading2', 'Überschrift 2'), prefix: '## ', shortcut: 'heading2', textStyle: 'font-size:1.1rem; font-weight:600;'},
+                    {label: t('actions.heading3', 'Überschrift 3'), prefix: '### ', shortcut: 'heading3', textStyle: 'font-size:1.05rem; font-weight:600;'},
+                    {label: t('actions.heading4', 'Überschrift 4'), prefix: '#### ', shortcut: 'heading4', textStyle: 'font-size:1rem; font-weight:600;'},
+                    {label: t('actions.heading5', 'Überschrift 5'), prefix: '##### ', shortcut: 'heading5', textStyle: 'font-size:0.95rem; font-weight:600;'},
+                    {label: t('actions.heading6', 'Überschrift 6'), prefix: '###### ', shortcut: 'heading6', textStyle: 'font-size:0.9rem; font-weight:600;'}
                 ],
                 run(textarea, item) {
                     helpers.transformSelectedLines(textarea, function (line) {
@@ -1314,6 +1407,33 @@
                     helpers.openCodeBlockModal(textarea);
                 }
             },
+            callout: {
+                title: t('actions.callout', 'Hinweisbox'),
+                icon: 'bi-info-square',
+                run(textarea) {
+                    const selected = helpers.getSelection(textarea);
+                    const content = selected === '' ? t('placeholders.defaultCalloutText', 'Hinweistext') : selected;
+                    helpers.insertBlock(textarea, helpers.buildMarkdownCallout(content));
+                }
+            },
+            details: {
+                title: t('actions.details', 'Details'),
+                icon: 'bi-arrows-collapse',
+                run(textarea) {
+                    const selected = helpers.getSelection(textarea);
+                    const content = selected === '' ? t('placeholders.defaultDetails', 'Detailinhalt') : selected;
+                    helpers.insertBlock(textarea, helpers.buildMarkdownDetails(content));
+                }
+            },
+            definitionList: {
+                title: t('actions.definitionList', 'Definitionsliste'),
+                icon: 'bi-card-list',
+                run(textarea) {
+                    const selected = helpers.getSelection(textarea);
+                    const content = selected === '' ? t('placeholders.defaultDefinition', 'Definition') : selected;
+                    helpers.insertBlock(textarea, helpers.buildMarkdownDefinitionList(content));
+                }
+            },
             table: {
                 title: t('actions.table', 'Tabelle'),
                 icon: 'bi-table',
@@ -1358,7 +1478,14 @@
                         }
                         return `- [ ] ${line}`;
                     }).join('\n');
-                    helpers.replaceSelection(textarea, replacement);
+                    helpers.insertBlock(textarea, replacement);
+                }
+            },
+            toggleTask: {
+                title: t('actions.toggleTask', 'Task umschalten'),
+                icon: 'bi-check2-square',
+                run(textarea) {
+                    helpers.toggleTaskLines(textarea);
                 }
             },
             undo: {
@@ -1482,6 +1609,23 @@
                     return `btn-group-${size}`;
                 }
                 return '';
+            },
+            getShortcutDisplay(actionKey) {
+                const shortcut = settings.shortcuts[actionKey];
+                if (!shortcut) return '';
+
+                const isMac = (typeof window !== 'undefined' && window.navigator && /Mac|iPod|iPhone|iPad/.test(window.navigator.platform));
+                const parts = shortcut.split('+');
+                const displayParts = parts.map(function(part) {
+                    part = part.trim().toLowerCase();
+                    if (part === 'ctrl') return isMac ? '⌘' : 'Ctrl';
+                    if (part === 'shift') return isMac ? '⇧' : 'Shift';
+                    if (part === 'alt') return isMac ? '⌥' : 'Alt';
+                    if (part === 'meta') return isMac ? '⌘' : 'Meta';
+                    return part.toUpperCase();
+                });
+
+                return displayParts.join('+');
             },
             getButtonClass() {
                 const btnClass = String(settings.btnClass || '').trim();
@@ -1996,7 +2140,21 @@
                 const value = helpers.getValue(textarea) || '';
                 const words = helpers.countWords(value);
                 const mode = helpers.getMode(textarea);
-                $stats.text(`${t('stats.mode', 'Mode')}: ${mode} | ${value.length} ${t('stats.chars', 'chars')} / ${words} ${t('stats.words', 'words')}`);
+                const statsHtml = `${t('stats.mode', 'Mode')}: ${mode} | ${value.length} ${t('stats.chars', 'chars')} / ${words} ${t('stats.words', 'words')}`;
+                
+                $stats.html(statsHtml);
+
+                // Add shortcut info button
+                let $infoBtn = $stats.parent().find('.js-bs-markdown-editor-info-btn');
+                if ($infoBtn.length === 0) {
+                    $infoBtn = $(`<button type="button" class="js-bs-markdown-editor-info-btn btn btn-link p-0 ms-2 text-decoration-none" title="${helpers.escapeHtml(t('stats.shortcuts', 'Keyboard shortcuts'))}">
+                        <i class="bi bi-info-circle"></i>
+                    </button>`);
+                    $stats.after($infoBtn);
+                    $infoBtn.on('click', function() {
+                        helpers.openShortcutsModal(textarea);
+                    });
+                }
             },
             getMode(textarea) {
                 const $preview = $(textarea).closest(helpers.getWrapperSelector()).find('.js-bs-parsedown-preview');
@@ -2195,6 +2353,21 @@
                     lines.push(`| ${cells.join(' | ')} |`);
                 });
                 return lines.join('\n');
+            },
+            buildMarkdownCallout(content) {
+                const title = t('placeholders.defaultCallout', 'Hinweis');
+                const body = String(content || '').split('\n').map(function (line) {
+                    return `> ${line}`;
+                }).join('\n');
+                return `> [!NOTE] ${title}\n${body}`;
+            },
+            buildMarkdownDetails(content) {
+                const summary = t('placeholders.defaultSummary', 'Zusammenfassung');
+                return `<details>\n<summary>${helpers.escapeHtml(summary)}</summary>\n\n${String(content || '')}\n\n</details>`;
+            },
+            buildMarkdownDefinitionList(content) {
+                const term = t('placeholders.defaultTerm', 'Begriff');
+                return `<dl>\n<dt>${helpers.escapeHtml(term)}</dt>\n<dd>${String(content || '')}</dd>\n</dl>`;
             },
             normalizeImageDimensionValue(value) {
                 const normalized = String(value || '').trim().toLowerCase();
@@ -2470,6 +2643,92 @@
                 $('body').append($modal);
                 modalInstance.show();
             },
+            openShortcutsModal(textarea) {
+                if (!window.bootstrap || !window.bootstrap.Modal) {
+                    return;
+                }
+
+                const modalId = 'bsMarkdownEditorShortcutsModal' + Math.random().toString(36).slice(2, 10);
+                let rowsHtml = '';
+
+                // Collect all shortcuts
+                const shortcuts = settings.shortcuts;
+                const shortcutEntries = [];
+
+                for (const actionKey in shortcuts) {
+                    const shortcut = shortcuts[actionKey];
+                    if (!shortcut) continue;
+
+                    let title = '';
+                    let action = actions[actionKey] || settings.customActions[actionKey];
+
+                    if (action) {
+                        title = action.title || actionKey;
+                    } else {
+                        // Search in sub-items
+                        for (const aKey in actions) {
+                            if (actions[aKey].items) {
+                                const foundItem = actions[aKey].items.find(i => i.shortcut === actionKey);
+                                if (foundItem) {
+                                    title = foundItem.label || actionKey;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (title) {
+                        shortcutEntries.push({
+                            title: title,
+                            display: helpers.getShortcutDisplay(actionKey)
+                        });
+                    }
+                }
+
+                // Sort by title
+                shortcutEntries.sort((a, b) => a.title.localeCompare(b.title));
+
+                shortcutEntries.forEach(entry => {
+                    rowsHtml += `
+                        <tr>
+                            <td>${helpers.escapeHtml(entry.title)}</td>
+                            <td class="text-end"><kbd>${helpers.escapeHtml(entry.display)}</kbd></td>
+                        </tr>`;
+                });
+
+                const $modal = $(`
+<div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}Title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="${modalId}Title">${helpers.escapeHtml(t('modal.shortcutsTitle', 'Tastenkombinationen'))}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}"></button>
+            </div>
+            <div class="modal-body p-0">
+                <table class="table table-striped table-hover mb-0">
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${helpers.escapeHtml(t('modal.close', 'Schließen'))}</button>
+            </div>
+        </div>
+    </div>
+</div>
+`);
+                const modalElement = $modal[0];
+                const modalInstance = new window.bootstrap.Modal(modalElement);
+
+                $modal.on('hidden.bs.modal', function () {
+                    modalInstance.dispose();
+                    $modal.remove();
+                });
+
+                $('body').append($modal);
+                modalInstance.show();
+            },
             replaceSelection(textarea, replacement, selectionStartOffset = 0, selectionEndOffset = replacement.length, source = 'toolbar') {
                 const start = textarea.selectionStart;
                 const end = textarea.selectionEnd;
@@ -2567,6 +2826,30 @@
                     return value;
                 }).join('\n');
                 helpers.replaceSelection(textarea, replacement);
+            },
+            clearSelectedFormatting(textarea) {
+                const selected = helpers.getSelection(textarea);
+                if (selected === '') {
+                    return;
+                }
+                const cleaned = helpers.removeInlineFormatting(selected);
+                helpers.replaceSelection(textarea, cleaned, 0, cleaned.length);
+            },
+            toggleTaskLines(textarea) {
+                helpers.transformSelectedLines(textarea, function (line) {
+                    const taskMatch = String(line).match(/^(\s*)(?:[-*+]|\d+[.)])\s+\[([ xX])\]\s+(.*)$/);
+                    if (taskMatch) {
+                        const marker = taskMatch[2].toLowerCase() === 'x' ? ' ' : 'x';
+                        return `${taskMatch[1]}- [${marker}] ${taskMatch[3]}`;
+                    }
+                    if (line.trim() === '') {
+                        return line;
+                    }
+                    const indentMatch = String(line).match(/^(\s*)(.*)$/);
+                    const indent = indentMatch ? indentMatch[1] : '';
+                    const content = helpers.stripListPrefix(indentMatch ? indentMatch[2] : line).trimStart();
+                    return `${indent}- [ ] ${content}`;
+                });
             },
             removeInlineFormatting(text) {
                 return String(text || '')
@@ -2669,14 +2952,67 @@
             });
 
             $editable.on('keydown.bsMarkdownEditorEditable', function (e) {
-                if (e.key !== 'Tab' || e.shiftKey) {
+                if (e.key === 'Tab' && !e.shiftKey) {
+                    e.preventDefault();
+                    helpers.insertTextIntoEditable($editable.get(0), helpers.getEditableTabInsertion($editable.get(0), 4));
+                    helpers.syncTextareaFromEditable(textarea, 'editable');
+                    helpers.rememberEditableSelection(textarea);
                     return;
                 }
 
-                e.preventDefault();
-                helpers.insertTextIntoEditable($editable.get(0), helpers.getEditableTabInsertion($editable.get(0), 4));
-                helpers.syncTextareaFromEditable(textarea, 'editable');
-                helpers.rememberEditableSelection(textarea);
+                const isCtrl = e.ctrlKey || e.metaKey;
+                const isAlt = e.altKey;
+                const isShift = e.shiftKey;
+                if (!isCtrl && !isAlt) return;
+
+                let key = e.key.toLowerCase();
+                
+                // Use e.code for digits to get the digit even if Shift is pressed
+                if (e.code && e.code.startsWith('Digit')) {
+                    key = e.code.replace('Digit', '');
+                }
+
+                // Normalizing key for Alt+U which might produce characters like 'µ' on some layouts
+                if (isAlt && !isCtrl && e.code === 'KeyU') {
+                    key = 'u';
+                }
+
+                // Normalizing keys for common combinations to ensure they are caught correctly regardless of layout shifts
+                if (isCtrl && !isAlt) {
+                    if (e.code && e.code.startsWith('Key')) {
+                        key = e.code.replace('Key', '').toLowerCase();
+                    }
+                }
+
+                const pressedShortcut = (isCtrl ? 'ctrl+' : '') + (isAlt ? 'alt+' : '') + (isShift ? 'shift+' : '') + key;
+
+                for (let actionKey in settings.shortcuts) {
+                    if (settings.shortcuts[actionKey] === pressedShortcut) {
+                        let action = actions[actionKey] || settings.customActions[actionKey];
+                        let item = null;
+
+                        if (!action) {
+                            // Search in sub-items (like headings)
+                            for (let aKey in actions) {
+                                if (actions[aKey].items) {
+                                    const foundItem = actions[aKey].items.find(i => i.shortcut === actionKey);
+                                    if (foundItem) {
+                                        action = actions[aKey];
+                                        item = foundItem;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (action && typeof action.run === 'function') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            action.run(textarea, item);
+                            return;
+                        }
+                    }
+                }
             });
 
             $editable.on('paste.bsMarkdownEditorEditable', function (e) {
@@ -2727,9 +3063,9 @@
             const $toolbarRight = $('<div class="d-flex flex-wrap align-items-center gap-1"></div>');
             const $toolbarRightCustom = $('<div class="d-flex flex-wrap align-items-center gap-1"></div>');
             const resolvedActionKeys = helpers.getResolvedActionKeys();
-            const groupedInlineStyleKeys = ['bold', 'italic', 'textStyles', 'code', 'codeBlock'];
-            const groupedInsertKeys = ['link', 'image'];
-            const groupedListKeys = ['ul', 'ol', 'taskList'];
+            const groupedInlineStyleKeys = ['bold', 'italic', 'textStyles', 'code', 'codeBlock', 'clearFormatting'];
+            const groupedInsertKeys = ['link', 'image', 'callout', 'details', 'definitionList'];
+            const groupedListKeys = ['ul', 'ol', 'taskList', 'toggleTask'];
             let inlineStylesDropdownRendered = false;
             let insertDropdownRendered = false;
             let listDropdownRendered = false;
@@ -2751,39 +3087,33 @@
                     inlineStylesDropdownRendered = true;
                     const inlineStyleItems = [];
                     if (resolvedActionKeys.indexOf('bold') !== -1 && actions.bold) {
-                        inlineStyleItems.push({label: actions.bold.title, icon: actions.bold.icon, run() { actions.bold.run(textarea); }});
+                        inlineStyleItems.push({label: actions.bold.title, icon: actions.bold.icon, shortcut: helpers.getShortcutDisplay('bold'), run() { actions.bold.run(textarea); }});
                     }
                     if (resolvedActionKeys.indexOf('italic') !== -1 && actions.italic) {
-                        inlineStyleItems.push({label: actions.italic.title, icon: actions.italic.icon, run() { actions.italic.run(textarea); }});
+                        inlineStyleItems.push({label: actions.italic.title, icon: actions.italic.icon, shortcut: helpers.getShortcutDisplay('italic'), run() { actions.italic.run(textarea); }});
                     }
                     if (resolvedActionKeys.indexOf('textStyles') !== -1 && actions.textStyles && Array.isArray(actions.textStyles.items)) {
                         actions.textStyles.items.forEach(function (item) {
                             inlineStyleItems.push({
                                 label: item.label,
                                 icon: item.icon || actions.textStyles.icon,
+                                shortcut: item.shortcut ? helpers.getShortcutDisplay(item.shortcut) : '',
                                 run() { actions.textStyles.run(textarea, item); }
                             });
                         });
                     }
                     if (resolvedActionKeys.indexOf('code') !== -1 && actions.code) {
-                        inlineStyleItems.push({label: actions.code.title, icon: actions.code.icon, run() { actions.code.run(textarea); }});
+                        inlineStyleItems.push({label: actions.code.title, icon: actions.code.icon, shortcut: helpers.getShortcutDisplay('code'), run() { actions.code.run(textarea); }});
                     }
                     if (resolvedActionKeys.indexOf('codeBlock') !== -1 && actions.codeBlock) {
-                        inlineStyleItems.push({label: actions.codeBlock.title, icon: actions.codeBlock.icon, run() { actions.codeBlock.run(textarea); }});
+                        inlineStyleItems.push({label: actions.codeBlock.title, icon: actions.codeBlock.icon, shortcut: helpers.getShortcutDisplay('codeBlock'), run() { actions.codeBlock.run(textarea); }});
                     }
-                    inlineStyleItems.push({type: 'divider'});
-                    inlineStyleItems.push({
-                        label: t('actions.clearFormatting', 'Formatierung löschen'),
-                        icon: 'bi-eraser',
-                        run() {
-                            const selected = helpers.getSelection(textarea);
-                            if (selected === '') {
-                                return;
-                            }
-                            const cleaned = helpers.removeInlineFormatting(selected);
-                            helpers.replaceSelection(textarea, cleaned, 0, cleaned.length);
+                    if (resolvedActionKeys.indexOf('clearFormatting') !== -1 && actions.clearFormatting) {
+                        if (inlineStyleItems.length > 0) {
+                            inlineStyleItems.push({type: 'divider'});
                         }
-                    });
+                        inlineStyleItems.push({label: actions.clearFormatting.title, icon: actions.clearFormatting.icon, shortcut: helpers.getShortcutDisplay('clearFormatting'), run() { actions.clearFormatting.run(textarea); }});
+                    }
 
                     if (inlineStyleItems.length > 1) {
                         const dropdownId = 'bsMarkdownEditorInlineStyles' + Math.random().toString(36).slice(2, 10);
@@ -2806,7 +3136,8 @@
                                 $menu.append('<li><hr class="dropdown-divider"></li>');
                                 return;
                             }
-                            const $link = $(`<a href="#" class="dropdown-item"><i class="bi ${item.icon} me-2"></i>${item.label}</a>`);
+                            const shortcutHtml = item.shortcut ? `<span class="float-end ms-4 text-body-secondary small">${item.shortcut}</span>` : '';
+                            const $link = $(`<a href="#" class="dropdown-item d-flex justify-content-between align-items-center"><span class="d-flex align-items-center"><i class="bi ${item.icon} me-2"></i>${item.label}</span>${shortcutHtml}</a>`);
                             $link.on('click', function (e) {
                                 e.preventDefault();
                                 helpers.syncTextareaFromEditable(textarea, 'editableSelection');
@@ -2846,7 +3177,9 @@
                         const $menu = $dropdown.find('.dropdown-menu');
                         availableListKeys.forEach(function (listKey) {
                             const listAction = actions[listKey];
-                            const $link = $(`<a href="#" class="dropdown-item"><i class="bi ${listAction.icon} me-2"></i>${listAction.title}</a>`);
+                            const shortcut = helpers.getShortcutDisplay(listKey);
+                            const shortcutHtml = shortcut ? `<span class="float-end ms-4 text-body-secondary small">${shortcut}</span>` : '';
+                            const $link = $(`<a href="#" class="dropdown-item d-flex justify-content-between align-items-center"><span class="d-flex align-items-center"><i class="bi ${listAction.icon} me-2"></i>${listAction.title}</span>${shortcutHtml}</a>`);
                             $link.on('click', function (e) {
                                 e.preventDefault();
                                 helpers.syncTextareaFromEditable(textarea, 'editableSelection');
@@ -2887,7 +3220,10 @@
 `);
                         const $menu = $dropdown.find('.dropdown-menu');
                         insertItems.forEach(function (insertAction) {
-                            const $link = $(`<a href="#" class="dropdown-item"><i class="bi ${insertAction.icon} me-2"></i>${insertAction.title}</a>`);
+                            const insertKey = Object.keys(actions).find(k => actions[k] === insertAction);
+                            const shortcut = helpers.getShortcutDisplay(insertKey);
+                            const shortcutHtml = shortcut ? `<span class="float-end ms-4 text-body-secondary small">${shortcut}</span>` : '';
+                            const $link = $(`<a href="#" class="dropdown-item d-flex justify-content-between align-items-center"><span class="d-flex align-items-center"><i class="bi ${insertAction.icon} me-2"></i>${insertAction.title}</span>${shortcutHtml}</a>`);
                             $link.on('click', function (e) {
                                 e.preventDefault();
                                 helpers.syncTextareaFromEditable(textarea, 'editableSelection');
@@ -2960,7 +3296,9 @@
                         const itemIcon = item.icon || null;
                         const iconHtml = itemIcon ? `<i class="bi ${itemIcon} me-2"></i>` : '';
                         const labelStyle = item.textStyle ? ` style="${item.textStyle}"` : '';
-                        const $link = $(`<a href="#" class="dropdown-item">${iconHtml}<span${labelStyle}>${item.label}</span></a>`);
+                        const itemShortcut = item.shortcut ? helpers.getShortcutDisplay(item.shortcut) : '';
+                        const shortcutHtml = itemShortcut ? `<span class="float-end ms-4 text-body-secondary small">${itemShortcut}</span>` : '';
+                        const $link = $(`<a href="#" class="dropdown-item d-flex justify-content-between align-items-center"><span class="d-flex align-items-center">${iconHtml}<span${labelStyle}>${item.label}</span></span>${shortcutHtml}</a>`);
                         $link.on('click', function (e) {
                             e.preventDefault();
                             helpers.syncTextareaFromEditable(textarea, 'editableSelection');
@@ -2978,7 +3316,9 @@
                 }
 
                 const buttonClass = key === 'preview' ? `${buttonClassBase} js-bs-parsedown-preview-toggle` : `${buttonClassBase} js-bs-parsedown-action`;
-                const $button = $(`<button type="button" class="${buttonClass}" title="${action.title}"><i class="bi ${action.icon}"></i></button>`);
+                const shortcut = helpers.getShortcutDisplay(key);
+                const title = shortcut ? `${action.title} (${shortcut})` : action.title;
+                const $button = $(`<button type="button" class="${buttonClass}" title="${title}"><i class="bi ${action.icon}"></i></button>`);
                 const $buttonGroup = $(`<div class="btn-group ${groupSizeClass}" role="group"></div>`);
                 $buttonGroup.append($button);
                 $button.on('click', function (e) {
@@ -3030,9 +3370,11 @@
                     }
                 } else if (typeof customAction.run === 'function') {
                     const title = customAction.title || customKey;
+                    const shortcut = helpers.getShortcutDisplay(customKey);
+                    const titleWithShortcut = shortcut ? `${title} (${shortcut})` : title;
                     const icon = customAction.icon ? `<i class="bi ${helpers.escapeHtml(customAction.icon)}"></i>` : helpers.escapeHtml(title);
                     const buttonClass = customAction.buttonClass || `${buttonClassBase} js-bs-parsedown-action`;
-                    const $button = $(`<button type="button" class="${buttonClass}" title="${helpers.escapeHtml(title)}">${icon}</button>`);
+                    const $button = $(`<button type="button" class="${buttonClass}" title="${helpers.escapeHtml(titleWithShortcut)}">${icon}</button>`);
                     const $buttonGroup = $(`<div class="btn-group ${groupSizeClass}" role="group"></div>`);
 
                     $button.on('click', function (event) {

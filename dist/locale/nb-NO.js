@@ -28,10 +28,14 @@ window.bsMarkdownEditorTranslations = {
         "code": "Kode",
         "codeBlock": "Kodeblokk",
         "copyCode": "Kopier kode",
+        "callout": "Infoboks",
+        "details": "Detaljer",
+        "definitionList": "Definisjonsliste",
         "table": "Tabell",
         "image": "Bilde",
         "hr": "Horisontal linje",
         "taskList": "Oppgaveliste",
+        "toggleTask": "Veksle oppgave",
         "undo": "Angre",
         "redo": "Gjør om",
         "preview": "Forhåndsvisning"
@@ -54,9 +58,21 @@ window.bsMarkdownEditorTranslations = {
         "defaultText": "Tekst",
         "defaultItem": "Element",
         "defaultTask": "Oppgave",
+        "defaultCallout": "Merk",
+        "defaultCalloutText": "Infotekst",
+        "defaultSummary": "Sammendrag",
+        "defaultDetails": "Detaljinnhold",
+        "defaultTerm": "Begrep",
+        "defaultDefinition": "Definisjon",
         "imageAlt": "Bilde",
         "tableColumn": "Kolonne",
         "tableValue": "Verdi"
+    },
+    "stats": {
+        "mode": "Mode",
+        "chars": "chars",
+        "words": "words",
+        "shortcuts": "Keyboard shortcuts"
     },
     "preview": {
         "loading": "Renderer forhåndsvisning...",
@@ -65,7 +81,8 @@ window.bsMarkdownEditorTranslations = {
     "modal": {
         "tableTitle": "Opprett tabell",
         "imageTitle": "Sett inn bilde",
-        "linkTitle": "Sett inn lenke",
+        "linkTitle": "Insert link",
+        "shortcutsTitle": "Keyboard shortcuts",
         "rows": "Rader",
         "columns": "Kolonner",
         "alt": "Alternativ tekst",

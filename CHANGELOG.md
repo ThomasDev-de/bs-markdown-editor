@@ -7,13 +7,31 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+- Package version bumped from `1.0.6` to `1.0.7`.
+
+## [1.0.7] - 2026-06-03
+
 ### Added
 
+- Added default keyboard shortcuts for `callout` (`Ctrl+Shift+C`), `details` (`Ctrl+Shift+D`), and `definitionList` (`Ctrl+Shift+U`).
+- Keyboard shortcuts expanded to cover all standard actions (e.g., `Ctrl+Z` for undo, `Ctrl+Shift+1-6` for headings).
+- Display of keyboard shortcuts in toolbar button tooltips and dropdown menus.
+- Added configurable keyboard shortcuts (default: `Ctrl+B` for bold, `Ctrl+I` for italic, etc.).
 - Added a copy-code button next to fenced code block language labels, copying only the raw `<code>` content without labels or line numbers.
 - Added the `actions.copyCode` translation key to default translations and all locale files.
+- Added the `toggleTask` toolbar action for toggling Markdown task list items between unchecked and checked states.
+- Added the `actions.toggleTask` translation key to default translations and all locale files.
+- Added `clearFormatting`, `callout`, `details`, and `definitionList` as configurable standard toolbar actions.
+- Added translation and placeholder keys for callout, details, and definition list insertions to all locale files.
+- Added `example.md` with Markdown samples covering all standard toolbar actions.
+- Added a demo button that loads `example.md` into the editor.
 
 ### Changed
 
+- Updated keyboard shortcuts to avoid conflicts with browser standard commands: `toggleTask` is now `Ctrl+Shift+M`, `underline` is `Ctrl+Alt+U`, and `ol` (numbered list) is `Ctrl+Shift+O`. Improved shortcut detection logic to correctly handle combinations with the `Shift` key, `Alt` key, and sub-item actions like headings across different keyboard layouts.
+- Added a shortcut info button in the stats bar that opens a modal with a table of all available keyboard shortcuts.
+- Fixed an issue where `Ctrl+Shift+U` (Definition List) was not correctly recognized on some keyboard layouts.
+- Locale source files now use a consistent object structure and generated `*.min.js` files; duplicate `*.min.min.js` artifacts were removed.
 - Fenced code blocks with any valid language hint now show the language label and copy action, even when the language is not supported by the built-in highlighter.
 - Known highlighted code blocks now use subtle striped line backgrounds alongside line numbers.
 - Markdown table parsing now preserves escaped pipes and pipes inside inline code, preventing README option tables from splitting into extra columns.
@@ -21,12 +39,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Markdown rendering no longer stalls on partially typed or invalid fenced code block markers such as extra backticks.
 - Empty highlighted code blocks no longer render line numbers or striped line backgrounds.
 - Code block insertion now uses a Bootstrap modal for optional language input instead of the browser prompt when Bootstrap Modal is available.
+- Task list insertion now preserves block boundaries by placing inserted task lists on their own lines.
+- Markdown callouts such as `> [!NOTE] Note` now render as Bootstrap alert blocks.
+- Raw `<details>` and `<dl>` blocks are now preserved as block-level preview HTML instead of being wrapped in paragraphs.
 - Custom actions with `position: 'right'` now render before the preview button in the right toolbar group.
 - Pressing `Tab` inside the editor now inserts spaces up to the next four-column tab stop instead of moving focus away.
 - PHP union and intersection return types now highlight all type names consistently without mis-highlighting `return $variable` as a type.
 - PHP casts such as `(float)` now highlight the cast type as a type, and trailing-dot float literals such as `1.` are highlighted as complete numbers.
 - Toolbar actions and custom actions now preserve the editor cursor or selection before opening modals, so inserted content lands at the previous position.
 - Empty placeholder lines in the editable source now serialize as a single newline, preventing one `Enter` at the end of a code block from rendering two blank code lines.
+- Package version bumped from `1.0.6` to `1.0.7`.
 
 ## [1.0.6] - 2026-06-02
 

@@ -28,10 +28,14 @@ window.bsMarkdownEditorTranslations = {
         "code": "Kód",
         "codeBlock": "Blok kódu",
         "copyCode": "Kopírovat kód",
+        "callout": "Výzva",
+        "details": "Podrobnosti",
+        "definitionList": "Seznam definic",
         "table": "Tabulka",
         "image": "Obrázek",
         "hr": "Vodorovná čára",
         "taskList": "Seznam úkolů",
+        "toggleTask": "Přepnout úkol",
         "undo": "Zpět",
         "redo": "Znovu",
         "preview": "Náhled"
@@ -54,9 +58,21 @@ window.bsMarkdownEditorTranslations = {
         "defaultText": "Text",
         "defaultItem": "Položka",
         "defaultTask": "Úkol",
+        "defaultCallout": "Poznámka",
+        "defaultCalloutText": "Text výzvy",
+        "defaultSummary": "Shrnutí",
+        "defaultDetails": "Obsah podrobností",
+        "defaultTerm": "Termín",
+        "defaultDefinition": "Definice",
         "imageAlt": "Obrázek",
         "tableColumn": "Sloupec",
         "tableValue": "Hodnota"
+    },
+    "stats": {
+        "mode": "Mode",
+        "chars": "chars",
+        "words": "words",
+        "shortcuts": "Keyboard shortcuts"
     },
     "preview": {
         "loading": "Vykreslování náhledu...",
@@ -65,7 +81,8 @@ window.bsMarkdownEditorTranslations = {
     "modal": {
         "tableTitle": "Vytvořit tabulku",
         "imageTitle": "Vložit obrázek",
-        "linkTitle": "Vložit odkaz",
+        "linkTitle": "Insert link",
+        "shortcutsTitle": "Keyboard shortcuts",
         "rows": "Řádky",
         "columns": "Sloupce",
         "alt": "Alternativní text",
