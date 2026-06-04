@@ -68,11 +68,32 @@ window.bsMarkdownEditorTranslations = {
         "tableColumn": "Kolumna",
         "tableValue": "Wartość"
     },
+    "callouts": {
+        "note": {
+            "label": "Notatka",
+            "title": "Notatka"
+        },
+        "tip": {
+            "label": "Wskazówka",
+            "title": "Wskazówka"
+        },
+        "important": {
+            "label": "Ważne",
+            "title": "Ważne"
+        },
+        "warning": {
+            "label": "Ostrzeżenie",
+            "title": "Ostrzeżenie"
+        },
+        "caution": {
+            "label": "Uwaga",
+            "title": "Uwaga"
+        }
+    },
     "stats": {
-        "mode": "Mode",
-        "chars": "chars",
-        "words": "words",
-        "shortcuts": "Keyboard shortcuts"
+        "mode": "Tryb",
+        "chars": "Znaki",
+        "words": "Słowa"
     },
     "preview": {
         "loading": "Renderowanie podglądu...",
@@ -97,11 +118,10 @@ window.bsMarkdownEditorTranslations = {
         "alignRight": "Do prawej",
         "imageDimensionsHelp": "Wartości liczbowe to piksele; auto jest dozwolone.",
         "cancel": "Anuluj",
-        "insert": "Wstaw"
-    },
-    "stats": {
-        "mode": "Tryb",
-        "chars": "Znaki",
-        "words": "Słowa"
+        "insert": "Wstaw",
+        "calloutTitle": "Wstaw wyróżnienie",
+        "calloutType": "Typ",
+        "calloutHeading": "Tytuł",
+        "calloutText": "Tekst"
     }
 };

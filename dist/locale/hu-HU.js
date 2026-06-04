@@ -68,11 +68,32 @@ window.bsMarkdownEditorTranslations = {
         "tableColumn": "Oszlop",
         "tableValue": "Érték"
     },
+    "callouts": {
+        "note": {
+            "label": "Megjegyzés",
+            "title": "Megjegyzés"
+        },
+        "tip": {
+            "label": "Tipp",
+            "title": "Tipp"
+        },
+        "important": {
+            "label": "Fontos",
+            "title": "Fontos"
+        },
+        "warning": {
+            "label": "Figyelmeztetés",
+            "title": "Figyelmeztetés"
+        },
+        "caution": {
+            "label": "Vigyázat",
+            "title": "Vigyázat"
+        }
+    },
     "stats": {
-        "mode": "Mode",
-        "chars": "chars",
-        "words": "words",
-        "shortcuts": "Keyboard shortcuts"
+        "mode": "Mód",
+        "chars": "Karakter",
+        "words": "Szó"
     },
     "preview": {
         "loading": "Előnézet renderelése...",
@@ -97,11 +118,10 @@ window.bsMarkdownEditorTranslations = {
         "alignRight": "Jobbra",
         "imageDimensionsHelp": "A számértékek képpontban értendők; az auto engedélyezett.",
         "cancel": "Mégse",
-        "insert": "Beszúrás"
-    },
-    "stats": {
-        "mode": "Mód",
-        "chars": "Karakter",
-        "words": "Szó"
+        "insert": "Beszúrás",
+        "calloutTitle": "Kiemelés beszúrása",
+        "calloutType": "Típus",
+        "calloutHeading": "Cím",
+        "calloutText": "Szöveg"
     }
 };

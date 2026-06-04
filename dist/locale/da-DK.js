@@ -68,11 +68,32 @@ window.bsMarkdownEditorTranslations = {
         "tableColumn": "Kolonne",
         "tableValue": "Værdi"
     },
+    "callouts": {
+        "note": {
+            "label": "Bemærk",
+            "title": "Bemærk"
+        },
+        "tip": {
+            "label": "Tip",
+            "title": "Tip"
+        },
+        "important": {
+            "label": "Vigtigt",
+            "title": "Vigtigt"
+        },
+        "warning": {
+            "label": "Advarsel",
+            "title": "Advarsel"
+        },
+        "caution": {
+            "label": "Forsigtig",
+            "title": "Forsigtig"
+        }
+    },
     "stats": {
-        "mode": "Mode",
-        "chars": "chars",
-        "words": "words",
-        "shortcuts": "Keyboard shortcuts"
+        "mode": "Tilstand",
+        "chars": "Tegn",
+        "words": "Ord"
     },
     "preview": {
         "loading": "Renderer forhåndsvisning...",
@@ -97,11 +118,10 @@ window.bsMarkdownEditorTranslations = {
         "alignRight": "Højre",
         "imageDimensionsHelp": "Numeriske værdier er pixels; auto er tilladt.",
         "cancel": "Annuller",
-        "insert": "Indsæt"
-    },
-    "stats": {
-        "mode": "Tilstand",
-        "chars": "Tegn",
-        "words": "Ord"
+        "insert": "Indsæt",
+        "calloutTitle": "Indsæt infoboks",
+        "calloutType": "Type",
+        "calloutHeading": "Titel",
+        "calloutText": "Tekst"
     }
 };

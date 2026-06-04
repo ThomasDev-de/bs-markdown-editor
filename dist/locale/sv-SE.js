@@ -68,11 +68,32 @@ window.bsMarkdownEditorTranslations = {
         "tableColumn": "Kolumn",
         "tableValue": "Värde"
     },
+    "callouts": {
+        "note": {
+            "label": "Obs",
+            "title": "Obs"
+        },
+        "tip": {
+            "label": "Tips",
+            "title": "Tips"
+        },
+        "important": {
+            "label": "Viktigt",
+            "title": "Viktigt"
+        },
+        "warning": {
+            "label": "Varning",
+            "title": "Varning"
+        },
+        "caution": {
+            "label": "Försiktighet",
+            "title": "Försiktighet"
+        }
+    },
     "stats": {
-        "mode": "Mode",
-        "chars": "chars",
-        "words": "words",
-        "shortcuts": "Keyboard shortcuts"
+        "mode": "Läge",
+        "chars": "Tecken",
+        "words": "Ord"
     },
     "preview": {
         "loading": "Renderar förhandsvisning...",
@@ -97,11 +118,10 @@ window.bsMarkdownEditorTranslations = {
         "alignRight": "Höger",
         "imageDimensionsHelp": "Numeriska värden är pixlar; auto är tillåtet.",
         "cancel": "Avbryt",
-        "insert": "Infoga"
-    },
-    "stats": {
-        "mode": "Läge",
-        "chars": "Tecken",
-        "words": "Ord"
+        "insert": "Infoga",
+        "calloutTitle": "Infoga faktaruta",
+        "calloutType": "Typ",
+        "calloutHeading": "Titel",
+        "calloutText": "Text"
     }
 };

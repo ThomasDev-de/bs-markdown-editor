@@ -68,11 +68,32 @@ window.bsMarkdownEditorTranslations = {
         "tableColumn": "Kolonne",
         "tableValue": "Verdi"
     },
+    "callouts": {
+        "note": {
+            "label": "Merk",
+            "title": "Merk"
+        },
+        "tip": {
+            "label": "Tips",
+            "title": "Tips"
+        },
+        "important": {
+            "label": "Viktig",
+            "title": "Viktig"
+        },
+        "warning": {
+            "label": "Advarsel",
+            "title": "Advarsel"
+        },
+        "caution": {
+            "label": "Forsiktig",
+            "title": "Forsiktig"
+        }
+    },
     "stats": {
-        "mode": "Mode",
-        "chars": "chars",
-        "words": "words",
-        "shortcuts": "Keyboard shortcuts"
+        "mode": "Modus",
+        "chars": "Tegn",
+        "words": "Ord"
     },
     "preview": {
         "loading": "Renderer forhåndsvisning...",
@@ -97,11 +118,10 @@ window.bsMarkdownEditorTranslations = {
         "alignRight": "Høyre",
         "imageDimensionsHelp": "Numeriske verdier er piksler; auto er tillatt.",
         "cancel": "Avbryt",
-        "insert": "Sett inn"
-    },
-    "stats": {
-        "mode": "Modus",
-        "chars": "Tegn",
-        "words": "Ord"
+        "insert": "Sett inn",
+        "calloutTitle": "Sett inn infoboks",
+        "calloutType": "Type",
+        "calloutHeading": "Tittel",
+        "calloutText": "Tekst"
     }
 };

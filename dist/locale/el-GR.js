@@ -68,11 +68,32 @@ window.bsMarkdownEditorTranslations = {
         "tableColumn": "Στήλη",
         "tableValue": "Τιμή"
     },
+    "callouts": {
+        "note": {
+            "label": "Σημείωση",
+            "title": "Σημείωση"
+        },
+        "tip": {
+            "label": "Συμβουλή",
+            "title": "Συμβουλή"
+        },
+        "important": {
+            "label": "Σημαντικό",
+            "title": "Σημαντικό"
+        },
+        "warning": {
+            "label": "Προειδοποίηση",
+            "title": "Προειδοποίηση"
+        },
+        "caution": {
+            "label": "Προσοχή",
+            "title": "Προσοχή"
+        }
+    },
     "stats": {
-        "mode": "Mode",
-        "chars": "chars",
-        "words": "words",
-        "shortcuts": "Keyboard shortcuts"
+        "mode": "Λειτουργία",
+        "chars": "Χαρακτήρες",
+        "words": "Λέξεις"
     },
     "preview": {
         "loading": "Γίνεται απόδοση προεπισκόπησης...",
@@ -97,11 +118,10 @@ window.bsMarkdownEditorTranslations = {
         "alignRight": "Δεξιά",
         "imageDimensionsHelp": "Οι αριθμητικές τιμές είναι pixel. επιτρέπεται το auto.",
         "cancel": "Ακύρωση",
-        "insert": "Εισαγωγή"
-    },
-    "stats": {
-        "mode": "Λειτουργία",
-        "chars": "Χαρακτήρες",
-        "words": "Λέξεις"
+        "insert": "Εισαγωγή",
+        "calloutTitle": "Εισαγωγή πλαισίου σημείωσης",
+        "calloutType": "Τύπος",
+        "calloutHeading": "Τίτλος",
+        "calloutText": "Κείμενο"
     }
 };

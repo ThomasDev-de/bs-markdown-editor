@@ -68,11 +68,32 @@ window.bsMarkdownEditorTranslations = {
         "tableColumn": "Coloană",
         "tableValue": "Valoare"
     },
+    "callouts": {
+        "note": {
+            "label": "Notă",
+            "title": "Notă"
+        },
+        "tip": {
+            "label": "Sfat",
+            "title": "Sfat"
+        },
+        "important": {
+            "label": "Important",
+            "title": "Important"
+        },
+        "warning": {
+            "label": "Avertisment",
+            "title": "Avertisment"
+        },
+        "caution": {
+            "label": "Atenție",
+            "title": "Atenție"
+        }
+    },
     "stats": {
-        "mode": "Mode",
-        "chars": "chars",
-        "words": "words",
-        "shortcuts": "Keyboard shortcuts"
+        "mode": "Mod",
+        "chars": "Caractere",
+        "words": "Cuvinte"
     },
     "preview": {
         "loading": "Se generează previzualizarea...",
@@ -97,11 +118,10 @@ window.bsMarkdownEditorTranslations = {
         "alignRight": "Dreapta",
         "imageDimensionsHelp": "Valorile numerice sunt pixeli; auto este permis.",
         "cancel": "Anulează",
-        "insert": "Inserează"
-    },
-    "stats": {
-        "mode": "Mod",
-        "chars": "Caractere",
-        "words": "Cuvinte"
+        "insert": "Inserează",
+        "calloutTitle": "Inserează casetă informativă",
+        "calloutType": "Tip",
+        "calloutHeading": "Titlu",
+        "calloutText": "Text"
     }
 };

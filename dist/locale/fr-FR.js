@@ -68,11 +68,32 @@ window.bsMarkdownEditorTranslations = {
         "tableColumn": "Colonne",
         "tableValue": "Valeur"
     },
+    "callouts": {
+        "note": {
+            "label": "Note",
+            "title": "Note"
+        },
+        "tip": {
+            "label": "Astuce",
+            "title": "Astuce"
+        },
+        "important": {
+            "label": "Important",
+            "title": "Important"
+        },
+        "warning": {
+            "label": "Avertissement",
+            "title": "Avertissement"
+        },
+        "caution": {
+            "label": "Attention",
+            "title": "Attention"
+        }
+    },
     "stats": {
         "mode": "Mode",
-        "chars": "chars",
-        "words": "words",
-        "shortcuts": "Keyboard shortcuts"
+        "chars": "Caractères",
+        "words": "Mots"
     },
     "preview": {
         "loading": "Rendu de l'aperçu...",
@@ -97,11 +118,10 @@ window.bsMarkdownEditorTranslations = {
         "alignRight": "Droite",
         "imageDimensionsHelp": "Les valeurs numériques sont en pixels ; auto est autorisé.",
         "cancel": "Annuler",
-        "insert": "Insérer"
-    },
-    "stats": {
-        "mode": "Mode",
-        "chars": "Caractères",
-        "words": "Mots"
+        "insert": "Insérer",
+        "calloutTitle": "Insérer un encart",
+        "calloutType": "Type",
+        "calloutHeading": "Titre",
+        "calloutText": "Texte"
     }
 };

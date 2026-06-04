@@ -7,7 +7,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
-- Package version bumped from `1.0.6` to `1.0.7`.
+## [1.0.8] - 2026-06-04
+
+### Added
+
+- Added a Bootstrap callout insertion modal with localized type, title, and text fields.
+- Added localized `callouts.*` labels and titles plus callout modal text to all locale files.
+
+### Changed
+
+- Toolbar buttons, including generated custom action buttons, now receive Bootstrap `p-1` spacing.
+- Dropdown shortcut hints are now rendered with a smaller, less dominant style.
+- PHP opening/closing tags such as `<?php`, `<?=`, and `?>` are highlighted with Bootstrap danger styling.
+- Package version bumped from `1.0.7` to `1.0.8`.
 
 ## [1.0.7] - 2026-06-03
 

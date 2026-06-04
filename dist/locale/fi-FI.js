@@ -68,11 +68,32 @@ window.bsMarkdownEditorTranslations = {
         "tableColumn": "Sarake",
         "tableValue": "Arvo"
     },
+    "callouts": {
+        "note": {
+            "label": "Huomio",
+            "title": "Huomio"
+        },
+        "tip": {
+            "label": "Vinkki",
+            "title": "Vinkki"
+        },
+        "important": {
+            "label": "Tärkeää",
+            "title": "Tärkeää"
+        },
+        "warning": {
+            "label": "Varoitus",
+            "title": "Varoitus"
+        },
+        "caution": {
+            "label": "Huomautus",
+            "title": "Huomautus"
+        }
+    },
     "stats": {
-        "mode": "Mode",
-        "chars": "chars",
-        "words": "words",
-        "shortcuts": "Keyboard shortcuts"
+        "mode": "Tila",
+        "chars": "Merkkiä",
+        "words": "Sanaa"
     },
     "preview": {
         "loading": "Muodostetaan esikatselua...",
@@ -97,11 +118,10 @@ window.bsMarkdownEditorTranslations = {
         "alignRight": "Oikea",
         "imageDimensionsHelp": "Numeeriset arvot ovat pikseleitä; auto on sallittu.",
         "cancel": "Peruuta",
-        "insert": "Lisää"
-    },
-    "stats": {
-        "mode": "Tila",
-        "chars": "Merkkiä",
-        "words": "Sanaa"
+        "insert": "Lisää",
+        "calloutTitle": "Lisää huomautus",
+        "calloutType": "Tyyppi",
+        "calloutHeading": "Otsikko",
+        "calloutText": "Teksti"
     }
 };

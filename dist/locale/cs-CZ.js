@@ -68,11 +68,32 @@ window.bsMarkdownEditorTranslations = {
         "tableColumn": "Sloupec",
         "tableValue": "Hodnota"
     },
+    "callouts": {
+        "note": {
+            "label": "Poznámka",
+            "title": "Poznámka"
+        },
+        "tip": {
+            "label": "Tip",
+            "title": "Tip"
+        },
+        "important": {
+            "label": "Důležité",
+            "title": "Důležité"
+        },
+        "warning": {
+            "label": "Varování",
+            "title": "Varování"
+        },
+        "caution": {
+            "label": "Upozornění",
+            "title": "Upozornění"
+        }
+    },
     "stats": {
-        "mode": "Mode",
-        "chars": "chars",
-        "words": "words",
-        "shortcuts": "Keyboard shortcuts"
+        "mode": "Režim",
+        "chars": "Znaky",
+        "words": "Slova"
     },
     "preview": {
         "loading": "Vykreslování náhledu...",
@@ -97,11 +118,10 @@ window.bsMarkdownEditorTranslations = {
         "alignRight": "Vpravo",
         "imageDimensionsHelp": "Číselné hodnoty jsou pixely; auto je povoleno.",
         "cancel": "Zrušit",
-        "insert": "Vložit"
-    },
-    "stats": {
-        "mode": "Režim",
-        "chars": "Znaky",
-        "words": "Slova"
+        "insert": "Vložit",
+        "calloutTitle": "Vložit výzvu",
+        "calloutType": "Typ",
+        "calloutHeading": "Titulek",
+        "calloutText": "Text"
     }
 };

@@ -189,8 +189,10 @@
             const phpBuiltinTypePattern = /^(?:array|bool|boolean|callable|false|float|int|integer|iterable|mixed|never|null|object|parent|real|self|static|string|true|void)$/i;
             const phpCastPattern = normalizedLanguage === 'php' ? '|\\(\\s*(?:array|bool|boolean|double|float|int|integer|object|real|string|unset)\\s*\\)' : '';
             const phpHeredocPattern = normalizedLanguage === 'php' ? '<<<[ \\t]*(?:[a-zA-Z_][\\w]*|\\\'[a-zA-Z_][\\w]*\\\')\\r?\\n[\\s\\S]*?\\r?\\n\\s*[a-zA-Z_][\\w]*;?|' : '';
+            const phpTagPattern = normalizedLanguage === 'php' ? '<\\?(?:php|=)?|\\?>|' : '';
             const tokenPattern = new RegExp(
                 phpHeredocPattern +
+                phpTagPattern +
                 '\\/\\*[\\s\\S]*?\\*\\/|\\/\\/[^\\n]*' + hashCommentPattern +
                 '|"(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\'|`(?:\\\\.|[^`\\\\])*`' +
                 '|\\$[a-zA-Z_][\\w]*' +
@@ -210,7 +212,9 @@
                 lastIndex = offset + token.length;
                 const followingSource = sourceCode.slice(lastIndex);
 
-                if (/^(?:\/\*[\s\S]*?\*\/|\/\/[^\n]*|#[^\n]*)$/.test(token)) {
+                if (normalizedLanguage === 'php' && /^(?:<\?(?:php|=)?|\?>)$/i.test(token)) {
+                    highlighted += `<span class="text-danger fw-semibold">${sharedConverters.escapeHtml(token)}</span>`;
+                } else if (/^(?:\/\*[\s\S]*?\*\/|\/\/[^\n]*|#[^\n]*)$/.test(token)) {
                     highlighted += normalizedLanguage === 'php' && /^\/\*\*/.test(token)
                         ? sharedConverters.renderPhpDocComment(token)
                         : `<span class="text-white-50 fst-italic">${sharedConverters.escapeHtml(token)}</span>`;
@@ -1235,6 +1239,28 @@
                 tableColumn: 'Column',
                 tableValue: 'Value'
             },
+            callouts: {
+                note: {
+                    label: 'Note',
+                    title: 'Note'
+                },
+                tip: {
+                    label: 'Tip',
+                    title: 'Tip'
+                },
+                important: {
+                    label: 'Important',
+                    title: 'Important'
+                },
+                warning: {
+                    label: 'Warning',
+                    title: 'Warning'
+                },
+                caution: {
+                    label: 'Caution',
+                    title: 'Caution'
+                }
+            },
             preview: {
                 loading: 'Rendering preview...',
                 error: 'Preview could not be rendered.'
@@ -1249,6 +1275,10 @@
                 tableTitle: 'Create table',
                 imageTitle: 'Insert image',
                 linkTitle: 'Insert link',
+                calloutTitle: 'Insert callout',
+                calloutType: 'Type',
+                calloutHeading: 'Title',
+                calloutText: 'Text',
                 shortcutsTitle: 'Keyboard shortcuts',
                 rows: 'Rows',
                 columns: 'Columns',
@@ -1411,9 +1441,7 @@
                 title: t('actions.callout', 'Hinweisbox'),
                 icon: 'bi-info-square',
                 run(textarea) {
-                    const selected = helpers.getSelection(textarea);
-                    const content = selected === '' ? t('placeholders.defaultCalloutText', 'Hinweistext') : selected;
-                    helpers.insertBlock(textarea, helpers.buildMarkdownCallout(content));
+                    helpers.openCalloutModal(textarea);
                 }
             },
             details: {
@@ -1524,6 +1552,7 @@
 <style id="bsMarkdownEditorRuntimeStyles">
 .bs-markdown-code-actions:hover .bs-markdown-code-language-badge,
 .bs-markdown-code-copy:hover{opacity:1!important;}
+.bs-markdown-shortcut-hint{font-size:.68rem;line-height:1;letter-spacing:-.01em;opacity:.62;}
 </style>
 `);
                 helpers.installCodeCopyHandler();
@@ -2354,12 +2383,29 @@
                 });
                 return lines.join('\n');
             },
-            buildMarkdownCallout(content) {
-                const title = t('placeholders.defaultCallout', 'Hinweis');
+            getCalloutTypes() {
+                return [
+                    {value: 'NOTE', label: t('callouts.note.label', 'Note'), title: t('callouts.note.title', t('placeholders.defaultCallout', 'Hinweis'))},
+                    {value: 'TIP', label: t('callouts.tip.label', 'Tip'), title: t('callouts.tip.title', 'Tip')},
+                    {value: 'IMPORTANT', label: t('callouts.important.label', 'Important'), title: t('callouts.important.title', 'Important')},
+                    {value: 'WARNING', label: t('callouts.warning.label', 'Warning'), title: t('callouts.warning.title', 'Warning')},
+                    {value: 'CAUTION', label: t('callouts.caution.label', 'Caution'), title: t('callouts.caution.title', 'Caution')}
+                ];
+            },
+            normalizeCalloutType(type) {
+                const normalized = String(type || '').trim().toUpperCase();
+                return ['NOTE', 'TIP', 'IMPORTANT', 'WARNING', 'CAUTION'].indexOf(normalized) === -1 ? 'NOTE' : normalized;
+            },
+            buildMarkdownCallout(content, type = 'NOTE', title = '') {
+                const calloutType = helpers.normalizeCalloutType(type);
+                const fallbackTitle = helpers.getCalloutTypes().reduce(function (found, item) {
+                    return found || (item.value === calloutType ? item.title : '');
+                }, '') || t('placeholders.defaultCallout', 'Hinweis');
+                const calloutTitle = String(title || '').trim() || fallbackTitle;
                 const body = String(content || '').split('\n').map(function (line) {
                     return `> ${line}`;
                 }).join('\n');
-                return `> [!NOTE] ${title}\n${body}`;
+                return `> [!${calloutType}] ${calloutTitle}\n${body}`;
             },
             buildMarkdownDetails(content) {
                 const summary = t('placeholders.defaultSummary', 'Zusammenfassung');
@@ -2425,6 +2471,89 @@
                 const language = languageInput.trim();
                 const code = selected === '' ? t('placeholders.code', 'code') : selected;
                 helpers.insertBlock(textarea, helpers.buildMarkdownCodeBlock(language, code));
+            },
+            insertCalloutWithPromptFallback(textarea) {
+                const selected = helpers.getSelection(textarea);
+                const content = selected === '' ? t('placeholders.defaultCalloutText', 'Hinweistext') : selected;
+                helpers.insertBlock(textarea, helpers.buildMarkdownCallout(content));
+            },
+            openCalloutModal(textarea) {
+                if (!window.bootstrap || !window.bootstrap.Modal) {
+                    helpers.insertCalloutWithPromptFallback(textarea);
+                    return;
+                }
+
+                const selected = helpers.getSelection(textarea);
+                const modalId = 'bsMarkdownEditorCalloutModal' + Math.random().toString(36).slice(2, 10);
+                const optionsHtml = helpers.getCalloutTypes().map(function (item) {
+                    return `<option value="${item.value}">${helpers.escapeHtml(item.label)}</option>`;
+                }).join('');
+                const defaultCalloutTitle = helpers.getCalloutTypes()[0].title;
+                const $modal = $(`
+<div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}Title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="${modalId}Title">${helpers.escapeHtml(t('modal.calloutTitle', 'Hinweisbox einfügen'))}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label" for="${modalId}Type">${helpers.escapeHtml(t('modal.calloutType', 'Typ'))}</label>
+                    <select id="${modalId}Type" class="form-select js-bs-markdown-callout-type">${optionsHtml}</select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="${modalId}Heading">${helpers.escapeHtml(t('modal.calloutHeading', 'Titel'))}</label>
+                    <input id="${modalId}Heading" class="form-control js-bs-markdown-callout-heading" type="text" value="${helpers.escapeHtml(defaultCalloutTitle)}">
+                </div>
+                <div class="mb-0">
+                    <label class="form-label" for="${modalId}Text">${helpers.escapeHtml(t('modal.calloutText', 'Text'))}</label>
+                    <textarea id="${modalId}Text" class="form-control js-bs-markdown-callout-text" rows="4">${helpers.escapeHtml(selected || t('placeholders.defaultCalloutText', 'Hinweistext'))}</textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}</button>
+                <button type="button" class="btn btn-primary js-bs-markdown-callout-insert">${helpers.escapeHtml(t('modal.insert', 'Einfügen'))}</button>
+            </div>
+        </div>
+    </div>
+</div>
+`);
+                const modalElement = $modal[0];
+                const modalInstance = new window.bootstrap.Modal(modalElement);
+
+                $modal.on('hidden.bs.modal', function () {
+                    modalInstance.dispose();
+                    $modal.remove();
+                });
+                $modal.on('shown.bs.modal', function () {
+                    $modal.find('.js-bs-markdown-callout-type').trigger('focus');
+                });
+                $modal.find('.js-bs-markdown-callout-type').on('change', function () {
+                    const type = $(this).val();
+                    const calloutType = helpers.getCalloutTypes().find(function (item) {
+                        return item.value === type;
+                    });
+                    $modal.find('.js-bs-markdown-callout-heading').val(calloutType ? calloutType.title : defaultCalloutTitle);
+                });
+
+                $modal.find('.js-bs-markdown-callout-insert').on('click', function () {
+                    const type = $modal.find('.js-bs-markdown-callout-type').val();
+                    const title = $modal.find('.js-bs-markdown-callout-heading').val();
+                    const text = $modal.find('.js-bs-markdown-callout-text').val() || t('placeholders.defaultCalloutText', 'Hinweistext');
+                    helpers.insertBlock(textarea, helpers.buildMarkdownCallout(text, type, title));
+                    modalInstance.hide();
+                });
+
+                $modal.on('keydown', function (event) {
+                    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+                        event.preventDefault();
+                        $modal.find('.js-bs-markdown-callout-insert').trigger('click');
+                    }
+                });
+
+                $('body').append($modal);
+                modalInstance.show();
             },
             openCodeBlockModal(textarea) {
                 if (!window.bootstrap || !window.bootstrap.Modal) {
@@ -3057,7 +3186,7 @@
             });
 
             const groupSizeClass = helpers.getGroupSizeClass();
-            const buttonClassBase = `btn ${helpers.getButtonClass()}`;
+            const buttonClassBase = `btn ${helpers.getButtonClass()} p-1`;
             const $toolbar = $('<div class="btn-toolbar mb-2 d-flex flex-wrap justify-content-between align-items-start gap-2 w-100" role="toolbar"></div>');
             const $toolbarLeft = $('<div class="d-flex flex-wrap align-items-center gap-1 flex-grow-1"></div>');
             const $toolbarRight = $('<div class="d-flex flex-wrap align-items-center gap-1"></div>');
@@ -3136,7 +3265,7 @@
                                 $menu.append('<li><hr class="dropdown-divider"></li>');
                                 return;
                             }
-                            const shortcutHtml = item.shortcut ? `<span class="float-end ms-4 text-body-secondary small">${item.shortcut}</span>` : '';
+                            const shortcutHtml = item.shortcut ? `<span class="float-end ms-4 text-body-secondary bs-markdown-shortcut-hint">${item.shortcut}</span>` : '';
                             const $link = $(`<a href="#" class="dropdown-item d-flex justify-content-between align-items-center"><span class="d-flex align-items-center"><i class="bi ${item.icon} me-2"></i>${item.label}</span>${shortcutHtml}</a>`);
                             $link.on('click', function (e) {
                                 e.preventDefault();
@@ -3178,7 +3307,7 @@
                         availableListKeys.forEach(function (listKey) {
                             const listAction = actions[listKey];
                             const shortcut = helpers.getShortcutDisplay(listKey);
-                            const shortcutHtml = shortcut ? `<span class="float-end ms-4 text-body-secondary small">${shortcut}</span>` : '';
+                            const shortcutHtml = shortcut ? `<span class="float-end ms-4 text-body-secondary bs-markdown-shortcut-hint">${shortcut}</span>` : '';
                             const $link = $(`<a href="#" class="dropdown-item d-flex justify-content-between align-items-center"><span class="d-flex align-items-center"><i class="bi ${listAction.icon} me-2"></i>${listAction.title}</span>${shortcutHtml}</a>`);
                             $link.on('click', function (e) {
                                 e.preventDefault();
@@ -3222,7 +3351,7 @@
                         insertItems.forEach(function (insertAction) {
                             const insertKey = Object.keys(actions).find(k => actions[k] === insertAction);
                             const shortcut = helpers.getShortcutDisplay(insertKey);
-                            const shortcutHtml = shortcut ? `<span class="float-end ms-4 text-body-secondary small">${shortcut}</span>` : '';
+                            const shortcutHtml = shortcut ? `<span class="float-end ms-4 text-body-secondary bs-markdown-shortcut-hint">${shortcut}</span>` : '';
                             const $link = $(`<a href="#" class="dropdown-item d-flex justify-content-between align-items-center"><span class="d-flex align-items-center"><i class="bi ${insertAction.icon} me-2"></i>${insertAction.title}</span>${shortcutHtml}</a>`);
                             $link.on('click', function (e) {
                                 e.preventDefault();
@@ -3297,7 +3426,7 @@
                         const iconHtml = itemIcon ? `<i class="bi ${itemIcon} me-2"></i>` : '';
                         const labelStyle = item.textStyle ? ` style="${item.textStyle}"` : '';
                         const itemShortcut = item.shortcut ? helpers.getShortcutDisplay(item.shortcut) : '';
-                        const shortcutHtml = itemShortcut ? `<span class="float-end ms-4 text-body-secondary small">${itemShortcut}</span>` : '';
+                        const shortcutHtml = itemShortcut ? `<span class="float-end ms-4 text-body-secondary bs-markdown-shortcut-hint">${itemShortcut}</span>` : '';
                         const $link = $(`<a href="#" class="dropdown-item d-flex justify-content-between align-items-center"><span class="d-flex align-items-center">${iconHtml}<span${labelStyle}>${item.label}</span></span>${shortcutHtml}</a>`);
                         $link.on('click', function (e) {
                             e.preventDefault();
@@ -3407,6 +3536,7 @@
                 $toolbar.append($toolbarRight);
             }
             const $preview = $('<div class="js-bs-parsedown-preview border rounded-3 d-none"></div>');
+            $toolbar.find('.btn').addClass('p-1');
             $wrapperRef.prepend($toolbar);
             $wrapperRef.append($preview);
 

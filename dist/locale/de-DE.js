@@ -68,15 +68,36 @@ window.bsMarkdownEditorTranslations = {
         "tableColumn": "Spalte",
         "tableValue": "Wert"
     },
-    "preview": {
-        "loading": "Rendere Vorschau...",
-        "error": "Vorschau konnte nicht gerendert werden."
+    "callouts": {
+        "note": {
+            "label": "Hinweis",
+            "title": "Hinweis"
+        },
+        "tip": {
+            "label": "Tipp",
+            "title": "Tipp"
+        },
+        "important": {
+            "label": "Wichtig",
+            "title": "Wichtig"
+        },
+        "warning": {
+            "label": "Warnung",
+            "title": "Warnung"
+        },
+        "caution": {
+            "label": "Achtung",
+            "title": "Achtung"
+        }
     },
     "stats": {
         "mode": "Modus",
         "chars": "Zeichen",
-        "words": "Wörter",
-        "shortcuts": "Tastenkombinationen"
+        "words": "Wörter"
+    },
+    "preview": {
+        "loading": "Rendere Vorschau...",
+        "error": "Vorschau konnte nicht gerendert werden."
     },
     "modal": {
         "tableTitle": "Tabelle erstellen",
@@ -97,11 +118,10 @@ window.bsMarkdownEditorTranslations = {
         "alignRight": "Rechts",
         "imageDimensionsHelp": "Zahlenwerte sind Pixel; auto ist erlaubt.",
         "cancel": "Abbrechen",
-        "insert": "Einfügen"
-    },
-    "stats": {
-        "mode": "Modus",
-        "chars": "Zeichen",
-        "words": "Wörter"
+        "insert": "Einfügen",
+        "calloutTitle": "Hinweisbox einfügen",
+        "calloutType": "Typ",
+        "calloutHeading": "Titel",
+        "calloutText": "Text"
     }
 };

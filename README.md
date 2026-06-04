@@ -67,7 +67,7 @@ For a complete Markdown sample covering all standard toolbar actions, see [examp
 | `customActions` | `object \| array`                | `{}`         | Additional toolbar actions. `run(context)` receives the editor context, including `textarea`, `editable`, and `helpers`.                                                                                   |
 | `shortcuts`     | `object`                          | `{...}`      | Keyboard shortcuts mapping action keys to shortcut strings (e.g., `'bold': 'ctrl+b'`). Supports `ctrl+` and `ctrl+shift+` modifiers.                                                                          |
 | `lang`         | `string`                          | `auto`       | Reserved for compatibility. Locale selection is now handled by preloaded locale files plus `translations` overrides.                                                                                        |
-| `translations` | `object`                          | `{}`         | Deep-merged text overrides for labels, prompts, placeholders, modal text, and preview messages. Merge order: built-in English defaults -> `window.bsMarkdownEditorTranslations` (if loaded) -> this option. |
+| `translations` | `object`                          | `{}`         | Deep-merged text overrides for labels, prompts, placeholders, callout labels/titles, modal text, and preview messages. Merge order: built-in English defaults -> `window.bsMarkdownEditorTranslations` (if loaded) -> this option. |
 
 ### Action Keys (`actions` option)
 
@@ -85,7 +85,7 @@ For a complete Markdown sample covering all standard toolbar actions, see [examp
 | `quote`      | Prefix lines with `>`                      |
 | `link`       | Insert markdown link                       |
 | `image`      | Open image modal and insert markdown image |
-| `callout`    | Insert a Markdown callout block            |
+| `callout`    | Open the callout modal and insert a Markdown callout block |
 | `details`    | Insert a collapsible details block         |
 | `definitionList` | Insert an HTML definition list block    |
 | `code`       | Inline code                                |
@@ -326,6 +326,7 @@ const markdown = $.bsMarkdownEditor.toMarkdown('<h1>Hello</h1>');
   inline code, code block, horizontal rule, table, undo/redo, and preview actions.
 - The table action opens a Bootstrap modal where users can choose row/column count; the modal is removed from the DOM when closed.
 - The image action opens a Bootstrap modal where users can enter URL, alt text, and optional width/height values.
+- The callout action opens a Bootstrap modal where users can choose the callout type and enter a title and text.
 - Preview rendering is built in and does not require an external Markdown package.
 - Preview supports inline image syntax (`![alt](url)`), task list checkboxes, nested lists (including sublists), fenced code blocks, and
   basic Markdown tables.
@@ -335,6 +336,7 @@ const markdown = $.bsMarkdownEditor.toMarkdown('<h1>Hello</h1>');
 - Fenced code blocks with a language hint (for example `php`, `javascript`, `typescript`, `css`, `json`, `sql`, `bash`, or `python`) are
   rendered with
   `language-*` classes, a small language badge, and built-in Bootstrap-based syntax highlighting.
+- PHP code highlighting marks PHP tags such as `<?php`, `<?=`, and `?>` with Bootstrap danger styling.
 - The generated UI uses Bootstrap 5 theme-aware utility classes and is compatible with `data-bs-theme="dark"` without requiring separate
   dark-mode markup.
 
@@ -349,6 +351,7 @@ To use another language, load one of the files from `dist/locale/` before `bs-ma
 ```
 
 Locale files set `window.bsMarkdownEditorTranslations`, which is deep-merged into the built-in English defaults.
+They include action labels, placeholders, modal text, and callout type labels/titles.
 
 ## Support this project
 

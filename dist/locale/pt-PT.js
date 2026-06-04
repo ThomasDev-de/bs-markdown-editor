@@ -68,11 +68,32 @@ window.bsMarkdownEditorTranslations = {
         "tableColumn": "Coluna",
         "tableValue": "Valor"
     },
+    "callouts": {
+        "note": {
+            "label": "Nota",
+            "title": "Nota"
+        },
+        "tip": {
+            "label": "Dica",
+            "title": "Dica"
+        },
+        "important": {
+            "label": "Importante",
+            "title": "Importante"
+        },
+        "warning": {
+            "label": "Aviso",
+            "title": "Aviso"
+        },
+        "caution": {
+            "label": "Atenção",
+            "title": "Atenção"
+        }
+    },
     "stats": {
-        "mode": "Mode",
-        "chars": "chars",
-        "words": "words",
-        "shortcuts": "Keyboard shortcuts"
+        "mode": "Modo",
+        "chars": "Caracteres",
+        "words": "Palavras"
     },
     "preview": {
         "loading": "A renderizar pré-visualização...",
@@ -97,11 +118,10 @@ window.bsMarkdownEditorTranslations = {
         "alignRight": "Direita",
         "imageDimensionsHelp": "Valores numéricos são píxeis; auto é permitido.",
         "cancel": "Cancelar",
-        "insert": "Inserir"
-    },
-    "stats": {
-        "mode": "Modo",
-        "chars": "Caracteres",
-        "words": "Palavras"
+        "insert": "Inserir",
+        "calloutTitle": "Inserir aviso",
+        "calloutType": "Tipo",
+        "calloutHeading": "Título",
+        "calloutText": "Texto"
     }
 };

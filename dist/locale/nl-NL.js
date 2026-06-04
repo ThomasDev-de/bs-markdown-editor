@@ -68,11 +68,32 @@ window.bsMarkdownEditorTranslations = {
         "tableColumn": "Kolom",
         "tableValue": "Waarde"
     },
+    "callouts": {
+        "note": {
+            "label": "Notitie",
+            "title": "Notitie"
+        },
+        "tip": {
+            "label": "Tip",
+            "title": "Tip"
+        },
+        "important": {
+            "label": "Belangrijk",
+            "title": "Belangrijk"
+        },
+        "warning": {
+            "label": "Waarschuwing",
+            "title": "Waarschuwing"
+        },
+        "caution": {
+            "label": "Let op",
+            "title": "Let op"
+        }
+    },
     "stats": {
-        "mode": "Mode",
-        "chars": "chars",
-        "words": "words",
-        "shortcuts": "Keyboard shortcuts"
+        "mode": "Modus",
+        "chars": "Tekens",
+        "words": "Woorden"
     },
     "preview": {
         "loading": "Voorbeeld renderen...",
@@ -97,11 +118,10 @@ window.bsMarkdownEditorTranslations = {
         "alignRight": "Rechts",
         "imageDimensionsHelp": "Numerieke waarden zijn pixels; auto is toegestaan.",
         "cancel": "Annuleren",
-        "insert": "Invoegen"
-    },
-    "stats": {
-        "mode": "Modus",
-        "chars": "Tekens",
-        "words": "Woorden"
+        "insert": "Invoegen",
+        "calloutTitle": "Infoblok invoegen",
+        "calloutType": "Type",
+        "calloutHeading": "Titel",
+        "calloutText": "Tekst"
     }
 };
