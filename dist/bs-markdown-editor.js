@@ -1571,14 +1571,16 @@
                     helpers.installCodeCopyHandler();
                     return;
                 }
-                $('head').append(`
-<style id="bsMarkdownEditorRuntimeStyles">
-.bs-markdown-code-actions:hover .bs-markdown-code-language-badge,
-.bs-markdown-code-copy:hover{opacity:1!important;}
-.bs-markdown-shortcut-hint{font-size:.68rem;line-height:1;letter-spacing:-.01em;opacity:.62;}
-.text-justify{text-align:justify!important;}
-</style>
-`);
+                $('head').append([
+                    "",
+                    "<style id=\"bsMarkdownEditorRuntimeStyles\">",
+                    ".bs-markdown-code-actions:hover .bs-markdown-code-language-badge,",
+                    ".bs-markdown-code-copy:hover{opacity:1!important;}",
+                    ".bs-markdown-shortcut-hint{font-size:.68rem;line-height:1;letter-spacing:-.01em;opacity:.62;}",
+                    ".text-justify{text-align:justify!important;}",
+                    "</style>",
+                    ""
+                ].join('\n'));
                 helpers.installCodeCopyHandler();
             },
             installCodeCopyHandler() {
@@ -2205,9 +2207,11 @@
                 // Add shortcut info button
                 let $infoBtn = $stats.parent().find('.js-bs-markdown-editor-info-btn');
                 if ($infoBtn.length === 0) {
-                    $infoBtn = $(`<button type="button" class="js-bs-markdown-editor-info-btn btn btn-link p-0 ms-2 text-decoration-none" title="${helpers.escapeHtml(t('stats.shortcuts', 'Keyboard shortcuts'))}">
-                        <i class="bi bi-info-circle"></i>
-                    </button>`);
+                    $infoBtn = $([
+                        "<button type=\"button\" class=\"js-bs-markdown-editor-info-btn btn btn-link p-0 ms-2 text-decoration-none\" title=\"" + helpers.escapeHtml(t('stats.shortcuts', 'Keyboard shortcuts')) + "\">",
+                        "<i class=\"bi bi-info-circle\"></i>",
+                        "</button>"
+                    ].join('\n'));
                     $stats.after($infoBtn);
                     $infoBtn.on('click', function() {
                         helpers.openShortcutsModal(textarea);
@@ -2518,36 +2522,38 @@
                     return `<option value="${item.value}">${helpers.escapeHtml(item.label)}</option>`;
                 }).join('');
                 const defaultCalloutTitle = helpers.getCalloutTypes()[0].title;
-                const $modal = $(`
-<div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}Title" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="${modalId}Title">${helpers.escapeHtml(t('modal.calloutTitle', 'Hinweisbox einfügen'))}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label" for="${modalId}Type">${helpers.escapeHtml(t('modal.calloutType', 'Typ'))}</label>
-                    <select id="${modalId}Type" class="form-select js-bs-markdown-callout-type">${optionsHtml}</select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" for="${modalId}Heading">${helpers.escapeHtml(t('modal.calloutHeading', 'Titel'))}</label>
-                    <input id="${modalId}Heading" class="form-control js-bs-markdown-callout-heading" type="text" value="${helpers.escapeHtml(defaultCalloutTitle)}">
-                </div>
-                <div class="mb-0">
-                    <label class="form-label" for="${modalId}Text">${helpers.escapeHtml(t('modal.calloutText', 'Text'))}</label>
-                    <textarea id="${modalId}Text" class="form-control js-bs-markdown-callout-text" rows="4">${helpers.escapeHtml(selected || t('placeholders.defaultCalloutText', 'Hinweistext'))}</textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}</button>
-                <button type="button" class="btn btn-primary js-bs-markdown-callout-insert">${helpers.escapeHtml(t('modal.insert', 'Einfügen'))}</button>
-            </div>
-        </div>
-    </div>
-</div>
-`);
+                const $modal = $([
+                    "",
+                    "<div class=\"modal fade\" id=\"" + modalId + "\" tabindex=\"-1\" aria-labelledby=\"" + modalId + "Title\" aria-hidden=\"true\">",
+                    "<div class=\"modal-dialog modal-dialog-centered\">",
+                    "<div class=\"modal-content\">",
+                    "<div class=\"modal-header\">",
+                    "<h5 class=\"modal-title\" id=\"" + modalId + "Title\">" + helpers.escapeHtml(t('modal.calloutTitle', 'Hinweisbox einfügen')) + "</h5>",
+                    "<button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"modal\" aria-label=\"" + helpers.escapeHtml(t('modal.cancel', 'Abbrechen')) + "\"></button>",
+                    "</div>",
+                    "<div class=\"modal-body\">",
+                    "<div class=\"mb-3\">",
+                    "<label class=\"form-label\" for=\"" + modalId + "Type\">" + helpers.escapeHtml(t('modal.calloutType', 'Typ')) + "</label>",
+                    "<select id=\"" + modalId + "Type\" class=\"form-select js-bs-markdown-callout-type\">" + optionsHtml + "</select>",
+                    "</div>",
+                    "<div class=\"mb-3\">",
+                    "<label class=\"form-label\" for=\"" + modalId + "Heading\">" + helpers.escapeHtml(t('modal.calloutHeading', 'Titel')) + "</label>",
+                    "<input id=\"" + modalId + "Heading\" class=\"form-control js-bs-markdown-callout-heading\" type=\"text\" value=\"" + helpers.escapeHtml(defaultCalloutTitle) + "\">",
+                    "</div>",
+                    "<div class=\"mb-0\">",
+                    "<label class=\"form-label\" for=\"" + modalId + "Text\">" + helpers.escapeHtml(t('modal.calloutText', 'Text')) + "</label>",
+                    "<textarea id=\"" + modalId + "Text\" class=\"form-control js-bs-markdown-callout-text\" rows=\"4\">" + helpers.escapeHtml(selected || t('placeholders.defaultCalloutText', 'Hinweistext')) + "</textarea>",
+                    "</div>",
+                    "</div>",
+                    "<div class=\"modal-footer\">",
+                    "<button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">" + helpers.escapeHtml(t('modal.cancel', 'Abbrechen')) + "</button>",
+                    "<button type=\"button\" class=\"btn btn-primary js-bs-markdown-callout-insert\">" + helpers.escapeHtml(t('modal.insert', 'Einfügen')) + "</button>",
+                    "</div>",
+                    "</div>",
+                    "</div>",
+                    "</div>",
+                    ""
+                ].join('\n'));
                 const modalElement = $modal[0];
                 const modalInstance = new window.bootstrap.Modal(modalElement);
 
@@ -2592,28 +2598,30 @@
 
                 const selected = helpers.getSelection(textarea);
                 const modalId = 'bsMarkdownEditorCodeBlockModal' + Math.random().toString(36).slice(2, 10);
-                const $modal = $(`
-<div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}Title" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="${modalId}Title">${helpers.escapeHtml(t('actions.codeBlock', 'Codeblock'))}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-0">
-                    <label class="form-label" for="${modalId}Language">${helpers.escapeHtml(t('prompts.codeLang', 'Sprache (optional)'))}</label>
-                    <input id="${modalId}Language" class="form-control js-bs-markdown-code-language" type="text" placeholder="php">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}</button>
-                <button type="button" class="btn btn-primary js-bs-markdown-code-insert">${helpers.escapeHtml(t('modal.insert', 'Einfügen'))}</button>
-            </div>
-        </div>
-    </div>
-</div>
-`);
+                const $modal = $([
+                    "",
+                    "<div class=\"modal fade\" id=\"" + modalId + "\" tabindex=\"-1\" aria-labelledby=\"" + modalId + "Title\" aria-hidden=\"true\">",
+                    "<div class=\"modal-dialog modal-dialog-centered modal-sm\">",
+                    "<div class=\"modal-content\">",
+                    "<div class=\"modal-header\">",
+                    "<h5 class=\"modal-title\" id=\"" + modalId + "Title\">" + helpers.escapeHtml(t('actions.codeBlock', 'Codeblock')) + "</h5>",
+                    "<button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"modal\" aria-label=\"" + helpers.escapeHtml(t('modal.cancel', 'Abbrechen')) + "\"></button>",
+                    "</div>",
+                    "<div class=\"modal-body\">",
+                    "<div class=\"mb-0\">",
+                    "<label class=\"form-label\" for=\"" + modalId + "Language\">" + helpers.escapeHtml(t('prompts.codeLang', 'Sprache (optional)')) + "</label>",
+                    "<input id=\"" + modalId + "Language\" class=\"form-control js-bs-markdown-code-language\" type=\"text\" placeholder=\"php\">",
+                    "</div>",
+                    "</div>",
+                    "<div class=\"modal-footer\">",
+                    "<button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">" + helpers.escapeHtml(t('modal.cancel', 'Abbrechen')) + "</button>",
+                    "<button type=\"button\" class=\"btn btn-primary js-bs-markdown-code-insert\">" + helpers.escapeHtml(t('modal.insert', 'Einfügen')) + "</button>",
+                    "</div>",
+                    "</div>",
+                    "</div>",
+                    "</div>",
+                    ""
+                ].join('\n'));
                 const modalElement = $modal[0];
                 const modalInstance = new window.bootstrap.Modal(modalElement);
 
@@ -2650,32 +2658,34 @@
 
                 const selected = helpers.getSelection(textarea);
                 const modalId = 'bsMarkdownEditorLinkModal' + Math.random().toString(36).slice(2, 10);
-                const $modal = $(`
-<div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}Title" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="${modalId}Title">${helpers.escapeHtml(t('modal.linkTitle', 'Link einfügen'))}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label" for="${modalId}Url">${helpers.escapeHtml(t('modal.url', 'URL'))}</label>
-                    <input id="${modalId}Url" class="form-control js-bs-markdown-link-url" type="url" value="https://" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" for="${modalId}Text">${helpers.escapeHtml(t('modal.linkText', 'Linktext'))}</label>
-                    <input id="${modalId}Text" class="form-control js-bs-markdown-link-text" type="text" value="${helpers.escapeHtml(selected || t('placeholders.linkText', 'Linktext'))}">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}</button>
-                <button type="button" class="btn btn-primary js-bs-markdown-link-insert">${helpers.escapeHtml(t('modal.insert', 'Einfügen'))}</button>
-            </div>
-        </div>
-    </div>
-</div>
-`);
+                const $modal = $([
+                    "",
+                    "<div class=\"modal fade\" id=\"" + modalId + "\" tabindex=\"-1\" aria-labelledby=\"" + modalId + "Title\" aria-hidden=\"true\">",
+                    "<div class=\"modal-dialog modal-dialog-centered\">",
+                    "<div class=\"modal-content\">",
+                    "<div class=\"modal-header\">",
+                    "<h5 class=\"modal-title\" id=\"" + modalId + "Title\">" + helpers.escapeHtml(t('modal.linkTitle', 'Link einfügen')) + "</h5>",
+                    "<button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"modal\" aria-label=\"" + helpers.escapeHtml(t('modal.cancel', 'Abbrechen')) + "\"></button>",
+                    "</div>",
+                    "<div class=\"modal-body\">",
+                    "<div class=\"mb-3\">",
+                    "<label class=\"form-label\" for=\"" + modalId + "Url\">" + helpers.escapeHtml(t('modal.url', 'URL')) + "</label>",
+                    "<input id=\"" + modalId + "Url\" class=\"form-control js-bs-markdown-link-url\" type=\"url\" value=\"https://\" required>",
+                    "</div>",
+                    "<div class=\"mb-3\">",
+                    "<label class=\"form-label\" for=\"" + modalId + "Text\">" + helpers.escapeHtml(t('modal.linkText', 'Linktext')) + "</label>",
+                    "<input id=\"" + modalId + "Text\" class=\"form-control js-bs-markdown-link-text\" type=\"text\" value=\"" + helpers.escapeHtml(selected || t('placeholders.linkText', 'Linktext')) + "\">",
+                    "</div>",
+                    "</div>",
+                    "<div class=\"modal-footer\">",
+                    "<button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">" + helpers.escapeHtml(t('modal.cancel', 'Abbrechen')) + "</button>",
+                    "<button type=\"button\" class=\"btn btn-primary js-bs-markdown-link-insert\">" + helpers.escapeHtml(t('modal.insert', 'Einfügen')) + "</button>",
+                    "</div>",
+                    "</div>",
+                    "</div>",
+                    "</div>",
+                    ""
+                ].join('\n'));
                 const modalElement = $modal[0];
                 const modalInstance = new window.bootstrap.Modal(modalElement);
 
@@ -2717,52 +2727,54 @@
 
                 const selected = helpers.getSelection(textarea);
                 const modalId = 'bsMarkdownEditorImageModal' + Math.random().toString(36).slice(2, 10);
-                const $modal = $(`
-<div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}Title" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="${modalId}Title">${helpers.escapeHtml(t('modal.imageTitle', 'Bild einfügen'))}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label" for="${modalId}Url">${helpers.escapeHtml(t('modal.url', 'Bild-URL'))}</label>
-                    <input id="${modalId}Url" class="form-control js-bs-markdown-image-url" type="url" value="https://" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" for="${modalId}Alt">${helpers.escapeHtml(t('modal.alt', 'Alt-Text'))}</label>
-                    <input id="${modalId}Alt" class="form-control js-bs-markdown-image-alt" type="text" value="${helpers.escapeHtml(selected || t('placeholders.imageAlt', 'Bild'))}">
-                </div>
-                <div class="row g-3">
-    <div class="col-sm-4">
-        <label class="form-label" for="${modalId}Width">${helpers.escapeHtml(t('modal.width', 'Breite'))}</label>
-        <input id="${modalId}Width" class="form-control js-bs-markdown-image-width" type="text" inputmode="numeric" placeholder="320">
-    </div>
-    <div class="col-sm-4">
-        <label class="form-label" for="${modalId}Height">${helpers.escapeHtml(t('modal.height', 'Höhe'))}</label>
-        <input id="${modalId}Height" class="form-control js-bs-markdown-image-height" type="text" inputmode="numeric" placeholder="180">
-    </div>
-    <div class="col-sm-4">
-        <label class="form-label" for="${modalId}Align">${helpers.escapeHtml(t('modal.align', 'Ausrichtung'))}</label>
-        <select id="${modalId}Align" class="form-select js-bs-markdown-image-align">
-            <option value="">${helpers.escapeHtml(t('modal.alignNone', 'Keine'))}</option>
-            <option value="left">${helpers.escapeHtml(t('modal.alignLeft', 'Links'))}</option>
-            <option value="center">${helpers.escapeHtml(t('modal.alignCenter', 'Zentriert'))}</option>
-            <option value="right">${helpers.escapeHtml(t('modal.alignRight', 'Rechts'))}</option>
-        </select>
-    </div>
-</div>
-                <div class="form-text mt-2">${helpers.escapeHtml(t('modal.imageDimensionsHelp', 'Zahlenwerte sind Pixel; auto ist erlaubt.'))}</div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}</button>
-                <button type="button" class="btn btn-primary js-bs-markdown-image-insert">${helpers.escapeHtml(t('modal.insert', 'Einfügen'))}</button>
-            </div>
-        </div>
-    </div>
-</div>
-`);
+                const $modal = $([
+                    "",
+                    "<div class=\"modal fade\" id=\"" + modalId + "\" tabindex=\"-1\" aria-labelledby=\"" + modalId + "Title\" aria-hidden=\"true\">",
+                    "<div class=\"modal-dialog modal-dialog-centered\">",
+                    "<div class=\"modal-content\">",
+                    "<div class=\"modal-header\">",
+                    "<h5 class=\"modal-title\" id=\"" + modalId + "Title\">" + helpers.escapeHtml(t('modal.imageTitle', 'Bild einfügen')) + "</h5>",
+                    "<button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"modal\" aria-label=\"" + helpers.escapeHtml(t('modal.cancel', 'Abbrechen')) + "\"></button>",
+                    "</div>",
+                    "<div class=\"modal-body\">",
+                    "<div class=\"mb-3\">",
+                    "<label class=\"form-label\" for=\"" + modalId + "Url\">" + helpers.escapeHtml(t('modal.url', 'Bild-URL')) + "</label>",
+                    "<input id=\"" + modalId + "Url\" class=\"form-control js-bs-markdown-image-url\" type=\"url\" value=\"https://\" required>",
+                    "</div>",
+                    "<div class=\"mb-3\">",
+                    "<label class=\"form-label\" for=\"" + modalId + "Alt\">" + helpers.escapeHtml(t('modal.alt', 'Alt-Text')) + "</label>",
+                    "<input id=\"" + modalId + "Alt\" class=\"form-control js-bs-markdown-image-alt\" type=\"text\" value=\"" + helpers.escapeHtml(selected || t('placeholders.imageAlt', 'Bild')) + "\">",
+                    "</div>",
+                    "<div class=\"row g-3\">",
+                    "<div class=\"col-sm-4\">",
+                    "<label class=\"form-label\" for=\"" + modalId + "Width\">" + helpers.escapeHtml(t('modal.width', 'Breite')) + "</label>",
+                    "<input id=\"" + modalId + "Width\" class=\"form-control js-bs-markdown-image-width\" type=\"text\" inputmode=\"numeric\" placeholder=\"320\">",
+                    "</div>",
+                    "<div class=\"col-sm-4\">",
+                    "<label class=\"form-label\" for=\"" + modalId + "Height\">" + helpers.escapeHtml(t('modal.height', 'Höhe')) + "</label>",
+                    "<input id=\"" + modalId + "Height\" class=\"form-control js-bs-markdown-image-height\" type=\"text\" inputmode=\"numeric\" placeholder=\"180\">",
+                    "</div>",
+                    "<div class=\"col-sm-4\">",
+                    "<label class=\"form-label\" for=\"" + modalId + "Align\">" + helpers.escapeHtml(t('modal.align', 'Ausrichtung')) + "</label>",
+                    "<select id=\"" + modalId + "Align\" class=\"form-select js-bs-markdown-image-align\">",
+                    "<option value=\"\">" + helpers.escapeHtml(t('modal.alignNone', 'Keine')) + "</option>",
+                    "<option value=\"left\">" + helpers.escapeHtml(t('modal.alignLeft', 'Links')) + "</option>",
+                    "<option value=\"center\">" + helpers.escapeHtml(t('modal.alignCenter', 'Zentriert')) + "</option>",
+                    "<option value=\"right\">" + helpers.escapeHtml(t('modal.alignRight', 'Rechts')) + "</option>",
+                    "</select>",
+                    "</div>",
+                    "</div>",
+                    "<div class=\"form-text mt-2\">" + helpers.escapeHtml(t('modal.imageDimensionsHelp', 'Zahlenwerte sind Pixel; auto ist erlaubt.')) + "</div>",
+                    "</div>",
+                    "<div class=\"modal-footer\">",
+                    "<button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">" + helpers.escapeHtml(t('modal.cancel', 'Abbrechen')) + "</button>",
+                    "<button type=\"button\" class=\"btn btn-primary js-bs-markdown-image-insert\">" + helpers.escapeHtml(t('modal.insert', 'Einfügen')) + "</button>",
+                    "</div>",
+                    "</div>",
+                    "</div>",
+                    "</div>",
+                    ""
+                ].join('\n'));
                 const modalElement = $modal[0];
                 const modalInstance = new window.bootstrap.Modal(modalElement);
 
@@ -2847,35 +2859,39 @@
                 shortcutEntries.sort((a, b) => a.title.localeCompare(b.title));
 
                 shortcutEntries.forEach(entry => {
-                    rowsHtml += `
-                        <tr>
-                            <td>${helpers.escapeHtml(entry.title)}</td>
-                            <td class="text-end"><kbd>${helpers.escapeHtml(entry.display)}</kbd></td>
-                        </tr>`;
+                    rowsHtml += [
+                        "",
+                        "<tr>",
+                        "<td>" + helpers.escapeHtml(entry.title) + "</td>",
+                        "<td class=\"text-end\"><kbd>" + helpers.escapeHtml(entry.display) + "</kbd></td>",
+                        "</tr>"
+                    ].join('\n');
                 });
 
-                const $modal = $(`
-<div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}Title" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="${modalId}Title">${helpers.escapeHtml(t('modal.shortcutsTitle', 'Tastenkombinationen'))}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${helpers.escapeHtml(t('modal.cancel', 'Abbrechen'))}"></button>
-            </div>
-            <div class="modal-body p-0">
-                <table class="table table-striped table-hover mb-0">
-                    <tbody>
-                        ${rowsHtml}
-                    </tbody>
-                </table>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${helpers.escapeHtml(t('modal.close', 'Schließen'))}</button>
-            </div>
-        </div>
-    </div>
-</div>
-`);
+                const $modal = $([
+                    "",
+                    "<div class=\"modal fade\" id=\"" + modalId + "\" tabindex=\"-1\" aria-labelledby=\"" + modalId + "Title\" aria-hidden=\"true\">",
+                    "<div class=\"modal-dialog modal-dialog-centered modal-dialog-scrollable\">",
+                    "<div class=\"modal-content\">",
+                    "<div class=\"modal-header\">",
+                    "<h5 class=\"modal-title\" id=\"" + modalId + "Title\">" + helpers.escapeHtml(t('modal.shortcutsTitle', 'Tastenkombinationen')) + "</h5>",
+                    "<button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"modal\" aria-label=\"" + helpers.escapeHtml(t('modal.cancel', 'Abbrechen')) + "\"></button>",
+                    "</div>",
+                    "<div class=\"modal-body p-0\">",
+                    "<table class=\"table table-striped table-hover mb-0\">",
+                    "<tbody>",
+                    "" + rowsHtml,
+                    "</tbody>",
+                    "</table>",
+                    "</div>",
+                    "<div class=\"modal-footer\">",
+                    "<button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">" + helpers.escapeHtml(t('modal.close', 'Schließen')) + "</button>",
+                    "</div>",
+                    "</div>",
+                    "</div>",
+                    "</div>",
+                    ""
+                ].join('\n'));
                 const modalElement = $modal[0];
                 const modalInstance = new window.bootstrap.Modal(modalElement);
 
@@ -3292,19 +3308,21 @@
 
                     if (inlineStyleItems.length > 1) {
                         const dropdownId = 'bsMarkdownEditorInlineStyles' + Math.random().toString(36).slice(2, 10);
-                        const $dropdown = $(`
-<div class="btn-group ${groupSizeClass}" role="group">
-    <button type="button"
-            class="${buttonClassBase} p-1 dropdown-toggle js-bs-parsedown-action"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-            id="${dropdownId}"
-            title="${t('actions.textStyles', 'Textstil')}">
-        <i class="bi bi-type-bold"></i>
-    </button>
-    <ul class="dropdown-menu" aria-labelledby="${dropdownId}"></ul>
-</div>
-`);
+                        const $dropdown = $([
+                            "",
+                            "<div class=\"btn-group " + groupSizeClass + "\" role=\"group\">",
+                            "<button type=\"button\"",
+                            "class=\"" + buttonClassBase + "p-1 dropdown-toggle js-bs-parsedown-action\"",
+                            "data-bs-toggle=\"dropdown\"",
+                            "aria-expanded=\"false\"",
+                            "id=\"" + dropdownId + "\"",
+                            "title=\"" + t('actions.textStyles', 'Textstil') + "\">",
+                            "<i class=\"bi bi-type-bold\"></i>",
+                            "</button>",
+                            "<ul class=\"dropdown-menu\" aria-labelledby=\"" + dropdownId + "\"></ul>",
+                            "</div>",
+                            ""
+                        ].join('\n'));
                         const $menu = $dropdown.find('.dropdown-menu');
                         inlineStyleItems.forEach(function (item) {
                             if (item.type === 'divider') {
@@ -3336,19 +3354,21 @@
                     });
                     if (availableListKeys.length > 1) {
                         const dropdownId = 'bsMarkdownEditorLists' + Math.random().toString(36).slice(2, 10);
-                        const $dropdown = $(`
-<div class="btn-group ${groupSizeClass}" role="group">
-    <button type="button"
-            class="${buttonClassBase} p-1 dropdown-toggle js-bs-parsedown-action"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-            id="${dropdownId}"
-            title="${t('actions.lists', 'Listen')}">
-        <i class="bi bi-list-task"></i>
-    </button>
-    <ul class="dropdown-menu" aria-labelledby="${dropdownId}"></ul>
-</div>
-`);
+                        const $dropdown = $([
+                            "",
+                            "<div class=\"btn-group " + groupSizeClass + "\" role=\"group\">",
+                            "<button type=\"button\"",
+                            "class=\"" + buttonClassBase + "p-1 dropdown-toggle js-bs-parsedown-action\"",
+                            "data-bs-toggle=\"dropdown\"",
+                            "aria-expanded=\"false\"",
+                            "id=\"" + dropdownId + "\"",
+                            "title=\"" + t('actions.lists', 'Listen') + "\">",
+                            "<i class=\"bi bi-list-task\"></i>",
+                            "</button>",
+                            "<ul class=\"dropdown-menu\" aria-labelledby=\"" + dropdownId + "\"></ul>",
+                            "</div>",
+                            ""
+                        ].join('\n'));
                         const $menu = $dropdown.find('.dropdown-menu');
                         availableListKeys.forEach(function (listKey) {
                             const listAction = actions[listKey];
@@ -3380,19 +3400,21 @@
                     });
                     if (insertItems.length > 1) {
                         const dropdownId = 'bsMarkdownEditorInsert' + Math.random().toString(36).slice(2, 10);
-                        const $dropdown = $(`
-<div class="btn-group ${groupSizeClass}" role="group">
-    <button type="button"
-            class="${buttonClassBase} p-1 dropdown-toggle js-bs-parsedown-action"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-            id="${dropdownId}"
-            title="${t('actions.insert', 'Einfügen')}">
-        <i class="bi bi-plus-lg"></i>
-    </button>
-    <ul class="dropdown-menu" aria-labelledby="${dropdownId}"></ul>
-</div>
-`);
+                        const $dropdown = $([
+                            "",
+                            "<div class=\"btn-group " + groupSizeClass + "\" role=\"group\">",
+                            "<button type=\"button\"",
+                            "class=\"" + buttonClassBase + "p-1 dropdown-toggle js-bs-parsedown-action\"",
+                            "data-bs-toggle=\"dropdown\"",
+                            "aria-expanded=\"false\"",
+                            "id=\"" + dropdownId + "\"",
+                            "title=\"" + t('actions.insert', 'Einfügen') + "\">",
+                            "<i class=\"bi bi-plus-lg\"></i>",
+                            "</button>",
+                            "<ul class=\"dropdown-menu\" aria-labelledby=\"" + dropdownId + "\"></ul>",
+                            "</div>",
+                            ""
+                        ].join('\n'));
                         const $menu = $dropdown.find('.dropdown-menu');
                         insertItems.forEach(function (insertAction) {
                             const insertKey = Object.keys(actions).find(k => actions[k] === insertAction);
@@ -3415,19 +3437,21 @@
                 if (Array.isArray(action.items) && action.items.length > 0) {
                     const controlClass = key === 'preview' ? '' : ' js-bs-parsedown-action';
                     const dropdownId = 'bsMarkdownEditorHeading' + Math.random().toString(36).slice(2, 10);
-                    const $dropdown = $(`
-<div class="btn-group ${groupSizeClass}" role="group">
-    <button type="button"
-            class="${buttonClassBase} p-1 dropdown-toggle${controlClass}"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-            id="${dropdownId}"
-            title="${action.title}">
-        <i class="bi ${action.icon}"></i>
-    </button>
-    <ul class="dropdown-menu" aria-labelledby="${dropdownId}"></ul>
-</div>
-`);
+                    const $dropdown = $([
+                        "",
+                        "<div class=\"btn-group " + groupSizeClass + "\" role=\"group\">",
+                        "<button type=\"button\"",
+                        "class=\"" + buttonClassBase + "p-1 dropdown-toggle" + controlClass + "\"",
+                        "data-bs-toggle=\"dropdown\"",
+                        "aria-expanded=\"false\"",
+                        "id=\"" + dropdownId + "\"",
+                        "title=\"" + action.title + "\">",
+                        "<i class=\"bi " + action.icon + "\"></i>",
+                        "</button>",
+                        "<ul class=\"dropdown-menu\" aria-labelledby=\"" + dropdownId + "\"></ul>",
+                        "</div>",
+                        ""
+                    ].join('\n'));
                     const $menu = $dropdown.find('.dropdown-menu');
                     action.items.forEach(function (item) {
                         if (item.type === 'divider') {
@@ -3436,22 +3460,24 @@
                         }
                         if (item.customForm) {
                             const formId = 'bsMarkdownEditorTableCustom' + Math.random().toString(36).slice(2, 10);
-                            const $custom = $(`
-<li class="px-3 py-2">
-    <div class="small text-body-secondary mb-2">${helpers.escapeHtml(item.label)}</div>
-    <div class="d-flex align-items-end gap-2">
-        <div>
-            <label class="form-label form-label-sm mb-1" for="${formId}Rows">${helpers.escapeHtml(t('modal.rows', 'Zeilen'))}</label>
-            <input id="${formId}Rows" class="form-control form-control-sm" type="number" min="1" max="30" value="2" style="width:5rem;">
-        </div>
-        <div>
-            <label class="form-label form-label-sm mb-1" for="${formId}Columns">${helpers.escapeHtml(t('modal.columns', 'Spalten'))}</label>
-            <input id="${formId}Columns" class="form-control form-control-sm" type="number" min="1" max="12" value="2" style="width:5rem;">
-        </div>
-        <button type="button" class="btn btn-sm btn-primary js-bs-parsedown-table-custom-insert">${helpers.escapeHtml(t('modal.insert', 'Einfügen'))}</button>
-    </div>
-</li>
-`);
+                            const $custom = $([
+                                "",
+                                "<li class=\"px-3 py-2\">",
+                                "<div class=\"small text-body-secondary mb-2\">" + helpers.escapeHtml(item.label) + "</div>",
+                                "<div class=\"d-flex align-items-end gap-2\">",
+                                "<div>",
+                                "<label class=\"form-label form-label-sm mb-1\" for=\"" + formId + "Rows\">" + helpers.escapeHtml(t('modal.rows', 'Zeilen')) + "</label>",
+                                "<input id=\"" + formId + "Rows\" class=\"form-control form-control-sm\" type=\"number\" min=\"1\" max=\"30\" value=\"2\" style=\"width:5rem;\">",
+                                "</div>",
+                                "<div>",
+                                "<label class=\"form-label form-label-sm mb-1\" for=\"" + formId + "Columns\">" + helpers.escapeHtml(t('modal.columns', 'Spalten')) + "</label>",
+                                "<input id=\"" + formId + "Columns\" class=\"form-control form-control-sm\" type=\"number\" min=\"1\" max=\"12\" value=\"2\" style=\"width:5rem;\">",
+                                "</div>",
+                                "<button type=\"button\" class=\"btn btn-sm btn-primary js-bs-parsedown-table-custom-insert\">" + helpers.escapeHtml(t('modal.insert', 'Einfügen')) + "</button>",
+                                "</div>",
+                                "</li>",
+                                ""
+                            ].join('\n'));
                             $custom.on('click', function (e) {
                                 e.stopPropagation();
                             });
