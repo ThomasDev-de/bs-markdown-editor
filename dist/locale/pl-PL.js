@@ -38,6 +38,12 @@ window.bsMarkdownEditorTranslations = {
         "toggleTask": "Przełącz zadanie",
         "undo": "Cofnij",
         "redo": "Ponów",
+        "alignment": "Alignment",
+        "alignLeft": "Align left",
+        "alignCenter": "Align center",
+        "alignRight": "Align right",
+        "alignJustify": "Justify",
+        "editor": "Edytor",
         "preview": "Podgląd"
     },
     "prompts": {

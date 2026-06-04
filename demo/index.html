@@ -145,13 +145,14 @@
                 </div>
                 <div class="panel-body">
                     <div class="controls mb-3 d-flex flex-wrap gap-2">
-                        <button id="modeEditor" class="btn btn-sm btn-outline-secondary">Editor</button>
-                        <button id="modePreview" class="btn btn-sm btn-outline-secondary">Plugin Preview</button>
+<!--                        <button id="modeEditor" class="btn btn-sm btn-outline-secondary">Editor</button>-->
+<!--                        <button id="modeHtml" class="btn btn-sm btn-outline-secondary">HTML</button>-->
+<!--                        <button id="modePreview" class="btn btn-sm btn-outline-secondary">Plugin Preview</button>-->
                         <button id="modeGet" class="btn btn-sm btn-outline-secondary">Get Mode</button>
                         <button id="valGet" class="btn btn-sm btn-outline-secondary">Get Value</button>
-                        <button id="valSet" class="btn btn-sm btn-outline-secondary">Set Sample</button>
+<!--                        <button id="valSet" class="btn btn-sm btn-outline-secondary">Set Sample</button>-->
                         <button id="loadExample" class="btn btn-sm btn-outline-primary">Load example.md</button>
-                        <button id="valAppend" class="btn btn-sm btn-outline-secondary">Append Timestamp</button>
+<!--                        <button id="valAppend" class="btn btn-sm btn-outline-secondary">Append Timestamp</button>-->
                     </div>
                     <textarea id="editor" class="form-control"></textarea>
                 </div>
@@ -184,6 +185,7 @@
 
 <script src="../vendor/components/jquery/jquery.min.js"></script>
 <script src="../vendor/twbs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<!--<script src="../dist/locale/de-DE.js"></script>-->
 <script src="../dist/bs-markdown-editor.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/ThomasDev-de/bs-emoji-picker@main/dist/bs-emoji-picker.min.js"></script>
 <script>
@@ -217,14 +219,14 @@
     }
 
     $editor.bsMarkdownEditor({
-        // size: 'sm',
+        size: 'sm',
         lang: 'en',
         resize: 'both',
         showStats: true,
         btnClass: 'border-0',
         customActions: {
             emoji: {
-                position: 'right',
+                position: 'left',
                 render(context) {
                     const $picker = $('<div class="btn-group"></div>');
                     let lastSelection = {
@@ -318,21 +320,24 @@
         addLog('any.bs.markdown-editor', data);
     });
 
-    $('#modeEditor').on('click', function () {
-        $editor.bsMarkdownEditor('mode', 'editor');
-    });
-    $('#modePreview').on('click', function () {
-        $editor.bsMarkdownEditor('mode', 'preview');
-    });
+    // $('#modeEditor').on('click', function () {
+    //     $editor.bsMarkdownEditor('mode', 'editor');
+    // });
+    // $('#modeHtml').on('click', function () {
+    //     $editor.bsMarkdownEditor('mode', 'html');
+    // });
+    // $('#modePreview').on('click', function () {
+    //     $editor.bsMarkdownEditor('mode', 'preview');
+    // });
     $('#modeGet').on('click', function () {
         addLog('method.mode()', {mode: $editor.bsMarkdownEditor('mode')});
     });
     $('#valGet').on('click', function () {
         addLog('method.val()', {value: $editor.bsMarkdownEditor('val')});
     });
-    $('#valSet').on('click', function () {
-        $editor.bsMarkdownEditor('val', '# Demo Heading\n\nA little **bold** text with `inline code`.\n\n```php\n/**\n * Noch en Testkommentar\n * @param string $test\n */\nfunction test(\n    string $test = "",\n    int $test2 = 3,\n    DB $pdo\n) {\n    // Test Ausgabe\n    echo "test $test";\n<<<ROFL\nHallo $test\nROFL;\n}\n```\n\n![Placeholder image](https://placehold.co/320x180){width=320 height=180}\n\n- item 1\n- item 2\n\nx<sup>2</sup> and H<sub>2</sub>O');
-    });
+    // $('#valSet').on('click', function () {
+    //     $editor.bsMarkdownEditor('val', '# Demo Heading\n\nA little **bold** text with `inline code`.\n\n```php\n/**\n * Noch en Testkommentar\n * @param string $test\n */\nfunction test(\n    string $test = "",\n    int $test2 = 3,\n    DB $pdo\n) {\n    // Test Ausgabe\n    echo "test $test";\n<<<ROFL\nHallo $test\nROFL;\n}\n```\n\n![Placeholder image](https://placehold.co/320x180){width=320 height=180}\n\n- item 1\n- item 2\n\nx<sup>2</sup> and H<sub>2</sub>O');
+    // });
     $('#loadExample').on('click', async function () {
         const $button = $(this);
         const originalText = $button.text();
@@ -352,10 +357,10 @@
             $button.prop('disabled', false).text(originalText);
         }
     });
-    $('#valAppend').on('click', function () {
-        const value = $editor.bsMarkdownEditor('val');
-        $editor.bsMarkdownEditor('val', value + '\n\nUpdated at: ' + new Date().toISOString());
-    });
+    // $('#valAppend').on('click', function () {
+    //     const value = $editor.bsMarkdownEditor('val');
+    //     $editor.bsMarkdownEditor('val', value + '\n\nUpdated at: ' + new Date().toISOString());
+    // });
     $('#clearLog').on('click', function () {
         $eventLog.empty();
     });

@@ -1165,7 +1165,11 @@
                 'heading6': 'ctrl+shift+6',
                 'callout': 'ctrl+shift+c',
                 'details': 'ctrl+shift+d',
-                'definitionList': 'ctrl+shift+u'
+                'definitionList': 'ctrl+shift+u',
+                'alignLeft': 'ctrl+alt+l',
+                'alignCenter': 'ctrl+alt+c',
+                'alignRight': 'ctrl+alt+r',
+                'alignJustify': 'ctrl+alt+j'
             }
         }, options);
 
@@ -1209,6 +1213,11 @@
                 toggleTask: 'Toggle task',
                 undo: 'Undo',
                 redo: 'Redo',
+                alignment: 'Alignment',
+                alignLeft: 'Align left',
+                alignCenter: 'Align center',
+                alignRight: 'Align right',
+                alignJustify: 'Justify',
                 preview: 'Preview'
             },
             prompts: {
@@ -1530,6 +1539,20 @@
                     helpers.redo(textarea);
                 }
             },
+            alignment: {
+                title: t('actions.alignment', 'Ausrichtung'),
+                icon: 'bi-justify-left',
+                items: [
+                    {label: t('actions.alignLeft', 'Linksbündig'), icon: 'bi-justify-left', shortcut: 'alignLeft', before: '\n<div class="text-start">\n', after: '\n</div>\n'},
+                    {label: t('actions.alignCenter', 'Zentriert'), icon: 'bi-text-center', shortcut: 'alignCenter', before: '\n<div class="text-center">\n', after: '\n</div>\n'},
+                    {label: t('actions.alignRight', 'Rechtsbündig'), icon: 'bi-justify-right', shortcut: 'alignRight', before: '\n<div class="text-end">\n', after: '\n</div>\n'},
+                    {label: t('actions.alignJustify', 'Blocksatz'), icon: 'bi-justify', shortcut: 'alignJustify', before: '\n<div style="text-align: justify;">\n', after: '\n</div>\n'},
+                    {type: 'divider'}
+                ],
+                run(textarea, item) {
+                    helpers.wrapSelection(textarea, item.before, item.after, t('placeholders.defaultAlignment', 'Text...'));
+                }
+            },
             preview: {
                 title: t('actions.preview', 'Vorschau'),
                 icon: 'bi-eye',
@@ -1553,6 +1576,7 @@
 .bs-markdown-code-actions:hover .bs-markdown-code-language-badge,
 .bs-markdown-code-copy:hover{opacity:1!important;}
 .bs-markdown-shortcut-hint{font-size:.68rem;line-height:1;letter-spacing:-.01em;opacity:.62;}
+.text-justify{text-align:justify!important;}
 </style>
 `);
                 helpers.installCodeCopyHandler();
@@ -1658,7 +1682,12 @@
             },
             getButtonClass() {
                 const btnClass = String(settings.btnClass || '').trim();
-                return btnClass === '' ? 'btn-outline-secondary' : btnClass;
+                const baseClass = btnClass === '' ? 'btn-outline-secondary' : btnClass;
+                const size = String(settings.size || '').trim().toLowerCase();
+                if (size === 'sm' || size === 'lg') {
+                    return `${baseClass} btn-${size}`;
+                }
+                return baseClass;
             },
             getWrapperClass() {
                 return String(settings.wrapperClass || '').trim();
@@ -3186,13 +3215,13 @@
             });
 
             const groupSizeClass = helpers.getGroupSizeClass();
-            const buttonClassBase = `btn ${helpers.getButtonClass()} p-1`;
+            const buttonClassBase = `btn ${helpers.getButtonClass()}`;
             const $toolbar = $('<div class="btn-toolbar mb-2 d-flex flex-wrap justify-content-between align-items-start gap-2 w-100" role="toolbar"></div>');
             const $toolbarLeft = $('<div class="d-flex flex-wrap align-items-center gap-1 flex-grow-1"></div>');
             const $toolbarRight = $('<div class="d-flex flex-wrap align-items-center gap-1"></div>');
             const $toolbarRightCustom = $('<div class="d-flex flex-wrap align-items-center gap-1"></div>');
             const resolvedActionKeys = helpers.getResolvedActionKeys();
-            const groupedInlineStyleKeys = ['bold', 'italic', 'textStyles', 'code', 'codeBlock', 'clearFormatting'];
+            const groupedInlineStyleKeys = ['bold', 'italic', 'textStyles', 'alignment', 'code', 'codeBlock', 'clearFormatting'];
             const groupedInsertKeys = ['link', 'image', 'callout', 'details', 'definitionList'];
             const groupedListKeys = ['ul', 'ol', 'taskList', 'toggleTask'];
             let inlineStylesDropdownRendered = false;
@@ -3231,6 +3260,23 @@
                             });
                         });
                     }
+                    if (resolvedActionKeys.indexOf('alignment') !== -1 && actions.alignment && Array.isArray(actions.alignment.items)) {
+                        if (inlineStyleItems.length > 0) {
+                            inlineStyleItems.push({type: 'divider'});
+                        }
+                        actions.alignment.items.forEach(function (item) {
+                            if (item.type === 'divider') {
+                                inlineStyleItems.push({type: 'divider'});
+                                return;
+                            }
+                            inlineStyleItems.push({
+                                label: item.label,
+                                icon: item.icon || actions.alignment.icon,
+                                shortcut: item.shortcut ? helpers.getShortcutDisplay(item.shortcut) : '',
+                                run() { actions.alignment.run(textarea, item); }
+                            });
+                        });
+                    }
                     if (resolvedActionKeys.indexOf('code') !== -1 && actions.code) {
                         inlineStyleItems.push({label: actions.code.title, icon: actions.code.icon, shortcut: helpers.getShortcutDisplay('code'), run() { actions.code.run(textarea); }});
                     }
@@ -3249,7 +3295,7 @@
                         const $dropdown = $(`
 <div class="btn-group ${groupSizeClass}" role="group">
     <button type="button"
-            class="${buttonClassBase} dropdown-toggle js-bs-parsedown-action"
+            class="${buttonClassBase} p-1 dropdown-toggle js-bs-parsedown-action"
             data-bs-toggle="dropdown"
             aria-expanded="false"
             id="${dropdownId}"
@@ -3293,7 +3339,7 @@
                         const $dropdown = $(`
 <div class="btn-group ${groupSizeClass}" role="group">
     <button type="button"
-            class="${buttonClassBase} dropdown-toggle js-bs-parsedown-action"
+            class="${buttonClassBase} p-1 dropdown-toggle js-bs-parsedown-action"
             data-bs-toggle="dropdown"
             aria-expanded="false"
             id="${dropdownId}"
@@ -3337,7 +3383,7 @@
                         const $dropdown = $(`
 <div class="btn-group ${groupSizeClass}" role="group">
     <button type="button"
-            class="${buttonClassBase} dropdown-toggle js-bs-parsedown-action"
+            class="${buttonClassBase} p-1 dropdown-toggle js-bs-parsedown-action"
             data-bs-toggle="dropdown"
             aria-expanded="false"
             id="${dropdownId}"
@@ -3372,7 +3418,7 @@
                     const $dropdown = $(`
 <div class="btn-group ${groupSizeClass}" role="group">
     <button type="button"
-            class="${buttonClassBase} dropdown-toggle${controlClass}"
+            class="${buttonClassBase} p-1 dropdown-toggle${controlClass}"
             data-bs-toggle="dropdown"
             aria-expanded="false"
             id="${dropdownId}"
@@ -3444,7 +3490,7 @@
                     return;
                 }
 
-                const buttonClass = key === 'preview' ? `${buttonClassBase} js-bs-parsedown-preview-toggle` : `${buttonClassBase} js-bs-parsedown-action`;
+                const buttonClass = key === 'preview' ? `${buttonClassBase} p-1 js-bs-parsedown-preview-toggle` : `${buttonClassBase} p-1 js-bs-parsedown-action`;
                 const shortcut = helpers.getShortcutDisplay(key);
                 const title = shortcut ? `${action.title} (${shortcut})` : action.title;
                 const $button = $(`<button type="button" class="${buttonClass}" title="${title}"><i class="bi ${action.icon}"></i></button>`);
@@ -3502,7 +3548,7 @@
                     const shortcut = helpers.getShortcutDisplay(customKey);
                     const titleWithShortcut = shortcut ? `${title} (${shortcut})` : title;
                     const icon = customAction.icon ? `<i class="bi ${helpers.escapeHtml(customAction.icon)}"></i>` : helpers.escapeHtml(title);
-                    const buttonClass = customAction.buttonClass || `${buttonClassBase} js-bs-parsedown-action`;
+                    const buttonClass = customAction.buttonClass || `${buttonClassBase} p-1 js-bs-parsedown-action`;
                     const $button = $(`<button type="button" class="${buttonClass}" title="${helpers.escapeHtml(titleWithShortcut)}">${icon}</button>`);
                     const $buttonGroup = $(`<div class="btn-group ${groupSizeClass}" role="group"></div>`);
 

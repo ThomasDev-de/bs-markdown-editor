@@ -38,6 +38,12 @@ window.bsMarkdownEditorTranslations = {
         "toggleTask": "Vaihda tehtävän tila",
         "undo": "Kumoa",
         "redo": "Tee uudelleen",
+        "alignment": "Alignment",
+        "alignLeft": "Align left",
+        "alignCenter": "Align center",
+        "alignRight": "Align right",
+        "alignJustify": "Justify",
+        "editor": "Editori",
         "preview": "Esikatselu"
     },
     "prompts": {

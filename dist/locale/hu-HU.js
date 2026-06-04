@@ -38,6 +38,12 @@ window.bsMarkdownEditorTranslations = {
         "toggleTask": "Feladat állapota",
         "undo": "Visszavonás",
         "redo": "Újra",
+        "alignment": "Alignment",
+        "alignLeft": "Align left",
+        "alignCenter": "Align center",
+        "alignRight": "Align right",
+        "alignJustify": "Justify",
+        "editor": "Szerkesztő",
         "preview": "Előnézet"
     },
     "prompts": {

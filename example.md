@@ -8,6 +8,24 @@ Use **bold text**, _italic text_, ~~strikethrough text~~, ==underlined text==, <
 
 Use the clear formatting action on a selected inline fragment such as **_formatted text_**.
 
+
+## Text Alignment
+
+<div class="text-start">
+This text is left-aligned (Bootstrap `text-start`).
+</div>
+
+<div class="text-center">
+This text is centered (Bootstrap `text-center`).
+</div>
+
+<div class="text-end">
+This text is right-aligned (Bootstrap `text-end`).
+</div>
+
+<div style="text-align: justify;">
+This text is justified. It will spread across the entire width of the container, providing a clean edge on both sides. This is particularly useful for longer paragraphs of text where a formal appearance is desired. The editor uses an inline style for this to ensure compatibility with Bootstrap 5.
+</div>
 ## Headings
 
 # Heading 1

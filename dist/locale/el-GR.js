@@ -38,6 +38,12 @@ window.bsMarkdownEditorTranslations = {
         "toggleTask": "Εναλλαγή εργασίας",
         "undo": "Αναίρεση",
         "redo": "Επανάληψη",
+        "alignment": "Alignment",
+        "alignLeft": "Align left",
+        "alignCenter": "Align center",
+        "alignRight": "Align right",
+        "alignJustify": "Justify",
+        "editor": "Επεξεργαστής",
         "preview": "Προεπισκόπηση"
     },
     "prompts": {

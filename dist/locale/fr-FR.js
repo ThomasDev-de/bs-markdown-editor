@@ -38,6 +38,12 @@ window.bsMarkdownEditorTranslations = {
         "toggleTask": "Basculer la tâche",
         "undo": "Annuler",
         "redo": "Rétablir",
+        "alignment": "Alignment",
+        "alignLeft": "Align left",
+        "alignCenter": "Align center",
+        "alignRight": "Align right",
+        "alignJustify": "Justify",
+        "editor": "Éditeur",
         "preview": "Aperçu"
     },
     "prompts": {
