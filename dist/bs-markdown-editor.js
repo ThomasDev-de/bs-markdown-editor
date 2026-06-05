@@ -1128,6 +1128,7 @@
             minHeight: 220,
             preview: true,
             mode: 'editor',
+            modes: ['editor', 'preview'],
             resize: false,
             showStats: false,
             size: null,
@@ -1218,7 +1219,10 @@
                 alignCenter: 'Align center',
                 alignRight: 'Align right',
                 alignJustify: 'Justify',
-                preview: 'Preview'
+                preview: 'Preview',
+                editor: 'Editor',
+                html: 'HTML',
+                mode: 'Mode'
             },
             prompts: {
                 linkUrl: 'Enter URL',
@@ -1577,6 +1581,7 @@
                     ".bs-markdown-code-actions:hover .bs-markdown-code-language-badge,",
                     ".bs-markdown-code-copy:hover{opacity:1!important;}",
                     ".bs-markdown-shortcut-hint{font-size:.68rem;line-height:1;letter-spacing:-.01em;opacity:.62;}",
+                    "@media (min-width: 768px) and (max-width: 991.98px) {.bs-markdown-toolbar-md-p-1{padding:.25rem!important;}}",
                     ".text-justify{text-align:justify!important;}",
                     "</style>",
                     ""
@@ -1707,6 +1712,56 @@
                     return resizeMode;
                 }
                 return 'none';
+            },
+            getModeLabels() {
+                return {
+                    editor: t('actions.editor', 'Editor'),
+                    html: t('actions.html', 'HTML'),
+                    preview: t('actions.preview', 'Vorschau')
+                };
+            },
+            getModeIcons() {
+                return {
+                    editor: 'bi-pen',
+                    html: 'bi-code-slash',
+                    preview: 'bi-eye'
+                };
+            },
+            normalizeModeList(modes) {
+                const allowedModeKeys = ['editor', 'html', 'preview'];
+                const rawModes = Array.isArray(modes) ? modes : String(modes || '').split(',');
+                const normalizedModes = rawModes.map(function (mode) {
+                    return String(mode || '').trim().toLowerCase();
+                }).filter(function (mode, index, list) {
+                    return allowedModeKeys.indexOf(mode) !== -1 && list.indexOf(mode) === index;
+                });
+
+                if (normalizedModes.length === 0) {
+                    normalizedModes.push('editor', 'preview');
+                }
+
+                if (settings.preview === false) {
+                    const previewIndex = normalizedModes.indexOf('preview');
+                    if (previewIndex !== -1) {
+                        normalizedModes.splice(previewIndex, 1);
+                    }
+                }
+
+                return normalizedModes.length > 0 ? normalizedModes : ['editor'];
+            },
+            getAllowedModes(textarea) {
+                const dataModes = textarea ? $(textarea).data('bsMarkdownEditorModes') : null;
+                return Array.isArray(dataModes) && dataModes.length > 0 ? dataModes : helpers.normalizeModeList(settings.modes);
+            },
+            normalizeMode(mode, textarea) {
+                const allowedModes = helpers.getAllowedModes(textarea);
+                const requestedMode = String(mode || '').trim().toLowerCase();
+
+                if (allowedModes.indexOf(requestedMode) !== -1) {
+                    return requestedMode;
+                }
+
+                return allowedModes[0] || 'editor';
             },
             getResolvedActionKeys() {
                 const allKeys = Object.keys(actions);
@@ -2067,6 +2122,35 @@
                 }
                 $(textarea).data('bsMarkdownEditorEditableSelection', offsets);
             },
+            getHtmlElement(textarea) {
+                return $(textarea).data('bsMarkdownEditorHtml') || null;
+            },
+            syncHtmlFromTextarea(textarea) {
+                const htmlElement = helpers.getHtmlElement(textarea);
+                if (!htmlElement) {
+                    return;
+                }
+                try {
+                    htmlElement.value = helpers.renderMarkdown(textarea.value);
+                } catch (error) {
+                    htmlElement.value = '';
+                }
+            },
+            syncTextareaFromHtml(textarea, source = 'html') {
+                const htmlElement = helpers.getHtmlElement(textarea);
+                if (!htmlElement) {
+                    return;
+                }
+                const selectionStart = htmlElement.selectionStart || 0;
+                const selectionEnd = htmlElement.selectionEnd || selectionStart;
+                const nextValue = sharedConverters.htmlToMarkdown(htmlElement.value);
+                helpers.withInternalChange(textarea, source, function () {
+                    textarea.value = nextValue;
+                    const nextSelection = Math.max(0, Math.min(nextValue.length, selectionStart));
+                    textarea.setSelectionRange(nextSelection, Math.max(nextSelection, Math.min(nextValue.length, selectionEnd)));
+                    $(textarea).trigger('input');
+                });
+            },
             refreshPreview(textarea) {
                 const $textarea = $(textarea);
                 const $wrapper = $textarea.closest(helpers.getWrapperSelector());
@@ -2082,6 +2166,7 @@
             },
             refreshRenderedState(textarea, preserveSelection = true) {
                 helpers.syncEditableFromTextarea(textarea, preserveSelection);
+                helpers.syncHtmlFromTextarea(textarea);
                 helpers.refreshPreview(textarea);
                 helpers.updateStats(textarea);
             },
@@ -2219,47 +2304,67 @@
                 }
             },
             getMode(textarea) {
-                const $preview = $(textarea).closest(helpers.getWrapperSelector()).find('.js-bs-parsedown-preview');
-                return $preview.is(':visible') ? 'preview' : 'editor';
+                return $(textarea).data('bsMarkdownEditorMode') || helpers.normalizeMode(settings.mode, textarea);
             },
             setMode(textarea, mode, source = 'api') {
-                const targetMode = String(mode || '').trim().toLowerCase();
-                if (targetMode !== 'editor' && targetMode !== 'preview') {
-                    return helpers.getMode(textarea);
-                }
+                const targetMode = helpers.normalizeMode(mode, textarea);
                 const $textarea = $(textarea);
                 const $wrapper = $textarea.closest(helpers.getWrapperSelector());
                 const $preview = $wrapper.find('.js-bs-parsedown-preview');
-                const $button = $wrapper.find('.js-bs-parsedown-preview-toggle');
                 const $editor = $wrapper.find('.js-bs-parsedown-editor');
+                const $html = $wrapper.find('.js-bs-parsedown-html');
                 const $actionButtons = $wrapper.find('.js-bs-parsedown-action');
                 const currentMode = helpers.getMode(textarea);
-                if (currentMode === targetMode) {
+                const hasStoredMode = typeof $textarea.data('bsMarkdownEditorMode') !== 'undefined';
+                if (hasStoredMode && currentMode === targetMode) {
+                    helpers.updateModeDropdown(textarea, targetMode);
                     return currentMode;
                 }
+                const surfaceSpacing = helpers.getTextareaPreviewSpacing(textarea);
+                const editable = helpers.getEditableElement(textarea);
+                const currentSurfaceHeight = Math.max(
+                    settings.minHeight,
+                    Math.ceil($editor.outerHeight() || 0),
+                    Math.ceil($html.outerHeight() || 0),
+                    Math.ceil($preview.outerHeight() || 0),
+                    Math.ceil((editable ? $(editable).outerHeight() : $textarea.outerHeight()) || 0)
+                );
+
+                $textarea.data('bsMarkdownEditorMode', targetMode);
+                $editor.addClass('d-none').hide();
+                $html.addClass('d-none').hide();
+                $preview.addClass('d-none').hide().html('').css({height: '', overflowY: ''});
+                $actionButtons.prop('disabled', targetMode !== 'editor').toggleClass('disabled', targetMode !== 'editor');
+
                 if (targetMode === 'editor') {
-                    $preview.addClass('d-none').hide().html('').css({height: '', overflowY: ''});
+                    if (currentMode === 'html') {
+                        helpers.syncTextareaFromHtml(textarea, 'mode');
+                    }
                     $editor.removeClass('d-none').show();
-                    $actionButtons.prop('disabled', false).removeClass('disabled');
-                    $button.removeClass('active btn-primary').addClass(helpers.getButtonClass());
-                } else {
-                    const previewSpacing = helpers.getTextareaPreviewSpacing(textarea);
-                    const editable = helpers.getEditableElement(textarea);
-                    const editorHeight = Math.max(settings.minHeight, Math.ceil($editor.outerHeight() || 0), Math.ceil((editable ? $(editable).outerHeight() : $textarea.outerHeight()) || 0));
-                    $button.removeClass(helpers.getButtonClass()).addClass('active btn-primary');
-                    $actionButtons.prop('disabled', true).addClass('disabled');
-                    $editor.addClass('d-none').hide();
+                    helpers.syncEditableFromTextarea(textarea, true);
+                } else if (targetMode === 'html') {
+                    helpers.syncHtmlFromTextarea(textarea);
+                    $html.removeClass('d-none').show().css({
+                        minHeight: settings.minHeight + 'px',
+                        height: currentSurfaceHeight + 'px',
+                        overflowY: 'auto'
+                    });
+                } else if (targetMode === 'preview') {
+                    if (currentMode === 'html') {
+                        helpers.syncTextareaFromHtml(textarea, 'mode');
+                    }
                     $preview.removeClass('d-none').show().css({
                         boxSizing: 'border-box',
-                        height: editorHeight + 'px',
+                        height: currentSurfaceHeight + 'px',
                         overflowY: 'auto',
-                        paddingTop: previewSpacing.paddingTop,
-                        paddingRight: previewSpacing.paddingRight,
-                        paddingBottom: previewSpacing.paddingBottom,
-                        paddingLeft: previewSpacing.paddingLeft
+                        paddingTop: surfaceSpacing.paddingTop,
+                        paddingRight: surfaceSpacing.paddingRight,
+                        paddingBottom: surfaceSpacing.paddingBottom,
+                        paddingLeft: surfaceSpacing.paddingLeft
                     }).html(`<div class="text-body-secondary">${helpers.escapeHtml(t('preview.loading', 'Rendere Vorschau...'))}</div>`);
                     helpers.refreshPreview(textarea);
                 }
+                helpers.updateModeDropdown(textarea, targetMode);
                 helpers.updateStats(textarea);
                 helpers.emitPluginEvent(textarea, 'modeChange.bs.markdown-editor', {
                     mode: targetMode,
@@ -2269,8 +2374,68 @@
                 return targetMode;
             },
             toggleMode(textarea, source = 'toolbar') {
-                const nextMode = helpers.getMode(textarea) === 'preview' ? 'editor' : 'preview';
+                const allowedModes = helpers.getAllowedModes(textarea);
+                const currentIndex = allowedModes.indexOf(helpers.getMode(textarea));
+                const nextMode = allowedModes[(currentIndex + 1) % allowedModes.length] || allowedModes[0] || 'editor';
                 return helpers.setMode(textarea, nextMode, source);
+            },
+            updateModeDropdown(textarea, mode) {
+                const $wrapper = $(textarea).closest(helpers.getWrapperSelector());
+                const $dropdown = $wrapper.find('.js-bs-markdown-mode-dropdown');
+                if ($dropdown.length === 0) {
+                    return;
+                }
+                const labels = helpers.getModeLabels();
+                const icons = helpers.getModeIcons();
+                const activeMode = helpers.normalizeMode(mode, textarea);
+                const activeLabel = labels[activeMode] || activeMode;
+                $dropdown.find('.js-bs-markdown-mode-icon').attr('class', 'bi ' + (icons[activeMode] || 'bi-circle') + ' js-bs-markdown-mode-icon');
+                $dropdown.find('.js-bs-markdown-mode-label').text(activeLabel);
+                $dropdown.find('[data-bs-toggle="dropdown"]').attr({title: activeLabel, 'aria-label': activeLabel});
+                $dropdown.find('.dropdown-item').removeClass('active').removeAttr('aria-current');
+                $dropdown.find(`[data-bs-markdown-mode="${activeMode}"]`).addClass('active').attr('aria-current', 'true');
+            },
+            renderModeDropdown(textarea, toolbarButtonClass, groupSizeClass) {
+                const allowedModes = helpers.getAllowedModes(textarea);
+                if (allowedModes.length <= 1) {
+                    return $();
+                }
+                const labels = helpers.getModeLabels();
+                const icons = helpers.getModeIcons();
+                const dropdownId = 'bsMarkdownEditorMode' + Math.random().toString(36).slice(2, 10);
+                const initialMode = helpers.normalizeMode(settings.mode, textarea);
+                const initialLabel = labels[initialMode] || initialMode;
+                const $dropdown = $([
+                    "",
+                    "<div class=\"btn-group " + groupSizeClass + " js-bs-markdown-mode-dropdown\" role=\"group\">",
+                    "<button type=\"button\"",
+                    "class=\"" + toolbarButtonClass + " dropdown-toggle\"",
+                    "data-bs-toggle=\"dropdown\"",
+                    "aria-expanded=\"false\"",
+                    "id=\"" + dropdownId + "\"",
+                    "title=\"" + helpers.escapeHtml(initialLabel) + "\"",
+                    "aria-label=\"" + helpers.escapeHtml(initialLabel) + "\">",
+                    "<i class=\"bi " + (icons[initialMode] || 'bi-circle') + " js-bs-markdown-mode-icon\"></i><span class=\"visually-hidden js-bs-markdown-mode-label\">" + helpers.escapeHtml(initialLabel) + "</span>",
+                    "</button>",
+                    "<ul class=\"dropdown-menu dropdown-menu-end\" aria-labelledby=\"" + dropdownId + "\"></ul>",
+                    "</div>",
+                    ""
+                ].join('\n'));
+                const $menu = $dropdown.find('.dropdown-menu');
+                allowedModes.forEach(function (mode) {
+                    const label = labels[mode] || mode;
+                    const $link = $(`<a href="#" class="dropdown-item" data-bs-markdown-mode="${helpers.escapeHtml(mode)}"><i class="bi ${icons[mode] || 'bi-circle'} me-2"></i>${helpers.escapeHtml(label)}</a>`);
+                    $link.on('click', function (event) {
+                        event.preventDefault();
+                        if (helpers.getMode(textarea) === 'html') {
+                            helpers.syncTextareaFromHtml(textarea, 'html');
+                        }
+                        helpers.setMode(textarea, mode, 'toolbar');
+                        $dropdown.find('[data-bs-toggle="dropdown"]').dropdown('hide');
+                    });
+                    $menu.append($('<li></li>').append($link));
+                });
+                return $dropdown;
             },
             getValue(textarea) {
                 return textarea.value;
@@ -3081,6 +3246,7 @@
             $textarea.wrap($editor);
             const $editorRef = $textarea.closest('.js-bs-parsedown-editor');
             const $editable = $(`<div class="js-bs-parsedown-editable form-control" contenteditable="true" spellcheck="true" aria-label="${helpers.escapeHtml(t('actions.textStyles', 'Textstil'))}"></div>`);
+            const $html = $(`<textarea class="js-bs-parsedown-html form-control font-monospace d-none" spellcheck="false" aria-label="${helpers.escapeHtml(t('actions.html', 'HTML'))}"></textarea>`);
             const resizeMode = helpers.getResizeMode();
             $editable.css({
                 minHeight: settings.minHeight + 'px',
@@ -3088,6 +3254,11 @@
                 overflowWrap: 'break-word',
                 overflow: resizeMode === 'none' ? 'hidden' : 'auto',
                 resize: resizeMode
+            });
+            $html.css({
+                minHeight: settings.minHeight + 'px',
+                whiteSpace: 'pre',
+                resize: resizeMode === 'none' ? 'none' : resizeMode
             });
             $editorRef.prepend($editable);
             $textarea.addClass('visually-hidden js-bs-parsedown-source').attr('aria-hidden', 'true').css({
@@ -3098,7 +3269,10 @@
                 height: '1px',
                 opacity: 0
             });
+            $editorRef.after($html);
             $textarea.data('bsMarkdownEditorEditable', $editable.get(0));
+            $textarea.data('bsMarkdownEditorHtml', $html.get(0));
+            $textarea.data('bsMarkdownEditorModes', helpers.normalizeModeList(settings.modes));
             helpers.installValuePropertyBridge(textarea);
             helpers.installSetRangeTextBridge(textarea);
             helpers.installFormResetBridge(textarea);
@@ -3123,6 +3297,10 @@
 
             $editable.on('keyup.bsMarkdownEditorEditable mouseup.bsMarkdownEditorEditable touchend.bsMarkdownEditorEditable focus.bsMarkdownEditorEditable', function () {
                 helpers.rememberEditableSelection(textarea);
+            });
+
+            $html.on('input.bsMarkdownEditorHtml', function () {
+                helpers.syncTextareaFromHtml(textarea, 'html');
             });
 
             $editable.on('keydown.bsMarkdownEditorEditable', function (e) {
@@ -3219,7 +3397,13 @@
                 helpers.pushHistoryState(textarea, helpers.createHistoryState(textarea));
                 const source = $textarea.data('bsMarkdownEditorChangeSource') || 'unknown';
                 if (source !== 'editable') {
-                    helpers.refreshRenderedState(textarea, source === 'external' || source === 'reset');
+                    if (source === 'html') {
+                        helpers.syncEditableFromTextarea(textarea, false);
+                        helpers.refreshPreview(textarea);
+                        helpers.updateStats(textarea);
+                    } else {
+                        helpers.refreshRenderedState(textarea, source === 'external' || source === 'reset');
+                    }
                 } else {
                     helpers.refreshPreview(textarea);
                     helpers.updateStats(textarea);
@@ -3232,11 +3416,14 @@
 
             const groupSizeClass = helpers.getGroupSizeClass();
             const buttonClassBase = `btn ${helpers.getButtonClass()}`;
+            const toolbarButtonClass = `${buttonClassBase} bs-markdown-toolbar-md-p-1`;
             const $toolbar = $('<div class="btn-toolbar mb-2 d-flex flex-wrap justify-content-between align-items-start gap-2 w-100" role="toolbar"></div>');
             const $toolbarLeft = $('<div class="d-flex flex-wrap align-items-center gap-1 flex-grow-1"></div>');
             const $toolbarRight = $('<div class="d-flex flex-wrap align-items-center gap-1"></div>');
             const $toolbarRightCustom = $('<div class="d-flex flex-wrap align-items-center gap-1"></div>');
             const resolvedActionKeys = helpers.getResolvedActionKeys();
+            const allowedModes = helpers.getAllowedModes(textarea);
+            const canUseEditorActions = allowedModes.indexOf('editor') !== -1;
             const groupedInlineStyleKeys = ['bold', 'italic', 'textStyles', 'alignment', 'code', 'codeBlock', 'clearFormatting'];
             const groupedInsertKeys = ['link', 'image', 'callout', 'details', 'definitionList'];
             const groupedListKeys = ['ul', 'ol', 'taskList', 'toggleTask'];
@@ -3250,7 +3437,7 @@
 
             resolvedActionKeys.forEach(function (key) {
                 const action = actions[key];
-                if (key === 'preview' && !settings.preview) {
+                if (key === 'preview' || !canUseEditorActions) {
                     return;
                 }
 
@@ -3312,7 +3499,7 @@
                             "",
                             "<div class=\"btn-group " + groupSizeClass + "\" role=\"group\">",
                             "<button type=\"button\"",
-                            "class=\"" + buttonClassBase + "p-1 dropdown-toggle js-bs-parsedown-action\"",
+                            "class=\"" + toolbarButtonClass + " dropdown-toggle js-bs-parsedown-action\"",
                             "data-bs-toggle=\"dropdown\"",
                             "aria-expanded=\"false\"",
                             "id=\"" + dropdownId + "\"",
@@ -3358,7 +3545,7 @@
                             "",
                             "<div class=\"btn-group " + groupSizeClass + "\" role=\"group\">",
                             "<button type=\"button\"",
-                            "class=\"" + buttonClassBase + "p-1 dropdown-toggle js-bs-parsedown-action\"",
+                            "class=\"" + toolbarButtonClass + " dropdown-toggle js-bs-parsedown-action\"",
                             "data-bs-toggle=\"dropdown\"",
                             "aria-expanded=\"false\"",
                             "id=\"" + dropdownId + "\"",
@@ -3404,7 +3591,7 @@
                             "",
                             "<div class=\"btn-group " + groupSizeClass + "\" role=\"group\">",
                             "<button type=\"button\"",
-                            "class=\"" + buttonClassBase + "p-1 dropdown-toggle js-bs-parsedown-action\"",
+                            "class=\"" + toolbarButtonClass + " dropdown-toggle js-bs-parsedown-action\"",
                             "data-bs-toggle=\"dropdown\"",
                             "aria-expanded=\"false\"",
                             "id=\"" + dropdownId + "\"",
@@ -3441,7 +3628,7 @@
                         "",
                         "<div class=\"btn-group " + groupSizeClass + "\" role=\"group\">",
                         "<button type=\"button\"",
-                        "class=\"" + buttonClassBase + "p-1 dropdown-toggle" + controlClass + "\"",
+                        "class=\"" + toolbarButtonClass + " dropdown-toggle" + controlClass + "\"",
                         "data-bs-toggle=\"dropdown\"",
                         "aria-expanded=\"false\"",
                         "id=\"" + dropdownId + "\"",
@@ -3516,7 +3703,7 @@
                     return;
                 }
 
-                const buttonClass = key === 'preview' ? `${buttonClassBase} p-1 js-bs-parsedown-preview-toggle` : `${buttonClassBase} p-1 js-bs-parsedown-action`;
+                const buttonClass = key === 'preview' ? `${toolbarButtonClass} js-bs-parsedown-preview-toggle` : `${toolbarButtonClass} js-bs-parsedown-action`;
                 const shortcut = helpers.getShortcutDisplay(key);
                 const title = shortcut ? `${action.title} (${shortcut})` : action.title;
                 const $button = $(`<button type="button" class="${buttonClass}" title="${title}"><i class="bi ${action.icon}"></i></button>`);
@@ -3558,6 +3745,8 @@
                     helpers: helpers,
                     settings: settings,
                     buttonClassBase: buttonClassBase,
+                    toolbarButtonClass: toolbarButtonClass,
+                    navButtonClass: toolbarButtonClass,
                     groupSizeClass: groupSizeClass,
                     $: $
                 };
@@ -3574,7 +3763,7 @@
                     const shortcut = helpers.getShortcutDisplay(customKey);
                     const titleWithShortcut = shortcut ? `${title} (${shortcut})` : title;
                     const icon = customAction.icon ? `<i class="bi ${helpers.escapeHtml(customAction.icon)}"></i>` : helpers.escapeHtml(title);
-                    const buttonClass = customAction.buttonClass || `${buttonClassBase} p-1 js-bs-parsedown-action`;
+                    const buttonClass = customAction.buttonClass || `${toolbarButtonClass} js-bs-parsedown-action`;
                     const $button = $(`<button type="button" class="${buttonClass}" title="${helpers.escapeHtml(titleWithShortcut)}">${icon}</button>`);
                     const $buttonGroup = $(`<div class="btn-group ${groupSizeClass}" role="group"></div>`);
 
@@ -3600,7 +3789,14 @@
                 $toolbarLeft.append($element);
             });
 
-            $toolbar.append($toolbarLeft);
+            const $modeDropdown = helpers.renderModeDropdown(textarea, toolbarButtonClass, groupSizeClass);
+            if ($modeDropdown.length > 0) {
+                $toolbarRight.append($modeDropdown);
+            }
+
+            if ($toolbarLeft.children().length > 0) {
+                $toolbar.append($toolbarLeft);
+            }
             if ($toolbarRightCustom.children().length > 0) {
                 $toolbarRight.prepend($toolbarRightCustom.children());
             }
@@ -3608,8 +3804,9 @@
                 $toolbar.append($toolbarRight);
             }
             const $preview = $('<div class="js-bs-parsedown-preview border rounded-3 d-none"></div>');
-            $toolbar.find('.btn').addClass('p-1');
-            $wrapperRef.prepend($toolbar);
+            if ($toolbar.children().length > 0) {
+                $wrapperRef.prepend($toolbar);
+            }
             $wrapperRef.append($preview);
 
             const api = {

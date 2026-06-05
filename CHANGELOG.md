@@ -7,6 +7,24 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-05
+
+### Added
+
+- Added the `modes` option (`string | string[]`) to configure allowed modes and their dropdown order.
+- Added support for single-mode configurations such as `modes: 'preview'`, rendering the selected surface directly without a mode dropdown.
+- Added localized mode dropdown labels via `actions.editor`, `actions.html`, and `actions.mode` across all locale files.
+- Added `toolbarButtonClass` and `navButtonClass` to custom action render contexts for toolbar-specific button styling.
+
+### Changed
+
+- Mode switching now uses a dropdown instead of individual toolbar buttons.
+- The mode dropdown button now displays only the current mode icon (`bi-pen`, `bi-code-slash`, or `bi-eye`) while keeping accessible labels.
+- Toolbar padding is no longer applied globally to every `.btn` inside the toolbar; only plugin-generated nav buttons receive the scoped padding class.
+- Custom action internals are no longer affected by plugin toolbar padding unless they explicitly use `navButtonClass`.
+- Demo updated to use `modes: ['editor', 'html', 'preview']` and the new custom action button context.
+- Package version bumped from `1.0.9` to `1.1.0`.
+
 ## [1.0.9] - 2026-06-04
 - **Fix**: Custom Actions übernehmen nun korrekt die globale `size` Option (z.B. `sm` oder `lg`).
 

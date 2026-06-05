@@ -44,7 +44,9 @@ window.bsMarkdownEditorTranslations = {
         "alignRight": "Align right",
         "alignJustify": "Justify",
         "editor": "Editor",
-        "preview": "Förhandsvisning"
+        "preview": "Förhandsvisning",
+        "html": "HTML",
+        "mode": "Läge"
     },
     "prompts": {
         "linkUrl": "Ange URL",

@@ -145,9 +145,6 @@
                 </div>
                 <div class="panel-body">
                     <div class="controls mb-3 d-flex flex-wrap gap-2">
-<!--                        <button id="modeEditor" class="btn btn-sm btn-outline-secondary">Editor</button>-->
-<!--                        <button id="modeHtml" class="btn btn-sm btn-outline-secondary">HTML</button>-->
-<!--                        <button id="modePreview" class="btn btn-sm btn-outline-secondary">Plugin Preview</button>-->
                         <button id="modeGet" class="btn btn-sm btn-outline-secondary">Get Mode</button>
                         <button id="valGet" class="btn btn-sm btn-outline-secondary">Get Value</button>
 <!--                        <button id="valSet" class="btn btn-sm btn-outline-secondary">Set Sample</button>-->
@@ -219,8 +216,8 @@
     }
 
     $editor.bsMarkdownEditor({
-        size: 'sm',
         lang: 'en',
+        modes: ['editor', 'html', 'preview'],
         resize: 'both',
         showStats: true,
         btnClass: 'border-0',
@@ -261,7 +258,7 @@
                     captureEditorSelection();
 
                     $picker.bsEmojiPicker({
-                        btnClass: context.buttonClassBase + '',
+                        btnClass: context.navButtonClass || context.buttonClassBase,
                         btnText: '<i class="bi bi-emoji-smile"></i>',
                         targetInput: null,
                         onClickEmoji(emoji) {
@@ -320,15 +317,6 @@
         addLog('any.bs.markdown-editor', data);
     });
 
-    // $('#modeEditor').on('click', function () {
-    //     $editor.bsMarkdownEditor('mode', 'editor');
-    // });
-    // $('#modeHtml').on('click', function () {
-    //     $editor.bsMarkdownEditor('mode', 'html');
-    // });
-    // $('#modePreview').on('click', function () {
-    //     $editor.bsMarkdownEditor('mode', 'preview');
-    // });
     $('#modeGet').on('click', function () {
         addLog('method.mode()', {mode: $editor.bsMarkdownEditor('mode')});
     });

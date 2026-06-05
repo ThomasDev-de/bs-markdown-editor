@@ -42,6 +42,7 @@ Or use a GitHub CDN (replace `VERSION` with a release tag):
         minHeight: 240,
         preview: true,
         mode: 'editor',
+        modes: ['editor', 'preview'],
         resize: 'vertical',
         size: 'sm',
         btnClass: 'border-0',
@@ -60,8 +61,9 @@ For a complete Markdown sample covering all standard toolbar actions, see [examp
 |-----------------|-----------------------------------|--------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `minHeight`     | `number`                          | `220`        | Minimum editor height in pixels. Applied to all surfaces and used as a lower bound for `height`.                                                                                                                                   |
 | `height`        | `number \| null`                  | `500`        | Initial editor height in pixels. If `null`, the editor follows the content.                                                                                                                                                        |
-| `preview`       | `boolean`                         | `true`       | Enables the preview toggle button in the toolbar. If `false`, preview mode is not available through the toolbar.                                                                                                                   |
-| `mode`          | `'editor' \| 'html' \| 'preview'` | `'editor'`   | Initial mode after initialization. Invalid values fall back to editor mode behavior.                                                                                                                                               |
+| `preview`       | `boolean`                         | `true`       | Legacy preview availability flag. If `false`, `preview` is removed from the resolved `modes` list.                                                                                                                                 |
+| `mode`          | `'editor' \| 'html' \| 'preview'` | `'editor'`   | Initial mode after initialization. Invalid values fall back to the first allowed `modes` entry.                                                                                                                                    |
+| `modes`         | `string \| string[]`              | `['editor', 'preview']` | Allowed modes and dropdown order. Supported values are `editor`, `html`, and `preview`. A string may be a single mode or comma-separated list. If only one mode is allowed, no mode dropdown is rendered.                 |
 | `resize`        | `boolean \| 'vertical' \| 'both'` | `false`      | Enables mouse-based resizing on the visible `contenteditable` surface. `true` maps to `'vertical'`.                                                                                                                                |
 | `size`          | `'sm' \| 'lg' \| null`            | `null`       | Button group size variant. Maps to Bootstrap button-group size classes (`btn-group-sm`/`btn-group-lg`).                                                                                                                            |
 | `btnClass`      | `string`                          | `'border-0'` | Bootstrap button style class used by toolbar buttons (example: `btn-outline-dark`, `btn-secondary`).                                                                                                                               |
@@ -100,9 +102,7 @@ For a complete Markdown sample covering all standard toolbar actions, see [examp
 | `undo`            | Undo via plugin history                                    |
 | `redo`            | Redo via plugin history                                    |
 | `alignment`       | Insert alignment HTML tags using Bootstrap utility classes (`text-start`, `text-center`, `text-end` or inline style for justify) |
-| `editor`          | Switch to Markdown editor mode                             |
-| `html`            | Switch to HTML source mode                                 |
-| `preview`         | Switch to preview mode                                     |
+| `preview`         | Legacy preview toggle action. Mode switching is rendered as a dropdown when `modes` allows more than one mode. |
 
 ### Shortcuts
 
@@ -200,7 +200,7 @@ appending to `textarea.value` always writes at the end and bypasses the current 
 | `$editable`, `$wrapper`, `$toolbar`, `$toolbarLeft`, `$toolbarRight` | jQuery references for editor UI integration.                                                     |
 | `helpers`                                                            | Editor helper API, including `getSelection`, `replaceSelection`, and `syncTextareaFromEditable`. |
 | `settings`                                                           | Resolved editor settings.                                                                        |
-| `buttonClassBase` / `groupSizeClass`                                 | Toolbar classes matching the current editor configuration.                                       |
+| `buttonClassBase` / `toolbarButtonClass` / `navButtonClass` / `groupSizeClass` | Toolbar classes matching the current editor configuration. `toolbarButtonClass` and `navButtonClass` include the plugin's toolbar padding class for the Bootstrap `md` breakpoint only. |
 
 For default `run(context)` buttons, the editor synchronizes the visible selection before calling `run`. If you render custom interactive UI
 with `render(context)`, capture the editor selection before your UI steals focus.
@@ -252,7 +252,7 @@ $('#editor').bsMarkdownEditor({
                 captureEditorSelection();
 
                 $picker.bsEmojiPicker({
-                    btnClass: context.buttonClassBase,
+                    btnClass: context.navButtonClass,
                     btnText: '<i class="bi bi-emoji-smile"></i>',
                     targetInput: null,
                     onClickEmoji(emoji) {
@@ -331,12 +331,13 @@ const markdown = $.bsMarkdownEditor.toMarkdown('<h1>Hello</h1>');
 | `ready.bs.markdown-editor`      | Plugin finished initialization                                                              | `{ mode, value, api }`           |
 | `change.bs.markdown-editor`     | Any content change (user, toolbar, API, history, external sync)                             | `{ source, value }`              |
 | `userChange.bs.markdown-editor` | User-initiated content change inside the editor (typing, paste, toolbar actions, undo/redo) | `{ source, value }`              |
-| `modeChange.bs.markdown-editor` | Mode changed between editor/preview                                                         | `{ mode, previousMode, source }` |
+| `modeChange.bs.markdown-editor` | Mode changed between editor/html/preview                                                    | `{ mode, previousMode, source }` |
 | `scroll.bs.markdown-editor`     | Editor or HTML source was scrolled (throttled)                             | `{ scrollTop, scrollLeft, scrollHeight, clientHeight, mode }` |
 | `any.bs.markdown-editor`        | Any plugin event above fired                                                                | `{ eventName, payload }`         |
 
 ## Notes
 
+- The mode dropdown is rendered only when more than one mode is allowed via `modes`; otherwise the single allowed mode is shown directly.
 - The toolbar includes bold, italic, text styles (`~~strikethrough~~`, `==underline==`), clear formatting, headings,
   unordered/ordered/task lists, task toggling, indent/outdent, quote, link, image, callout, details, definition list,
   inline code, code block, horizontal rule, table, undo/redo, and preview actions.
