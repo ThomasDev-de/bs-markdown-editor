@@ -14,7 +14,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Fixed a `TypeError: action.run is not a function` when opening the emoji picker. Standard actions now support custom `render` functions.
+- Fixed emoji picker not loading in demo by adding missing `bs-emoji-picker.js` dependency.
 - Fixed automatic list continuation in contenteditable mode by ensuring the `input` event is triggered after insertion.
+- Fixed empty list item behavior to correctly break the list and insert a newline.
 - Improved list marker detection regex to be more robust with different spacing.
 
 - Placeholder for upcoming changes.

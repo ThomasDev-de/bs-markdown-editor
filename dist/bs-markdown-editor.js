@@ -3410,10 +3410,12 @@
 
                         if (content === '') {
                             // Empty list item: remove the list marker
-                            const newValue = value.substring(0, lineStart) + indent + value.substring(lineEnd === -1 ? value.length : lineEnd);
+                            // Use e.shiftKey check to allow normal enter if needed, but here we want to break the list
+                            const nextLineStart = lineEnd === -1 ? value.length : lineEnd + 1;
+                            const newValue = value.substring(0, lineStart) + '\n' + value.substring(nextLineStart);
                             helpers.withInternalChange(textarea, 'editable', function () {
                                 textarea.value = newValue;
-                                textarea.setSelectionRange(lineStart + indent.length, lineStart + indent.length);
+                                textarea.setSelectionRange(lineStart + 1, lineStart + 1);
                                 $(textarea).trigger('input');
                             });
                             helpers.syncEditableFromTextarea(textarea, true);
