@@ -99,6 +99,7 @@ For a complete Markdown sample covering all standard toolbar actions, see [examp
 | `taskList`        | Task list (`- [ ] ...`)                                    |
 | `toggleTask`      | Toggle selected task list items                            |
 | `table`           | Open table modal and insert markdown table                 |
+| `emoji`           | Open emoji picker (requires `bs-emoji-picker` plugin)      |
 | `undo`            | Undo via plugin history                                    |
 | `redo`            | Redo via plugin history                                    |
 | `alignment`       | Insert alignment HTML tags using Bootstrap utility classes (`text-start`, `text-center`, `text-end` or inline style for justify) |
@@ -132,6 +133,7 @@ The editor supports keyboard shortcuts for common actions. Default shortcuts are
 | Subscript       | `Ctrl + Shift + B`   |
 | Superscript     | `Ctrl + Shift + P`   |
 | Code block      | `Ctrl + Shift + K`   |
+| Emoji           | `Ctrl + E`           |
 | Heading 1-6     | `Ctrl + Shift + 1-6` |
 | Align Left      | `Ctrl + Alt + L`     |
 | Align Center    | `Ctrl + Alt + C`     |
@@ -207,79 +209,16 @@ with `render(context)`, capture the editor selection before your UI steals focus
 
 #### Advanced: Emoji Picker
 
-The example below renders `bs-emoji-picker` as a toolbar custom action. The picker itself is initialized without `targetInput`, so the
-Markdown editor keeps control over selection, history, preview refreshes, and events.
+The editor includes native support for the `bs-emoji-picker` plugin. To enable it, simply include the picker's JS file
+after jQuery and Bootstrap. If the plugin is detected, the emoji button will be rendered automatically in the toolbar.
 
-```js
-// Load bs-emoji-picker after jQuery and Bootstrap.
-// <script src="https://cdn.jsdelivr.net/gh/ThomasDev-de/bs-emoji-picker@main/dist/bs-emoji-picker.min.js"></script>
-
-$('#editor').bsMarkdownEditor({
-    customActions: {
-        emoji: {
-            position: 'right',
-            render(context) {
-                const $picker = $('<div class="btn-group"></div>');
-                let lastSelection = {
-                    start: context.textarea.selectionStart || 0,
-                    end: context.textarea.selectionEnd || 0
-                };
-
-                function captureEditorSelection() {
-                    const selection = window.getSelection();
-                    if (!selection || selection.rangeCount === 0) {
-                        return;
-                    }
-                    const range = selection.getRangeAt(0);
-                    if (!context.editable.contains(range.startContainer) || !context.editable.contains(range.endContainer)) {
-                        return;
-                    }
-                    const offsets = context.helpers.getEditableSelectionOffsets(context.editable);
-                    lastSelection = {
-                        start: offsets.start,
-                        end: offsets.end
-                    };
-                    context.textarea.setSelectionRange(lastSelection.start, lastSelection.end);
-                }
-
-                function rememberSelection() {
-                    captureEditorSelection();
-                    $picker.data('bsMarkdownEditorEmojiSelection', lastSelection);
-                }
-
-                context.$editable.on('keyup.bsMarkdownEditorEmoji mouseup.bsMarkdownEditorEmoji touchend.bsMarkdownEditorEmoji input.bsMarkdownEditorEmoji', captureEditorSelection);
-                $(document).on('selectionchange.bsMarkdownEditorEmoji', captureEditorSelection);
-                captureEditorSelection();
-
-                $picker.bsEmojiPicker({
-                    btnClass: context.navButtonClass,
-                    btnText: '<i class="bi bi-emoji-smile"></i>',
-                    targetInput: null,
-                    onClickEmoji(emoji) {
-                        const selection = $picker.data('bsMarkdownEditorEmojiSelection') || lastSelection || {
-                            start: context.textarea.selectionStart,
-                            end: context.textarea.selectionEnd
-                        };
-                        context.textarea.setSelectionRange(selection.start, selection.end);
-                        context.helpers.replaceSelection(
-                            context.textarea,
-                            emoji,
-                            emoji.length,
-                            emoji.length,
-                            'customAction'
-                        );
-                    }
-                });
-
-                $picker.on('mousedown', '[data-bs-toggle="dropdown"]', rememberSelection);
-                $picker.on('show.bs.dropdown', '.dropdown-emoji', rememberSelection);
-
-                return $picker;
-            }
-        }
-    }
-});
+```html
+<!-- Load bs-emoji-picker after jQuery and Bootstrap -->
+<script src="https://cdn.jsdelivr.net/gh/ThomasDev-de/bs-emoji-picker@2.0.2/dist/bs-emoji-picker.min.js"></script>
 ```
+
+The picker is initialized automatically with optimized settings for the Markdown editor. No additional configuration is required.
+If you want to exclude the emoji action from the toolbar, use the `actions` filter.
 
 ## Methods
 

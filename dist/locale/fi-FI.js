@@ -36,6 +36,7 @@ window.bsMarkdownEditorTranslations = {
         "hr": "Vaakaviiva",
         "taskList": "Tehtävälista",
         "toggleTask": "Vaihda tehtävän tila",
+        "emoji": "Emoji",
         "undo": "Kumoa",
         "redo": "Tee uudelleen",
         "alignment": "Alignment",

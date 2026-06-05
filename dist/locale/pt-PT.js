@@ -36,6 +36,7 @@ window.bsMarkdownEditorTranslations = {
         "hr": "Linha horizontal",
         "taskList": "Lista de tarefas",
         "toggleTask": "Alternar tarefa",
+        "emoji": "Emoji",
         "undo": "Desfazer",
         "redo": "Refazer",
         "alignment": "Alignment",

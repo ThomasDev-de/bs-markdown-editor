@@ -7,6 +7,31 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Added automatic list continuation when pressing `Enter` in ordered and unordered lists.
+- Empty list items are now automatically removed when pressing `Enter`.
+
+### Fixed
+
+- Fixed automatic list continuation in contenteditable mode by ensuring the `input` event is triggered after insertion.
+- Improved list marker detection regex to be more robust with different spacing.
+
+- Placeholder for upcoming changes.
+
+## [1.2.0] - 2026-06-05
+
+### Added
+
+- Added native support for the `emoji` toolbar action, which integrates with `bs-emoji-picker`.
+- Added `emoji` translation keys to all locale files.
+- Added `Ctrl + E` as a default keyboard shortcut for the emoji picker.
+
+### Changed
+
+- Updated `README.md` and `demo/index.html` to reflect the new built-in emoji support.
+- Package version bumped from `1.1.0` to `1.2.0`.
+
 ## [1.1.0] - 2026-06-05
 
 ### Added

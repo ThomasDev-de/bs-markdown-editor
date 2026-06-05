@@ -1148,6 +1148,7 @@
                 'link': 'ctrl+shift+l',
                 'image': 'ctrl+shift+i',
                 'codeBlock': 'ctrl+shift+k',
+                'emoji': 'ctrl+e',
                 'undo': 'ctrl+z',
                 'redo': 'ctrl+y',
                 'preview': 'ctrl+p',
@@ -1212,6 +1213,7 @@
                 hr: 'Horizontal rule',
                 taskList: 'Task list',
                 toggleTask: 'Toggle task',
+                emoji: 'Emoji',
                 undo: 'Undo',
                 redo: 'Redo',
                 alignment: 'Alignment',
@@ -1527,6 +1529,85 @@
                 icon: 'bi-check2-square',
                 run(textarea) {
                     helpers.toggleTaskLines(textarea);
+                }
+            },
+            emoji: {
+                title: t('actions.emoji', 'Emoji'),
+                icon: 'bi-emoji-smile',
+                run(textarea) {
+                    const $wrapper = $(textarea).closest('.bs-markdown-editor');
+                    const $picker = $wrapper.find('.dropdown-emoji');
+                    if ($picker.length > 0) {
+                        const dropdown = bootstrap.Dropdown.getOrCreateInstance($picker.find('[data-bs-toggle="dropdown"]')[0]);
+                        dropdown.toggle();
+                    }
+                },
+                render(context) {
+                    const $picker = $('<div class="btn-group dropdown-emoji"></div>');
+                    let lastSelection = {
+                        start: context.textarea.selectionStart || 0,
+                        end: context.textarea.selectionEnd || 0
+                    };
+
+                    function captureEditorSelection() {
+                        const selection = window.getSelection();
+                        if (!selection || selection.rangeCount === 0) {
+                            return;
+                        }
+                        const range = selection.getRangeAt(0);
+                        if (!context.editable.contains(range.startContainer) || !context.editable.contains(range.endContainer)) {
+                            return;
+                        }
+                        const offsets = context.helpers.getEditableSelectionOffsets(context.editable);
+                        lastSelection = {
+                            start: offsets.start,
+                            end: offsets.end
+                        };
+                        context.textarea.setSelectionRange(lastSelection.start, lastSelection.end);
+                    }
+
+                    function rememberSelection() {
+                        captureEditorSelection();
+                        $picker.data('bsMarkdownEditorEmojiSelection', lastSelection);
+                    }
+
+                    context.$editable.on('keyup.bsMarkdownEditorEmoji mouseup.bsMarkdownEditorEmoji touchend.bsMarkdownEditorEmoji input.bsMarkdownEditorEmoji', captureEditorSelection);
+                    $(document).on('selectionchange.bsMarkdownEditorEmoji', captureEditorSelection);
+                    captureEditorSelection();
+
+                    if (typeof $picker.bsEmojiPicker === 'function') {
+                        $picker.bsEmojiPicker({
+                            btnClass: context.navButtonClass || context.buttonClassBase,
+                            btnText: '<i class="bi bi-emoji-smile"></i>',
+                            targetInput: null,
+                            onClickEmoji(emoji) {
+                                const selection = $picker.data('bsMarkdownEditorEmojiSelection') || lastSelection || {
+                                    start: context.textarea.selectionStart,
+                                    end: context.textarea.selectionEnd
+                                };
+                                context.textarea.setSelectionRange(selection.start, selection.end);
+                                context.helpers.replaceSelection(
+                                    context.textarea,
+                                    emoji,
+                                    emoji.length,
+                                    emoji.length,
+                                    'customAction'
+                                );
+                            }
+                        });
+                        $picker.find('[data-bs-toggle="dropdown"]').attr({title: t('actions.emoji', 'Emoji'), 'aria-label': t('actions.emoji', 'Emoji')});
+                        $picker.find('.dropdown-menu').addClass('dropdown-menu-end');
+                        $picker.on('mousedown', '[data-bs-toggle="dropdown"]', rememberSelection);
+                        $picker.on('show.bs.dropdown', '.dropdown-emoji', rememberSelection);
+                    } else {
+                        const shortcut = context.helpers.getShortcutDisplay('emoji');
+                        const titleWithShortcut = shortcut ? `${t('actions.emoji', 'Emoji')} (${shortcut})` : t('actions.emoji', 'Emoji');
+                        const $button = $(`<button type="button" class="${context.navButtonClass}" title="${context.helpers.escapeHtml(titleWithShortcut)}"><i class="bi bi-emoji-smile"></i></button>`);
+                        $button.prop('disabled', true);
+                        $picker.append($button);
+                    }
+
+                    return $picker;
                 }
             },
             undo: {
@@ -3312,6 +3393,50 @@
                     return;
                 }
 
+                if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                    const offsets = helpers.getEditableSelectionOffsets($editable.get(0));
+                    const value = helpers.getEditableValue($editable.get(0));
+                    const safeStart = Math.max(0, Math.min(value.length, offsets.start));
+                    const lineStart = value.lastIndexOf('\n', Math.max(0, safeStart - 1)) + 1;
+                    const lineEnd = value.indexOf('\n', safeStart);
+                    const currentLine = value.substring(lineStart, lineEnd === -1 ? value.length : lineEnd);
+
+                    const listMatch = currentLine.match(/^(\s*)([*-+] \[[ xX]\]\s*|[*-+]\s*|[0-9]+\.\s*)(.*)$/);
+                    if (listMatch) {
+                        e.preventDefault();
+                        const indent = listMatch[1];
+                        const marker = listMatch[2];
+                        const content = listMatch[3].trim();
+
+                        if (content === '') {
+                            // Empty list item: remove the list marker
+                            const newValue = value.substring(0, lineStart) + indent + value.substring(lineEnd === -1 ? value.length : lineEnd);
+                            helpers.withInternalChange(textarea, 'editable', function () {
+                                textarea.value = newValue;
+                                textarea.setSelectionRange(lineStart + indent.length, lineStart + indent.length);
+                                $(textarea).trigger('input');
+                            });
+                            helpers.syncEditableFromTextarea(textarea, true);
+                        } else {
+                            // Continue the list
+                            let nextMarker = marker;
+                            const orderedMatch = marker.match(/^([0-9]+)(\.\s*)$/);
+                            if (orderedMatch) {
+                                nextMarker = (parseInt(orderedMatch[1], 10) + 1) + (orderedMatch[2] || '. ');
+                            }
+                            if (!nextMarker.endsWith(' ')) {
+                                nextMarker += ' ';
+                            }
+                            const insertion = '\n' + indent + nextMarker;
+                            helpers.insertTextIntoEditable($editable.get(0), insertion);
+                            // Ensure the input event is triggered so the underlying textarea is updated
+                            $editable.trigger('input');
+                        }
+                        helpers.rememberEditableSelection(textarea);
+                        return;
+                    }
+                }
+
                 const isCtrl = e.ctrlKey || e.metaKey;
                 const isAlt = e.altKey;
                 const isShift = e.shiftKey;
@@ -3439,6 +3564,38 @@
                 const action = actions[key];
                 if (key === 'preview' || !canUseEditorActions) {
                     return;
+                }
+
+                if (typeof action.render === 'function') {
+                    const context = {
+                        key: key,
+                        textarea: textarea,
+                        editable: $editable.get(0),
+                        $editable: $editable,
+                        wrapper: $wrapperRef.get(0),
+                        $wrapper: $wrapperRef,
+                        toolbar: $toolbar.get(0),
+                        $toolbar: $toolbar,
+                        toolbarLeft: $toolbarLeft.get(0),
+                        $toolbarLeft: $toolbarLeft,
+                        toolbarRight: $toolbarRight.get(0),
+                        $toolbarRight: $toolbarRight,
+                        helpers: helpers,
+                        settings: settings,
+                        buttonClassBase: buttonClassBase,
+                        toolbarButtonClass: toolbarButtonClass,
+                        navButtonClass: toolbarButtonClass,
+                        groupSizeClass: groupSizeClass,
+                        $: $
+                    };
+                    const rendered = action.render(context);
+                    if (rendered) {
+                        const $element = rendered.jquery ? rendered : $(rendered);
+                        if ($element.length > 0) {
+                            $toolbarLeft.append($element);
+                            return;
+                        }
+                    }
                 }
 
                 if (groupedInlineStyleKeys.indexOf(key) !== -1) {

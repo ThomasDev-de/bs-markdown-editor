@@ -36,6 +36,7 @@ window.bsMarkdownEditorTranslations = {
         "hr": "Trennlinie",
         "taskList": "Task-Liste",
         "toggleTask": "Task umschalten",
+        "emoji": "Emoji",
         "undo": "Rückgängig",
         "redo": "Wiederholen",
         "alignment": "Ausrichtung",

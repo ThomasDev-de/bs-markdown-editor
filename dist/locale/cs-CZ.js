@@ -36,6 +36,7 @@ window.bsMarkdownEditorTranslations = {
         "hr": "Vodorovná čára",
         "taskList": "Seznam úkolů",
         "toggleTask": "Přepnout úkol",
+        "emoji": "Emoji",
         "undo": "Zpět",
         "redo": "Znovu",
         "alignment": "Alignment",

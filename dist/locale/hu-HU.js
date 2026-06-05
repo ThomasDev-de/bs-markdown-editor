@@ -36,6 +36,7 @@ window.bsMarkdownEditorTranslations = {
         "hr": "Vízszintes vonal",
         "taskList": "Feladatlista",
         "toggleTask": "Feladat állapota",
+        "emoji": "Emoji",
         "undo": "Visszavonás",
         "redo": "Újra",
         "alignment": "Alignment",
