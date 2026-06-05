@@ -7,18 +7,25 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed
+
+- Prüfung hinzugefügt, ob der Emoji-Picker bereits durch ein manuell eingebundenes `<script>`-Tag geladen wird, um doppelte Injektionen zu vermeiden.
+- Die Injektion des Emoji-Picker Scripts erfolgt nun am Ende des `<body>` statt im `<head>`.
+- Vereinfachte Ladestrategie für den Emoji-Picker: Es wird nur noch der GitHub CDN Link verwendet, Fallbacks auf lokale Vendor-Pfade wurden entfernt.
+- Repository-Besitz und Paketname für Emoji-Picker auf `thomasdev-de/bs-emoji-picker` korrigiert.
+- Fixed a `TypeError: action.run is not a function` when opening the emoji picker. Standard actions now support custom `render` functions.
+- Fixed emoji picker not loading in demo by adding missing `bs-emoji-picker.js` dependency.
+- Fixed automatic list continuation in contenteditable mode by ensuring the `input` event is triggered after insertion.
+- Fixed empty list item behavior to remove the marker while keeping the cursor on the same visible line.
+
 ### Added
 
 - Added automatic list continuation when pressing `Enter` in ordered and unordered lists.
 - Empty list items are now automatically removed when pressing `Enter`.
-
-### Fixed
-
-- Fixed a `TypeError: action.run is not a function` when opening the emoji picker. Standard actions now support custom `render` functions.
-- Fixed emoji picker not loading in demo by adding missing `bs-emoji-picker.js` dependency.
-- Fixed automatic list continuation in contenteditable mode by ensuring the `input` event is triggered after insertion.
-- Fixed empty list item behavior to correctly break the list and insert a newline.
+- Added keyboard indentation for list items: `Tab` creates a nested sublist item and `Shift + Tab` outdents it.
+- Automatische Lazy-Loading Unterstützung für `bs-emoji-picker` via GitHub CDN (@main) und Script-Injektion hinzugefügt.
 - Improved list marker detection regex to be more robust with different spacing.
+- Fixed rendering of trailing empty editor lines so the caret no longer jumps to the previous line after breaking out of a list.
 
 - Placeholder for upcoming changes.
 

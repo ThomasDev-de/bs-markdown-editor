@@ -1136,6 +1136,8 @@
             wrapperClass: '',
             actions: 'all',
             customActions: {},
+            emojiPickerAutoLoad: true,
+            emojiPickerSrc: null,
             lang: null,
             translations: {},
             shortcuts: {
@@ -1538,8 +1540,11 @@
                     const $wrapper = $(textarea).closest('.bs-markdown-editor');
                     const $picker = $wrapper.find('.dropdown-emoji');
                     if ($picker.length > 0) {
-                        const dropdown = bootstrap.Dropdown.getOrCreateInstance($picker.find('[data-bs-toggle="dropdown"]')[0]);
-                        dropdown.toggle();
+                        const trigger = $picker.find('[data-bs-toggle="dropdown"]').get(0);
+                        if (trigger) {
+                            const dropdown = bootstrap.Dropdown.getOrCreateInstance(trigger);
+                            dropdown.toggle();
+                        }
                     }
                 },
                 render(context) {
@@ -1548,6 +1553,8 @@
                         start: context.textarea.selectionStart || 0,
                         end: context.textarea.selectionEnd || 0
                     };
+                    const shortcut = context.helpers.getShortcutDisplay('emoji');
+                    const titleWithShortcut = shortcut ? `${t('actions.emoji', 'Emoji')} (${shortcut})` : t('actions.emoji', 'Emoji');
 
                     function captureEditorSelection() {
                         const selection = window.getSelection();
@@ -1571,40 +1578,54 @@
                         $picker.data('bsMarkdownEditorEmojiSelection', lastSelection);
                     }
 
-                    context.$editable.on('keyup.bsMarkdownEditorEmoji mouseup.bsMarkdownEditorEmoji touchend.bsMarkdownEditorEmoji input.bsMarkdownEditorEmoji', captureEditorSelection);
-                    $(document).on('selectionchange.bsMarkdownEditorEmoji', captureEditorSelection);
-                    captureEditorSelection();
+                    function insertEmoji(emoji) {
+                        const selection = $picker.data('bsMarkdownEditorEmojiSelection') || lastSelection || {
+                            start: context.textarea.selectionStart,
+                            end: context.textarea.selectionEnd
+                        };
+                        context.textarea.setSelectionRange(selection.start, selection.end);
+                        context.helpers.replaceSelection(
+                            context.textarea,
+                            emoji,
+                            emoji.length,
+                            emoji.length,
+                            'customAction'
+                        );
+                    }
 
-                    if (typeof $picker.bsEmojiPicker === 'function') {
+                    function renderExternalPicker() {
+                        $picker.empty();
                         $picker.bsEmojiPicker({
                             btnClass: context.navButtonClass || context.buttonClassBase,
                             btnText: '<i class="bi bi-emoji-smile"></i>',
                             targetInput: null,
-                            onClickEmoji(emoji) {
-                                const selection = $picker.data('bsMarkdownEditorEmojiSelection') || lastSelection || {
-                                    start: context.textarea.selectionStart,
-                                    end: context.textarea.selectionEnd
-                                };
-                                context.textarea.setSelectionRange(selection.start, selection.end);
-                                context.helpers.replaceSelection(
-                                    context.textarea,
-                                    emoji,
-                                    emoji.length,
-                                    emoji.length,
-                                    'customAction'
-                                );
-                            }
+                            onClickEmoji: insertEmoji
                         });
                         $picker.find('[data-bs-toggle="dropdown"]').attr({title: t('actions.emoji', 'Emoji'), 'aria-label': t('actions.emoji', 'Emoji')});
                         $picker.find('.dropdown-menu').addClass('dropdown-menu-end');
                         $picker.on('mousedown', '[data-bs-toggle="dropdown"]', rememberSelection);
                         $picker.on('show.bs.dropdown', '.dropdown-emoji', rememberSelection);
-                    } else {
-                        const shortcut = context.helpers.getShortcutDisplay('emoji');
-                        const titleWithShortcut = shortcut ? `${t('actions.emoji', 'Emoji')} (${shortcut})` : t('actions.emoji', 'Emoji');
-                        const $button = $(`<button type="button" class="${context.navButtonClass}" title="${context.helpers.escapeHtml(titleWithShortcut)}"><i class="bi bi-emoji-smile"></i></button>`);
+                    }
+
+                    function renderUnavailablePicker() {
+                        const $button = $(`<button type="button" class="${context.navButtonClass}" title="${context.helpers.escapeHtml(titleWithShortcut)}" aria-label="${context.helpers.escapeHtml(t('actions.emoji', 'Emoji'))}"><i class="bi bi-emoji-smile"></i></button>`);
                         $button.prop('disabled', true);
-                        $picker.append($button);
+                        $picker.empty().append($button);
+                    }
+
+                    context.$editable.on('keyup.bsMarkdownEditorEmoji mouseup.bsMarkdownEditorEmoji touchend.bsMarkdownEditorEmoji input.bsMarkdownEditorEmoji', captureEditorSelection);
+                    $(document).on('selectionchange.bsMarkdownEditorEmoji', captureEditorSelection);
+                    captureEditorSelection();
+
+                    if (typeof $picker.bsEmojiPicker === 'function') {
+                        renderExternalPicker();
+                    } else {
+                        renderUnavailablePicker();
+                        context.helpers.loadEmojiPickerPlugin().done(function () {
+                            if (typeof $picker.bsEmojiPicker === 'function') {
+                                renderExternalPicker();
+                            }
+                        }).fail(renderUnavailablePicker);
                     }
 
                     return $picker;
@@ -1650,6 +1671,119 @@
         const helpers = {
             escapeHtml(value) {
                 return sharedConverters.escapeHtml(value);
+            },
+            makeAbsoluteUrl(url, baseUrl = document.baseURI) {
+                try {
+                    return new URL(url, baseUrl).href;
+                } catch (error) {
+                    return String(url || '');
+                }
+            },
+            getEditorScriptUrl() {
+                const scripts = Array.prototype.slice.call(document.getElementsByTagName('script')).reverse();
+                const script = scripts.find(function (item) {
+                    return /(?:^|\/)bs-markdown-editor(?:\.min)?\.js(?:[?#].*)?$/.test(item.getAttribute('src') || '');
+                });
+                return script ? helpers.makeAbsoluteUrl(script.getAttribute('src')) : '';
+            },
+            getEmojiPickerScriptCandidates() {
+                const candidates = [];
+                const configuredSrc = settings.emojiPickerSrc;
+                if (typeof configuredSrc === 'string' && configuredSrc.trim() !== '') {
+                    candidates.push(helpers.makeAbsoluteUrl(configuredSrc.trim()));
+                } else if (Array.isArray(configuredSrc)) {
+                    configuredSrc.forEach(function (src) {
+                        if (typeof src === 'string' && src.trim() !== '') {
+                            candidates.push(helpers.makeAbsoluteUrl(src.trim()));
+                        }
+                    });
+                }
+
+                if (candidates.length === 0) {
+                    candidates.push('https://cdn.jsdelivr.net/gh/ThomasDev-de/bs-emoji-picker@main/dist/bs-emoji-picker.min.js');
+                }
+
+                return candidates.filter(function (src, index, list) {
+                    return src !== '' && list.indexOf(src) === index;
+                });
+            },
+            loadEmojiPickerPlugin() {
+                if (typeof $.fn.bsEmojiPicker === 'function') {
+                    return $.Deferred().resolve().promise();
+                }
+                if (settings.emojiPickerAutoLoad === false) {
+                    return $.Deferred().reject().promise();
+                }
+
+                const cacheKey = 'bsMarkdownEditorEmojiPickerLoad';
+                const cachedLoad = $(document).data(cacheKey);
+                if (cachedLoad) {
+                    return cachedLoad.promise();
+                }
+
+                const deferred = $.Deferred();
+                const candidates = helpers.getEmojiPickerScriptCandidates();
+                $(document).data(cacheKey, deferred);
+
+                // Check if any candidate is already being loaded by a script tag in the DOM
+                const existingScripts = Array.prototype.slice.call(document.getElementsByTagName('script'));
+                const isAlreadyLoading = existingScripts.some(function (script) {
+                    const src = script.getAttribute('src') || '';
+                    return candidates.some(function (candidate) {
+                        return src.indexOf(candidate) !== -1 || candidate.indexOf(src) !== -1;
+                    }) || /(?:^|\/)bs-emoji-picker(?:\.min)?\.js(?:[?#].*)?$/.test(src);
+                });
+
+                if (isAlreadyLoading) {
+                    // If it's already loading, we wait for it to define the plugin
+                    let attempts = 0;
+                    const checkInterval = setInterval(function () {
+                        if (typeof $.fn.bsEmojiPicker === 'function') {
+                            clearInterval(checkInterval);
+                            deferred.resolve();
+                        } else if (attempts > 50) { // Timeout after ~5 seconds
+                            clearInterval(checkInterval);
+                            // If it fails, we might want to try loading it ourselves after all
+                            loadNext(0);
+                        }
+                        attempts++;
+                    }, 100);
+                    return deferred.promise();
+                }
+
+                function loadNext(index) {
+                    if (typeof $.fn.bsEmojiPicker === 'function') {
+                        deferred.resolve();
+                        return;
+                    }
+
+                    if (index >= candidates.length) {
+                        deferred.reject();
+                        return;
+                    }
+
+                    const src = candidates[index];
+                    const script = document.createElement('script');
+                    script.async = true;
+                    script.src = src;
+
+                    script.onload = function () {
+                        if (typeof $.fn.bsEmojiPicker === 'function') {
+                            deferred.resolve();
+                        } else {
+                            loadNext(index + 1);
+                        }
+                    };
+
+                    script.onerror = function () {
+                        loadNext(index + 1);
+                    };
+
+                    document.body.appendChild(script);
+                }
+
+                loadNext(0);
+                return deferred.promise();
             },
             ensurePluginStyles() {
                 if ($('#bsMarkdownEditorRuntimeStyles').length > 0) {
@@ -2130,10 +2264,15 @@
                 selection.addRange(range);
             },
             renderEditableHtml(markdown) {
-                return helpers.escapeHtml(markdown == null ? '' : String(markdown))
+                const value = markdown == null ? '' : String(markdown);
+                let html = helpers.escapeHtml(value)
                     .replace(/&lt;sub&gt;([\s\S]*?)&lt;\/sub&gt;/gi, '<sub>$1</sub>')
                     .replace(/&lt;sup&gt;([\s\S]*?)&lt;\/sup&gt;/gi, '<sup>$1</sup>')
                     .replace(/\n/g, '<br>');
+                if (value.endsWith('\n')) {
+                    html += '<br>';
+                }
+                return html;
             },
             insertTextIntoEditable(editable, text) {
                 if (!editable) {
@@ -3221,6 +3360,103 @@
                     return line;
                 });
             },
+            isIndentableListLine(line) {
+                return /^(\s*)([-*+] \[[ xX]\]\s*|[-*+]\s*|[0-9]+\.\s*)/.test(String(line));
+            },
+            transformListIndentFromEditable(textarea, editable, outdent = false) {
+                const offsets = helpers.getEditableSelectionOffsets(editable, helpers.getRememberedEditableSelection(textarea));
+                const value = helpers.getEditableValue(editable);
+                const valueLength = value.length;
+                const selectionStart = Math.max(0, Math.min(valueLength, offsets.start));
+                const selectionEnd = Math.max(selectionStart, Math.min(valueLength, offsets.end));
+                const rangeEndOffset = selectionEnd > selectionStart && value.charAt(selectionEnd - 1) === '\n'
+                    ? selectionEnd - 1
+                    : selectionEnd;
+                const lineStart = value.lastIndexOf('\n', Math.max(0, selectionStart - 1)) + 1;
+                const lineEndIndex = value.indexOf('\n', rangeEndOffset);
+                const lineEnd = lineEndIndex === -1 ? valueLength : lineEndIndex;
+                const lines = value.substring(lineStart, lineEnd).split('\n');
+                const hasListLine = lines.some(function (line) {
+                    return helpers.isIndentableListLine(line);
+                });
+                const allContentLinesAreLists = lines.every(function (line) {
+                    return line.trim() === '' || helpers.isIndentableListLine(line);
+                });
+
+                if (!hasListLine || !allContentLinesAreLists) {
+                    return false;
+                }
+
+                let absoluteLineStart = lineStart;
+                const changes = [];
+                const transformed = lines.map(function (line) {
+                    const originalLineStart = absoluteLineStart;
+                    absoluteLineStart += line.length + 1;
+
+                    if (!helpers.isIndentableListLine(line)) {
+                        return line;
+                    }
+
+                    let nextLine = line;
+                    if (outdent) {
+                        if (line.startsWith('\t')) {
+                            nextLine = line.slice(1);
+                        } else if (line.startsWith('  ')) {
+                            nextLine = line.slice(2);
+                        } else if (line.startsWith(' ')) {
+                            nextLine = line.slice(1);
+                        }
+                    } else {
+                        nextLine = '  ' + line;
+                    }
+
+                    const delta = nextLine.length - line.length;
+                    if (delta !== 0) {
+                        changes.push({
+                            start: originalLineStart,
+                            end: originalLineStart + line.length,
+                            delta: delta
+                        });
+                    }
+                    return nextLine;
+                }).join('\n');
+
+                function adjustOffset(offset) {
+                    let adjusted = offset;
+                    changes.forEach(function (change) {
+                        if (offset === change.start && change.delta > 0) {
+                            adjusted += change.delta;
+                            return;
+                        }
+                        if (offset > change.start && offset <= change.end) {
+                            adjusted = Math.max(change.start, adjusted + change.delta);
+                            return;
+                        }
+                        if (offset > change.end) {
+                            adjusted += change.delta;
+                        }
+                    });
+                    return Math.max(0, adjusted);
+                }
+
+                const nextValue = value.substring(0, lineStart) + transformed + value.substring(lineEnd);
+                const nextSelectionStart = Math.min(nextValue.length, adjustOffset(selectionStart));
+                const nextSelectionEnd = Math.max(nextSelectionStart, Math.min(nextValue.length, adjustOffset(selectionEnd)));
+
+                helpers.withInternalChange(textarea, 'editable', function () {
+                    textarea.value = nextValue;
+                    textarea.setSelectionRange(nextSelectionStart, nextSelectionEnd);
+                    $(textarea).data('bsMarkdownEditorEditableSelection', {
+                        start: nextSelectionStart,
+                        end: nextSelectionEnd
+                    });
+                    $(textarea).trigger('input');
+                    helpers.refreshRenderedState(textarea, true);
+                    helpers.focusEditor(textarea);
+                });
+
+                return true;
+            },
             prefixLines(textarea, prefix) {
                 const selected = helpers.getSelection(textarea);
                 const content = selected === '' ? t('placeholders.defaultText', 'Text') : selected;
@@ -3385,11 +3621,20 @@
             });
 
             $editable.on('keydown.bsMarkdownEditorEditable', function (e) {
-                if (e.key === 'Tab' && !e.shiftKey) {
-                    e.preventDefault();
-                    helpers.insertTextIntoEditable($editable.get(0), helpers.getEditableTabInsertion($editable.get(0), 4));
-                    helpers.syncTextareaFromEditable(textarea, 'editable');
-                    helpers.rememberEditableSelection(textarea);
+                if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                    const handledListIndent = helpers.transformListIndentFromEditable(textarea, $editable.get(0), e.shiftKey);
+                    if (handledListIndent) {
+                        e.preventDefault();
+                        helpers.rememberEditableSelection(textarea);
+                        return;
+                    }
+
+                    if (!e.shiftKey) {
+                        e.preventDefault();
+                        helpers.insertTextIntoEditable($editable.get(0), helpers.getEditableTabInsertion($editable.get(0), 4));
+                        helpers.syncTextareaFromEditable(textarea, 'editable');
+                        helpers.rememberEditableSelection(textarea);
+                    }
                     return;
                 }
 
@@ -3401,7 +3646,7 @@
                     const lineEnd = value.indexOf('\n', safeStart);
                     const currentLine = value.substring(lineStart, lineEnd === -1 ? value.length : lineEnd);
 
-                    const listMatch = currentLine.match(/^(\s*)([*-+] \[[ xX]\]\s*|[*-+]\s*|[0-9]+\.\s*)(.*)$/);
+                    const listMatch = currentLine.match(/^(\s*)([-*+] \[[ xX]\]\s*|[-*+]\s*|[0-9]+\.\s*)(.*)$/);
                     if (listMatch) {
                         e.preventDefault();
                         const indent = listMatch[1];
@@ -3409,13 +3654,11 @@
                         const content = listMatch[3].trim();
 
                         if (content === '') {
-                            // Empty list item: remove the list marker
-                            // Use e.shiftKey check to allow normal enter if needed, but here we want to break the list
-                            const nextLineStart = lineEnd === -1 ? value.length : lineEnd + 1;
-                            const newValue = value.substring(0, lineStart) + '\n' + value.substring(nextLineStart);
+                            // Empty list item: remove only the marker and keep the cursor on the same line.
+                            const newValue = value.substring(0, lineStart) + (lineEnd === -1 ? '' : value.substring(lineEnd));
                             helpers.withInternalChange(textarea, 'editable', function () {
                                 textarea.value = newValue;
-                                textarea.setSelectionRange(lineStart + 1, lineStart + 1);
+                                textarea.setSelectionRange(lineStart, lineStart);
                                 $(textarea).trigger('input');
                             });
                             helpers.syncEditableFromTextarea(textarea, true);

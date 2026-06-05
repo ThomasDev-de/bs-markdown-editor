@@ -70,6 +70,8 @@ For a complete Markdown sample covering all standard toolbar actions, see [examp
 | `wrapperClass`  | `string \| null`                  | `null`       | Additional class name(s) applied to the editor wrapper. The plugin always keeps its internal wrapper class `.bs-markdown-editor` and appends your classes on top.                                                                  |
 | `actions`       | `'all' \| string[]`               | `'all'`      | Toolbar action filter. `'all'` renders all actions. Array mode renders only matching action keys and keeps array order. Unknown keys are ignored.                                                                                  |
 | `customActions` | `object \| array`                 | `{}`         | Additional toolbar actions. `run(context)` receives the editor context, including `textarea`, `editable`, and `helpers`.                                                                                                           |
+| `emojiPickerAutoLoad` | `boolean`                   | `true`       | Automatically loads the `bs-emoji-picker` script (via GitHub CDN as fallback) when the emoji action is rendered and the picker plugin is not already loaded. |
+| `emojiPickerSrc` | `string \| string[] \| null`      | `null`       | Optional custom script URL(s) for `bs-emoji-picker`. When omitted, the editor tries the GitHub CDN automatically. |
 | `shortcuts`     | `object`                          | `{...}`      | Keyboard shortcuts mapping action keys to shortcut strings (e.g., `'bold': 'ctrl+b'`). Supports `ctrl+` and `ctrl+shift+` modifiers.                                                                                               |
 | `lang`          | `string`                          | `auto`       | Reserved for compatibility. Locale selection is now handled by preloaded locale files plus `translations` overrides.                                                                                                               |
 | `translations`  | `object`                          | `{}`         | Deep-merged text overrides for labels, prompts, placeholders, callout labels/titles, modal text, and preview messages. Merge order: built-in English defaults -> `window.bsMarkdownEditorTranslations` (if loaded) -> this option. |
@@ -99,7 +101,7 @@ For a complete Markdown sample covering all standard toolbar actions, see [examp
 | `taskList`        | Task list (`- [ ] ...`)                                    |
 | `toggleTask`      | Toggle selected task list items                            |
 | `table`           | Open table modal and insert markdown table                 |
-| `emoji`           | Open emoji picker (requires `bs-emoji-picker` plugin)      |
+| `emoji`           | Open emoji picker                                          |
 | `undo`            | Undo via plugin history                                    |
 | `redo`            | Redo via plugin history                                    |
 | `alignment`       | Insert alignment HTML tags using Bootstrap utility classes (`text-start`, `text-center`, `text-end` or inline style for justify) |
@@ -209,14 +211,14 @@ with `render(context)`, capture the editor selection before your UI steals focus
 
 #### Advanced: Emoji Picker
 
-The editor includes native support for the `bs-emoji-picker` plugin. To enable it, simply include the picker's JS file
-after jQuery and Bootstrap. If the plugin is detected, the emoji button will be rendered automatically in the toolbar.
+The editor uses the dependency `thomasdev-de/bs-emoji-picker` for the emoji toolbar action.
+If `$.fn.bsEmojiPicker` is not loaded yet, the editor automatically tries to load it.
 
-```html
-<!-- Load bs-emoji-picker after jQuery and Bootstrap -->
-<script src="https://cdn.jsdelivr.net/gh/ThomasDev-de/bs-emoji-picker@2.0.2/dist/bs-emoji-picker.min.js"></script>
-```
+By default, it attempts to load the script from the following sources (in order):
+1.  Any URLs provided via the `emojiPickerSrc` option.
+2.  GitHub CDN: `https://cdn.jsdelivr.net/gh/ThomasDev-de/bs-emoji-picker@main/dist/bs-emoji-picker.min.js`
 
+This means that in most cases, no separate script tag for the emoji picker is required. The script is loaded asynchronuously when the editor initializes.
 The picker is initialized automatically with optimized settings for the Markdown editor. No additional configuration is required.
 If you want to exclude the emoji action from the toolbar, use the `actions` filter.
 
