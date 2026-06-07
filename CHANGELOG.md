@@ -11,10 +11,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Der Emoji-Picker wird nun standardmäßig nicht mehr automatisch über GitHub nachgeladen (`emojiPickerAutoLoad` ist nun `false`).
 - Die Emoji-Aktion wird im Toolbar nur noch eingeblendet, wenn das Plugin `bsEmojiPicker` (manuell eingebunden) im DOM präsent ist.
+- Die gerenderten Code-Blöcke (Fenced Code Blocks) wurden mit abgerundeten Ecken, Schatten und Innenabständen versehen.
 
 ### Fixed
 
 - Prüfung hinzugefügt, ob der Emoji-Picker bereits durch ein manuell eingebundenes `<script>`-Tag geladen wird, um doppelte Injektionen zu vermeiden.
+- Styling für Inline-Code wurde wieder auf den Standard zurückgesetzt (nur Code-Blöcke erhalten abgerundete Ecken).
 - Die Injektion des Emoji-Picker Scripts erfolgt nun am Ende des `<body>` statt im `<head>`.
 - Vereinfachte Ladestrategie für den Emoji-Picker: Es wird nur noch der GitHub CDN Link verwendet, Fallbacks auf lokale Vendor-Pfade wurden entfernt.
 - Repository-Besitz und Paketname für Emoji-Picker auf `thomasdev-de/bs-emoji-picker` korrigiert.

@@ -373,7 +373,7 @@
 
             content = content.replace(/`([^`]+)`/g, function (_, code) {
                 const token = `@@CODE_${codeStore.length}@@`;
-                codeStore.push(`<code class="bg-light border rounded px-1">${code}</code>`);
+                codeStore.push(`<code>${code}</code>`);
                 return token;
             });
 
