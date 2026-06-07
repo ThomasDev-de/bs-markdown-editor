@@ -7,6 +7,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+
+- Der Emoji-Picker wird nun standardmäßig nicht mehr automatisch über GitHub nachgeladen (`emojiPickerAutoLoad` ist nun `false`).
+- Die Emoji-Aktion wird im Toolbar nur noch eingeblendet, wenn das Plugin `bsEmojiPicker` (manuell eingebunden) im DOM präsent ist.
+
 ### Fixed
 
 - Prüfung hinzugefügt, ob der Emoji-Picker bereits durch ein manuell eingebundenes `<script>`-Tag geladen wird, um doppelte Injektionen zu vermeiden.

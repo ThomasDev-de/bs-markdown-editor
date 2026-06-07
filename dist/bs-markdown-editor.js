@@ -373,7 +373,7 @@
 
             content = content.replace(/`([^`]+)`/g, function (_, code) {
                 const token = `@@CODE_${codeStore.length}@@`;
-                codeStore.push(`<code>${code}</code>`);
+                codeStore.push(`<code class="bg-light border rounded px-1">${code}</code>`);
                 return token;
             });
 
@@ -501,19 +501,19 @@
                     const code = fenceLines.join('\n');
 
                     if (isKnownLanguage) {
-                        const preClass = ' class="position-relative pt-4 bg-dark text-light overflow-auto"';
-                        const codeClass = ` class="${languageClass} d-block flex-grow-1"`;
+                        const preClass = ' class="position-relative pt-4 bg-dark text-light overflow-auto rounded shadow-sm"';
+                        const codeClass = ` class="${languageClass} d-block flex-grow-1 p-3"`;
                         const codeStyle = ' style="padding-top:3px;"';
                         if (code.trim() === '') {
                             html.push(`<pre${preClass}>${sharedConverters.renderCodeLanguageBadge(language)}<code${codeClass}${codeStyle}></code></pre>`);
                         } else {
                             const stripedStyle = ' style="line-height:1.5;background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 1.5em, rgba(255,255,255,.035) 1.5em, rgba(255,255,255,.035) 3em);"';
                             const lineNumbers = sharedConverters.renderCodeLineNumbers(code);
-                            html.push(`<pre${preClass}>${sharedConverters.renderCodeLanguageBadge(language)}<span class="d-flex align-items-start"${stripedStyle}><span aria-hidden="true" class="text-secondary user-select-none pe-3 me-3 border-end border-secondary" style="padding-top:3px;text-align:right;">${lineNumbers}</span><code${codeClass}${codeStyle}>${sharedConverters.highlightCode(code, language)}</code></span></pre>`);
+                            html.push(`<pre${preClass}>${sharedConverters.renderCodeLanguageBadge(language)}<span class="d-flex align-items-start"${stripedStyle}><span aria-hidden="true" class="text-secondary user-select-none pe-3 me-3 border-end border-secondary p-3" style="padding-top:3px;text-align:right;">${lineNumbers}</span><code${codeClass}${codeStyle}>${sharedConverters.highlightCode(code, language)}</code></span></pre>`);
                         }
                     } else {
-                        const codeClass = languageClass === '' ? '' : ` class="${languageClass}"`;
-                        const preClass = language === '' ? '' : ' class="position-relative pt-4"';
+                        const codeClass = languageClass === '' ? '' : ` class="${languageClass} p-3 d-block"`;
+                        const preClass = ' class="position-relative pt-4 bg-light border rounded shadow-sm"';
                         const codeStyle = language === '' ? '' : ' style="padding-top:3px;"';
                         html.push(`<pre${preClass}>${sharedConverters.renderCodeLanguageBadge(language)}<code${codeClass}${codeStyle}>${sharedConverters.escapeHtml(code)}</code></pre>`);
                     }
@@ -1136,7 +1136,7 @@
             wrapperClass: '',
             actions: 'all',
             customActions: {},
-            emojiPickerAutoLoad: true,
+            emojiPickerAutoLoad: false,
             emojiPickerSrc: null,
             lang: null,
             translations: {},
@@ -1619,16 +1619,20 @@
 
                     if (typeof $picker.bsEmojiPicker === 'function') {
                         renderExternalPicker();
-                    } else {
+                        return $picker;
+                    }
+
+                    if (settings.emojiPickerAutoLoad) {
                         renderUnavailablePicker();
                         context.helpers.loadEmojiPickerPlugin().done(function () {
                             if (typeof $picker.bsEmojiPicker === 'function') {
                                 renderExternalPicker();
                             }
                         }).fail(renderUnavailablePicker);
+                        return $picker;
                     }
 
-                    return $picker;
+                    return null;
                 }
             },
             undo: {
